@@ -55,7 +55,7 @@ const KpiBar = ({value}) => {
 // Modal générique
 const Modal = ({title, onClose, children}) => (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl">
       <div className="flex items-center justify-between p-6 border-b border-slate-200">
         <h2 className="text-lg font-bold text-slate-900">{title}</h2>
         <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
@@ -1172,8 +1172,14 @@ const App = () => {
   const removeDriver = async (id) => { await dr.remove(id); };
 
   // Wrappers CRUD Shifts
-  const addShift = async (item) => { await sh.add({...item, check_in: item.checkIn||false, check_out: item.checkOut||false}); };
-  const updateShift = async (id, item) => { await sh.update(id, {...item, check_in: item.checkIn||false, check_out: item.checkOut||false}); };
+  const addShift = async (item) => { 
+    const { checkIn, checkOut, reverse, ...rest } = item;
+    await sh.add({...rest, check_in: checkIn||false, check_out: checkOut||false, reversement: reverse||0}); 
+  };
+  const updateShift = async (id, item) => { 
+    const { checkIn, checkOut, reverse, ...rest } = item;
+    await sh.update(id, {...rest, check_in: checkIn||false, check_out: checkOut||false, reversement: reverse||0}); 
+  };
   const removeShift = async (id) => { await sh.remove(id); };
 
   // Wrappers CRUD Reversements
