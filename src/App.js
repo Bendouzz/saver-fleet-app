@@ -55,7 +55,7 @@ const KpiBar = ({value}) => {
 // Modal générique
 const Modal = ({title, onClose, children}) => (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl">
+    <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
       <div className="flex items-center justify-between p-6 border-b border-slate-200">
         <h2 className="text-lg font-bold text-slate-900">{title}</h2>
         <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
