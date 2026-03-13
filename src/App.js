@@ -55,7 +55,7 @@ const KpiBar = ({value}) => {
 // Modal générique
 const Modal = ({title, onClose, children}) => (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl">
+    <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
       <div className="flex items-center justify-between p-6 border-b border-slate-200">
         <h2 className="text-lg font-bold text-slate-900">{title}</h2>
         <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
@@ -213,67 +213,150 @@ const LoginPage = ({onLogin}) => {
 // DASHBOARD
 // ============================================================
 const DashboardPage = ({vehicles, drivers, shifts, reversements, alerts, recharges}) => {
+  const [periode, setPeriode] = useState("jour");
+
+  // Stats véhicules
   const activeVh = vehicles.filter(v=>v.status==="En exploitation").length;
+  const enRechargeVh = vehicles.filter(v=>v.status==="En recharge").length;
+  const immobiliseVh = vehicles.filter(v=>v.status==="Immobilisé" || v.status==="Maintenance").length;
+  const avgSoc = vehicles.length > 0 ? Math.round(vehicles.reduce((a,v)=>a+v.soc,0)/vehicles.length) : 0;
+
+  // Stats shifts
+  const shiftEnCours = shifts.filter(s=>s.status==="En cours").length;
+  const shiftPlanifie = shifts.filter(s=>s.status==="Planifié").length;
+  const shiftTermine = shifts.filter(s=>s.status==="Terminé").length;
+
+  // Stats recettes selon période
+  const today = new Date().toISOString().split("T")[0];
+  const weekAgo = new Date(Date.now()-7*24*60*60*1000).toISOString().split("T")[0];
+  const monthAgo = new Date(Date.now()-30*24*60*60*1000).toISOString().split("T")[0];
+  const filterDate = periode==="jour" ? today : periode==="semaine" ? weekAgo : monthAgo;
   const totalRecette = shifts.reduce((a,s)=>a+s.recette,0);
   const totalReverse = reversements.filter(r=>r.status==="Validé").reduce((a,r)=>a+r.montant,0);
-  const alertCount = alerts.filter(a=>!a.read).length;
-  const avgSoc = Math.round(vehicles.reduce((a,v)=>a+v.soc,0)/vehicles.length);
-  const shiftEnCours = shifts.filter(s=>s.status==="En cours").length;
+  const reversementsFiltered = reversements.filter(r=> !filterDate || r.date >= filterDate);
+  const recetteFiltered = reversementsFiltered.reduce((a,r)=>a+r.montant,0);
+
+  // Stats chauffeurs
   const totalDrivers = drivers.filter(d=>d.status==="Actif").length;
+  const topDrivers = [...drivers].sort((a,b)=>b.ca-a.ca).slice(0,5);
+
+  const alertCount = alerts.filter(a=>!a.read).length;
   const driverName = (id) => { const d=drivers.find(x=>x.id===id); return d?d.prenom+" "+d.nom:"—"; };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold text-slate-900">Tableau de bord</h1><p className="text-slate-500 text-sm">Vue temps réel · {new Date().toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p></div>
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Tableau de bord</h1>
+          <p className="text-slate-500 text-sm">Vue temps réel · {new Date().toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
+        </div>
+        <div className="flex gap-2">
+          {["jour","semaine","mois"].map(p=>(
+            <button key={p} onClick={()=>setPeriode(p)} className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all ${periode===p?"bg-blue-600 text-white":"bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"}`}>{p}</button>
+          ))}
+        </div>
       </div>
+
+      {/* Stats principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Recettes du jour" value={fmt(totalRecette)} sub={`${shiftEnCours} shifts en cours`} color="text-emerald-600" icon={{bg:"bg-emerald-500",el:<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>}} />
-        <StatCard label="Véhicules actifs" value={`${activeVh} / ${vehicles.length}`} sub={`SOC moyen : ${avgSoc}%`} color="text-blue-600" icon={{bg:"bg-blue-500",el:<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>}} />
+        <StatCard label={`Recettes (${periode})`} value={fmt(recetteFiltered)} sub={`Total cumulé : ${fmt(totalRecette)}`} color="text-emerald-600" icon={{bg:"bg-emerald-500",el:<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>}} />
+        <StatCard label="Shifts actifs" value={shiftEnCours.toString()} sub={`${shiftPlanifie} planifiés · ${shiftTermine} terminés`} color="text-blue-600" icon={{bg:"bg-blue-500",el:<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>}} />
         <StatCard label="Chauffeurs actifs" value={totalDrivers.toString()} sub={`${drivers.filter(d=>d.status==="Suspendu").length} suspendu(s)`} color="text-violet-600" icon={{bg:"bg-violet-500",el:<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197"/></svg>}} />
         <StatCard label="Alertes actives" value={alertCount.toString()} sub={`${alerts.filter(a=>!a.read&&a.sev==="critical").length} critiques`} color="text-red-600" icon={{bg:"bg-red-500",el:<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>}} />
       </div>
+
+      {/* Véhicules status */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-emerald-700">En exploitation</span>
+            <span className="text-2xl font-bold text-emerald-700">{activeVh}</span>
+          </div>
+          <div className="w-full bg-emerald-200 rounded-full h-2"><div className="bg-emerald-500 h-2 rounded-full" style={{width:`${vehicles.length>0?(activeVh/vehicles.length)*100:0}%`}}/></div>
+          <div className="text-xs text-emerald-600 mt-1">{vehicles.length > 0 ? Math.round((activeVh/vehicles.length)*100) : 0}% de la flotte</div>
+        </div>
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-amber-700">En recharge</span>
+            <span className="text-2xl font-bold text-amber-700">{enRechargeVh}</span>
+          </div>
+          <div className="w-full bg-amber-200 rounded-full h-2"><div className="bg-amber-500 h-2 rounded-full" style={{width:`${vehicles.length>0?(enRechargeVh/vehicles.length)*100:0}%`}}/></div>
+          <div className="text-xs text-amber-600 mt-1">SOC moyen : {avgSoc}%</div>
+        </div>
+        <div className="bg-red-50 border border-red-200 rounded-xl p-5">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-red-700">Immobilisés</span>
+            <span className="text-2xl font-bold text-red-700">{immobiliseVh}</span>
+          </div>
+          <div className="w-full bg-red-200 rounded-full h-2"><div className="bg-red-500 h-2 rounded-full" style={{width:`${vehicles.length>0?(immobiliseVh/vehicles.length)*100:0}%`}}/></div>
+          <div className="text-xs text-red-600 mt-1">{vehicles.length > 0 ? Math.round((immobiliseVh/vehicles.length)*100) : 0}% de la flotte</div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Cashflow */}
         <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-6">
-          <h2 className="font-semibold text-slate-900 mb-4">Cashflow du jour</h2>
+          <h2 className="font-semibold text-slate-900 mb-4">Cashflow</h2>
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="text-center p-4 bg-emerald-50 rounded-xl"><div className="text-xs text-slate-500 mb-1">Recettes</div><div className="text-lg font-bold text-emerald-600">{fmt(totalRecette)}</div></div>
             <div className="text-center p-4 bg-blue-50 rounded-xl"><div className="text-xs text-slate-500 mb-1">Reversés</div><div className="text-lg font-bold text-blue-600">{fmt(totalReverse)}</div></div>
             <div className="text-center p-4 bg-amber-50 rounded-xl"><div className="text-xs text-slate-500 mb-1">En attente</div><div className="text-lg font-bold text-amber-600">{fmt(totalRecette-totalReverse)}</div></div>
           </div>
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium text-slate-500">Derniers reversements</h3>
-            {reversements.slice(0,4).map(r=>(
-              <div key={r.id} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
-                <div className="flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">{driverName(r.ch).charAt(0)}</div><div><div className="text-sm font-medium text-slate-700">{driverName(r.ch)}</div><div className="text-xs text-slate-400">{r.canal} · {r.date}</div></div></div>
-                <div className="text-right"><div className="text-sm font-semibold">{fmt(r.montant)}</div><Badge color={sc(r.status)}>{r.status}</Badge></div>
+          {/* Top chauffeurs */}
+          <h3 className="text-sm font-semibold text-slate-700 mb-3">🏆 Top chauffeurs par CA</h3>
+          <div className="space-y-2">
+            {topDrivers.length > 0 ? topDrivers.map((d,i)=>(
+              <div key={d.id} className="flex items-center gap-3">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white ${i===0?"bg-yellow-500":i===1?"bg-slate-400":i===2?"bg-amber-600":"bg-slate-300"}`}>{i+1}</div>
+                <div className="flex-1"><div className="flex items-center justify-between"><span className="text-sm font-medium text-slate-700">{d.prenom} {d.nom}</span><span className="text-sm font-semibold text-emerald-600">{fmt(d.ca)}</span></div><div className="w-full bg-slate-100 rounded-full h-1.5 mt-1"><div className="bg-emerald-500 h-1.5 rounded-full" style={{width:`${topDrivers[0].ca>0?(d.ca/topDrivers[0].ca)*100:0}%`}}/></div></div>
               </div>
-            ))}
+            )) : <div className="text-sm text-slate-400 text-center py-4">Aucun chauffeur enregistré</div>}
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h2 className="font-semibold text-slate-900 mb-4">Alertes récentes</h2>
-          <div className="space-y-3">
-            {alerts.map(a=>(
-              <div key={a.id} className={`flex gap-3 p-3 rounded-lg bg-slate-50 ${!a.read?"border-l-4":""} ${a.sev==="critical"?"border-red-500":a.sev==="warning"?"border-amber-500":"border-blue-500"}`}>
-                <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${a.sev==="critical"?"bg-red-500":a.sev==="warning"?"bg-amber-500":"bg-blue-500"}`}/>
-                <div><div className="text-sm font-medium text-slate-700">{a.msg}</div><div className="text-xs text-slate-400 mt-0.5">{a.type} · {a.date}</div></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className="bg-white rounded-xl border border-slate-200 p-6">
-        <h2 className="font-semibold text-slate-900 mb-4">État de charge de la flotte</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {vehicles.map(v=>(
-            <div key={v.id} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-100">
-              <div><div className="font-medium text-sm text-slate-800">{v.immat}</div><div className="text-xs text-slate-400">{v.modele}</div><Badge color={sc(v.status)}>{v.status}</Badge></div>
-              <div className="text-right"><SocBar soc={v.soc}/><div className="text-xs text-slate-400 mt-1">{v.km.toLocaleString()} km</div></div>
+
+        {/* Alertes + derniers reversements */}
+        <div className="space-y-6">
+          <div className="bg-white rounded-xl border border-slate-200 p-6">
+            <h2 className="font-semibold text-slate-900 mb-3">Derniers reversements</h2>
+            <div className="space-y-2">
+              {reversements.slice(0,4).map(r=>(
+                <div key={r.id} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+                  <div className="flex items-center gap-2"><div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">{driverName(r.ch).charAt(0)}</div><div><div className="text-xs font-medium text-slate-700">{driverName(r.ch)}</div><div className="text-xs text-slate-400">{r.canal}</div></div></div>
+                  <div className="text-right"><div className="text-xs font-semibold">{fmt(r.montant)}</div><Badge color={sc(r.status)}>{r.status}</Badge></div>
+                </div>
+              ))}
+              {reversements.length === 0 && <div className="text-sm text-slate-400 text-center py-2">Aucun reversement</div>}
             </div>
-          ))}
+          </div>
+          <div className="bg-white rounded-xl border border-slate-200 p-6">
+            <h2 className="font-semibold text-slate-900 mb-3">Alertes</h2>
+            <div className="space-y-2">
+              {alerts.filter(a=>!a.read).slice(0,4).map(a=>(
+                <div key={a.id} className={`flex gap-2 p-2 rounded-lg border-l-4 bg-slate-50 ${a.sev==="critical"?"border-red-500":a.sev==="warning"?"border-amber-500":"border-blue-500"}`}>
+                  <div><div className="text-xs font-medium text-slate-700">{a.msg}</div><div className="text-xs text-slate-400">{a.type}</div></div>
+                </div>
+              ))}
+              {alerts.filter(a=>!a.read).length===0 && <div className="text-sm text-slate-400 text-center py-2">Aucune alerte active ✅</div>}
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* État de charge flotte */}
+      {vehicles.length > 0 && (
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <h2 className="font-semibold text-slate-900 mb-4">État de charge de la flotte</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {vehicles.map(v=>(
+              <div key={v.id} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <div><div className="font-medium text-sm text-slate-800">{v.immat}</div><div className="text-xs text-slate-400">{v.modele}</div><Badge color={sc(v.status)}>{v.status}</Badge></div>
+                <div className="text-right"><SocBar soc={v.soc}/><div className="text-xs text-slate-400 mt-1">{v.km.toLocaleString()} km</div></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -1063,24 +1146,82 @@ const SitesPage = ({vehicles, drivers}) => (
 // ============================================================
 // RBAC PAGE
 // ============================================================
-const RbacPage = () => (
-  <div className="space-y-6">
-    <h1 className="text-2xl font-bold text-slate-900">RBAC & Audit</h1>
-    <div className="bg-white rounded-xl border border-slate-200 p-6">
-      <h2 className="font-semibold text-slate-900 mb-4">Matrice des permissions</h2>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead><tr className="bg-slate-50"><th className="text-left p-3 font-semibold text-slate-700">Action</th><th className="p-3 text-center font-semibold text-slate-700">Chauffeur</th><th className="p-3 text-center font-semibold text-slate-700">Superviseur</th><th className="p-3 text-center font-semibold text-slate-700">Ops</th><th className="p-3 text-center font-semibold text-slate-700">Finance</th><th className="p-3 text-center font-semibold text-slate-700">Admin</th></tr></thead>
-          <tbody>
-            {[["Effectuer reversement",true,false,false,false,false],["Valider check-in",false,true,true,false,true],["Annuler opération",false,true,false,false,true],["Valider remplacement",false,false,true,false,true],["Autoriser avance",false,false,false,false,true],["Valider dépenses",false,false,false,true,true],["Immobiliser VH",false,false,true,false,true],["Accès reporting",false,false,true,true,true],["Gestion RBAC",false,false,false,false,true]].map(([action,...perms],i)=>(
-              <tr key={i} className="border-b border-slate-100"><td className="p-3 text-slate-700">{action}</td>{perms.map((p,j)=><td key={j} className="p-3 text-center">{p?<span className="text-emerald-500 font-bold">✓</span>:<span className="text-slate-300">—</span>}</td>)}</tr>
-            ))}
-          </tbody>
-        </table>
+const RbacPage = ({currentUser}) => {
+  const [users, setUsers] = useState(getUsers());
+  const [confirmDelete, setConfirmDelete] = useState(null);
+
+  const handleDelete = (id) => {
+    if (id === currentUser?.id) return alert("Vous ne pouvez pas supprimer votre propre compte !");
+    const updated = users.filter(u=>u.id!==id);
+    saveUsers(updated);
+    setUsers(updated);
+    setConfirmDelete(null);
+  };
+
+  const handleRoleChange = (id, role) => {
+    const updated = users.map(u=>u.id===id?{...u,role}:u);
+    saveUsers(updated);
+    setUsers(updated);
+  };
+
+  const roleColor = (r) => ({"admin":"bg-red-100 text-red-700","ops":"bg-blue-100 text-blue-700","finance":"bg-emerald-100 text-emerald-700","supervisor":"bg-violet-100 text-violet-700"}[r]||"bg-slate-100 text-slate-600");
+
+  return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold text-slate-900">RBAC & Audit</h1>
+
+      {/* Gestion utilisateurs */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6">
+        <h2 className="font-semibold text-slate-900 mb-4">Utilisateurs ({users.length})</h2>
+        <div className="space-y-3">
+          {users.map(u=>(
+            <div key={u.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-violet-400 flex items-center justify-center text-white font-bold">{u.name[0]}</div>
+                <div>
+                  <div className="font-medium text-sm text-slate-800">{u.name} {u.id===currentUser?.id && <span className="text-xs text-blue-500">(vous)</span>}</div>
+                  <div className="text-xs text-slate-400">{u.email}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                {currentUser?.role==="admin" && u.id!==currentUser?.id ? (
+                  <select value={u.role} onChange={e=>handleRoleChange(u.id,e.target.value)} className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="admin">Admin</option>
+                    <option value="ops">Ops</option>
+                    <option value="finance">Finance</option>
+                    <option value="supervisor">Superviseur</option>
+                  </select>
+                ) : (
+                  <Badge color={roleColor(u.role)}>{u.role}</Badge>
+                )}
+                {currentUser?.role==="admin" && u.id!==currentUser?.id && (
+                  <button onClick={()=>setConfirmDelete(u)} className="text-red-600 text-xs border border-red-200 px-2 py-1 rounded hover:bg-red-50">Supprimer</button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
+
+      {/* Matrice permissions */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6">
+        <h2 className="font-semibold text-slate-900 mb-4">Matrice des permissions</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead><tr className="bg-slate-50"><th className="text-left p-3 font-semibold text-slate-700">Action</th><th className="p-3 text-center font-semibold text-slate-700">Superviseur</th><th className="p-3 text-center font-semibold text-slate-700">Ops</th><th className="p-3 text-center font-semibold text-slate-700">Finance</th><th className="p-3 text-center font-semibold text-slate-700">Admin</th></tr></thead>
+            <tbody>
+              {[["Effectuer reversement",false,false,false,true],["Valider check-in",true,true,false,true],["Annuler opération",true,false,false,true],["Valider remplacement",false,true,false,true],["Autoriser avance",false,false,false,true],["Valider dépenses",false,false,true,true],["Immobiliser VH",false,true,false,true],["Accès reporting",false,true,true,true],["Gestion RBAC",false,false,false,true]].map(([action,...perms],i)=>(
+                <tr key={i} className="border-b border-slate-100"><td className="p-3 text-slate-700">{action}</td>{perms.map((p,j)=><td key={j} className="p-3 text-center">{p?<span className="text-emerald-500 font-bold">✓</span>:<span className="text-slate-300">—</span>}</td>)}</tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {confirmDelete && <ConfirmDialog message={`Supprimer le compte de ${confirmDelete.name} ?`} onConfirm={()=>handleDelete(confirmDelete.id)} onCancel={()=>setConfirmDelete(null)} />}
     </div>
-  </div>
-);
+  );
+};
 
 // ============================================================
 // NAVIGATION
@@ -1220,12 +1361,16 @@ const App = () => {
     gps: <GpsPage vehicles={vh.data} alerts={alerts}/>,
     reporting: <ReportingPage vehicles={vh.data} drivers={dr.data} recharges={rc.data} maintenances={mt.data}/>,
     sites: <SitesPage vehicles={vh.data} drivers={dr.data}/>,
-    rbac: <RbacPage/>,
+    rbac: <RbacPage currentUser={user}/>,
   };
 
   return (
     <div className="min-h-screen bg-slate-100 flex">
-      <aside className={`${sideOpen?"w-64":"w-20"} bg-slate-900 text-white flex flex-col transition-all duration-300 flex-shrink-0`}>
+      {/* Overlay mobile */}
+      {sideOpen && <div className="fixed inset-0 bg-black/50 z-20 lg:hidden" onClick={()=>setSideOpen(false)}/>}
+
+      {/* Sidebar */}
+      <aside className={`${sideOpen?"w-64 translate-x-0":"-translate-x-full lg:translate-x-0 lg:w-20"} fixed lg:relative z-30 h-full lg:h-auto bg-slate-900 text-white flex flex-col transition-all duration-300 flex-shrink-0`}>
         <div className="p-4 flex items-center gap-3 border-b border-slate-700/50">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center flex-shrink-0">
             <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
@@ -1234,7 +1379,7 @@ const App = () => {
         </div>
         <nav className="flex-1 py-4 overflow-y-auto">
           {NAV.map(n=>(
-            <button key={n.id} onClick={()=>setPage(n.id)} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${page===n.id?"bg-blue-600/20 text-blue-400 border-r-2 border-blue-400":"text-slate-400 hover:text-white hover:bg-slate-800"}`}>
+            <button key={n.id} onClick={()=>{setPage(n.id); if(window.innerWidth<1024)setSideOpen(false);}} className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${page===n.id?"bg-blue-600/20 text-blue-400 border-r-2 border-blue-400":"text-slate-400 hover:text-white hover:bg-slate-800"}`}>
               <NavIcon d={n.icon} className="w-5 h-5 flex-shrink-0"/>
               {sideOpen && <span>{n.label}</span>}
             </button>
@@ -1248,21 +1393,26 @@ const App = () => {
           </button>
         </div>
       </aside>
-      <div className="flex-1 flex flex-col min-h-screen">
-        <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between">
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col min-h-screen lg:ml-0">
+        <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
           <button onClick={()=>setSideOpen(!sideOpen)} className="text-slate-400 hover:text-slate-600">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
-          <div className="flex items-center gap-4">
+          <div className="text-sm font-semibold text-slate-700 lg:hidden">{NAV.find(n=>n.id===page)?.label}</div>
+          <div className="flex items-center gap-3">
             <button className="relative text-slate-400 hover:text-slate-600">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
               {unread>0&&<span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">{unread}</span>}
             </button>
-            <div className="h-8 w-px bg-slate-200"/>
-            <div className="text-sm text-slate-500">{user.name}</div>
+            <div className="hidden sm:flex items-center gap-2">
+              <div className="h-8 w-px bg-slate-200"/>
+              <div className="text-sm text-slate-500">{user.name}</div>
+            </div>
           </div>
         </header>
-        <main className="flex-1 p-6 overflow-y-auto">{pages[page]}</main>
+        <main className="flex-1 p-4 lg:p-6 overflow-y-auto">{pages[page]}</main>
       </div>
     </div>
   );
