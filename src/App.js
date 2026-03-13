@@ -93,47 +93,51 @@ const ConfirmDialog = ({message, onConfirm, onCancel}) => (
 );
 
 // ============================================================
-// AUTH SYSTEM
+// AUTH SYSTEM - Supabase
 // ============================================================
 const ADMIN_DEFAULT = { id: "U-001", name: "Lems Fal", email: "admin@saver.ci", password: "saver2024", role: "admin" };
 
-const getUsers = () => {
+const getUsers = async () => {
   try {
-    const u = localStorage.getItem("saver_users");
-    return u ? JSON.parse(u) : [ADMIN_DEFAULT];
+    const { data, error } = await supabase.from("users").select("*");
+    if (error || !data || data.length === 0) return [ADMIN_DEFAULT];
+    return data;
   } catch { return [ADMIN_DEFAULT]; }
 };
 
-const saveUsers = (users) => {
-  try { localStorage.setItem("saver_users", JSON.stringify(users)); } catch {}
+const saveUser = async (user) => {
+  try { await supabase.from("users").upsert(user); } catch {}
 };
 
 const LoginPage = ({onLogin}) => {
-  const [mode, setMode] = useState("login"); // login | register
+  const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState("ops");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    setError("");
-    if (!email || !password) return setError("Email et mot de passe requis");
-    const users = getUsers();
+  const handleLogin = async () => {
+    setError(""); setLoading(true);
+    if (!email || !password) { setLoading(false); return setError("Email et mot de passe requis"); }
+    const users = await getUsers();
     const found = users.find(u => u.email === email && u.password === password);
+    setLoading(false);
     if (!found) return setError("Email ou mot de passe incorrect");
     onLogin(found);
   };
 
-  const handleRegister = () => {
-    setError("");
-    if (!name || !email || !password) return setError("Tous les champs sont requis");
-    if (password.length < 6) return setError("Mot de passe minimum 6 caractères");
-    const users = getUsers();
-    if (users.find(u => u.email === email)) return setError("Cet email est déjà utilisé");
-    const newUser = { id: `U-${String(users.length+1).padStart(3,"0")}`, name, email, password, role };
-    saveUsers([...users, newUser]);
+  const handleRegister = async () => {
+    setError(""); setLoading(true);
+    if (!name || !email || !password) { setLoading(false); return setError("Tous les champs sont requis"); }
+    if (password.length < 6) { setLoading(false); return setError("Mot de passe minimum 6 caractères"); }
+    const users = await getUsers();
+    if (users.find(u => u.email === email)) { setLoading(false); return setError("Cet email est déjà utilisé"); }
+    const newUser = { id: `U-${Date.now()}`, name, email, password, role };
+    await saveUser(newUser);
+    setLoading(false);
     setSuccess("Compte créé ! Vous pouvez vous connecter.");
     setMode("login");
     setEmail(email);
@@ -170,7 +174,7 @@ const LoginPage = ({onLogin}) => {
                 <label className="block text-sm text-blue-200 mb-1.5">Mot de passe</label>
                 <input type="password" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleLogin()} placeholder="••••••••" className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-400"/>
               </div>
-              <button onClick={handleLogin} className="w-full bg-gradient-to-r from-emerald-500 to-blue-500 text-white py-3 rounded-lg font-semibold hover:from-emerald-600 hover:to-blue-600 transition-all shadow-lg">
+              <button onClick={handleLogin} disabled={loading} className="w-full bg-gradient-to-r from-emerald-500 to-blue-500 text-white py-3 rounded-lg font-semibold hover:from-emerald-600 hover:to-blue-600 transition-all shadow-lg">
                 Se connecter
               </button>
               <div className="text-center text-blue-300/60 text-xs">Compte admin par défaut : admin@saver.ci / saver2024</div>
@@ -198,7 +202,7 @@ const LoginPage = ({onLogin}) => {
                   <option value="admin" className="text-slate-900">Admin</option>
                 </select>
               </div>
-              <button onClick={handleRegister} className="w-full bg-gradient-to-r from-emerald-500 to-blue-500 text-white py-3 rounded-lg font-semibold hover:from-emerald-600 hover:to-blue-600 transition-all shadow-lg">
+              <button onClick={handleRegister} disabled={loading} className="w-full bg-gradient-to-r from-emerald-500 to-blue-500 text-white py-3 rounded-lg font-semibold hover:from-emerald-600 hover:to-blue-600 transition-all shadow-lg">
                 Créer mon compte
               </button>
             </div>
@@ -1147,21 +1151,23 @@ const SitesPage = ({vehicles, drivers}) => (
 // RBAC PAGE
 // ============================================================
 const RbacPage = ({currentUser}) => {
-  const [users, setUsers] = useState(getUsers());
+  const [users, setUsers] = useState([ADMIN_DEFAULT]);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
-  const handleDelete = (id) => {
+  useEffect(() => {
+    getUsers().then(setUsers);
+  }, []);
+
+  const handleDelete = async (id) => {
     if (id === currentUser?.id) return alert("Vous ne pouvez pas supprimer votre propre compte !");
-    const updated = users.filter(u=>u.id!==id);
-    saveUsers(updated);
-    setUsers(updated);
+    await supabase.from("users").delete().eq("id", id);
+    setUsers(u => u.filter(x=>x.id!==id));
     setConfirmDelete(null);
   };
 
-  const handleRoleChange = (id, role) => {
-    const updated = users.map(u=>u.id===id?{...u,role}:u);
-    saveUsers(updated);
-    setUsers(updated);
+  const handleRoleChange = async (id, role) => {
+    await supabase.from("users").update({role}).eq("id", id);
+    setUsers(u => u.map(x=>x.id===id?{...x,role}:x));
   };
 
   const roleColor = (r) => ({"admin":"bg-red-100 text-red-700","ops":"bg-blue-100 text-blue-700","finance":"bg-emerald-100 text-emerald-700","supervisor":"bg-violet-100 text-violet-700"}[r]||"bg-slate-100 text-slate-600");
