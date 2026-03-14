@@ -1447,7 +1447,7 @@ const App = () => {
   const updateMaintenance = async (id, item) => { await mt.update(id, {...item, description: item.desc}); };
   const removeMaintenance = async (id) => { await mt.remove(id); };
 
-  if (!user) return <LoginPage onLogin={(u)=>setUser(u)}/>;
+  if (!user) return <LoginPage onLogin={async(u)=>{ const {data} = await supabase.from("users").select("*").eq("id",u.id).single(); setUser(data||u); }}/>;
 
   if (loading) return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center">
