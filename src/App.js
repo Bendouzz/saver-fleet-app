@@ -81,7 +81,7 @@ const InputField = ({label, value, onChange, type="text", options, required}) =>
 // Confirmation dialog
 const ConfirmDialog = ({message, onConfirm, onCancel}) => (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6">
+    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl max-h-[90vh] overflow-y-auto p-6">
       <h3 className="text-lg font-bold text-slate-900 mb-2">Confirmer la suppression</h3>
       <p className="text-slate-500 text-sm mb-6">{message}</p>
       <div className="flex gap-3">
@@ -157,8 +157,7 @@ const LoginPage = ({onLogin}) => {
         <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-8 border border-white/20">
           {/* Tabs */}
           <div className="flex gap-2 mb-6">
-            <button onClick={()=>{setMode("login");setError("");setSuccess("");}} className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${mode==="login"?"bg-white text-slate-900":"text-white/70 hover:text-white"}`}>Connexion</button>
-            <button onClick={()=>{setMode("register");setError("");setSuccess("");}} className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${mode==="register"?"bg-white text-slate-900":"text-white/70 hover:text-white"}`}>Créer un compte</button>
+            <button className="flex-1 py-2 rounded-lg text-sm font-medium bg-white text-slate-900">Connexion</button>
           </div>
 
           {error && <div className="bg-red-500/20 border border-red-500/50 text-red-200 text-sm px-4 py-2 rounded-lg mb-4">{error}</div>}
@@ -176,34 +175,6 @@ const LoginPage = ({onLogin}) => {
               </div>
               <button onClick={handleLogin} disabled={loading} className="w-full bg-gradient-to-r from-emerald-500 to-blue-500 text-white py-3 rounded-lg font-semibold hover:from-emerald-600 hover:to-blue-600 transition-all shadow-lg">
                 Se connecter
-              </button>
-              <div className="text-center text-blue-300/60 text-xs">Compte admin par défaut : admin@saver.ci / saver2024</div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm text-blue-200 mb-1.5">Nom complet</label>
-                <input type="text" value={name} onChange={e=>setName(e.target.value)} placeholder="Prénom Nom" className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-400"/>
-              </div>
-              <div>
-                <label className="block text-sm text-blue-200 mb-1.5">Email</label>
-                <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="votre@email.com" className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-400"/>
-              </div>
-              <div>
-                <label className="block text-sm text-blue-200 mb-1.5">Mot de passe</label>
-                <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Minimum 6 caractères" className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-400"/>
-              </div>
-              <div>
-                <label className="block text-sm text-blue-200 mb-1.5">Rôle</label>
-                <select value={role} onChange={e=>setRole(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-emerald-400">
-                  <option value="ops" className="text-slate-900">Ops Manager</option>
-                  <option value="supervisor" className="text-slate-900">Superviseur</option>
-                  <option value="finance" className="text-slate-900">Finance</option>
-                  <option value="admin" className="text-slate-900">Admin</option>
-                </select>
-              </div>
-              <button onClick={handleRegister} disabled={loading} className="w-full bg-gradient-to-r from-emerald-500 to-blue-500 text-white py-3 rounded-lg font-semibold hover:from-emerald-600 hover:to-blue-600 transition-all shadow-lg">
-                Créer mon compte
               </button>
             </div>
           )}
@@ -1121,31 +1092,79 @@ const ReportingPage = ({vehicles, drivers, recharges, maintenances}) => {
 // ============================================================
 // SITES PAGE
 // ============================================================
-const SitesPage = ({vehicles, drivers}) => (
-  <div className="space-y-6">
-    <h1 className="text-2xl font-bold text-slate-900">Sites & Comptes Wave</h1>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {SITES_INIT.map(site=>{
-        const sVh = vehicles.filter(v=>v.site===site.id);
-        const sDr = drivers.filter(d=>d.site===site.id);
-        return (
-          <div key={site.id} className="bg-white rounded-xl border border-slate-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div><h3 className="text-lg font-bold text-slate-900">{site.name}</h3><p className="text-sm text-slate-500">{site.ville} · Zone {site.zone}</p></div>
-              <Badge color="bg-emerald-100 text-emerald-700">Actif</Badge>
+const SitesPage = ({vehicles, drivers, sites, onAdd, onUpdate, onDelete}) => {
+  const [showModal, setShowModal] = useState(false);
+  const [editItem, setEditItem] = useState(null);
+  const [form, setForm] = useState({name:"", ville:"", zone:"", waveAccount:""});
+  const [confirmDelete, setConfirmDelete] = useState(null);
+
+  const openAdd = () => { setForm({name:"",ville:"",zone:"",waveAccount:""}); setEditItem(null); setShowModal(true); };
+  const openEdit = (s) => { setForm({...s}); setEditItem(s); setShowModal(true); };
+
+  const handleSave = async () => {
+    if (!form.name || !form.ville) return;
+    if (editItem) { await onUpdate(editItem.id, form); }
+    else { await onAdd({...form, id: Date.now()}); }
+    setShowModal(false);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-slate-900">Sites & Comptes Wave</h1>
+        <button onClick={openAdd} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
+          <span className="text-lg">+</span> Ajouter un site
+        </button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {sites.map(site=>{
+          const sVh = vehicles.filter(v=>v.site===site.id||v.site===site.name);
+          const sDr = drivers.filter(d=>d.site===site.id||d.site===site.name);
+          return (
+            <div key={site.id} className="bg-white rounded-xl border border-slate-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div><h3 className="text-lg font-bold text-slate-900">{site.name}</h3><p className="text-sm text-slate-500">{site.ville} · Zone {site.zone}</p></div>
+                <div className="flex items-center gap-2">
+                  <Badge color="bg-emerald-100 text-emerald-700">Actif</Badge>
+                  <button onClick={()=>openEdit(site)} className="text-blue-600 text-xs border border-blue-200 px-2 py-1 rounded hover:bg-blue-50">Modifier</button>
+                  <button onClick={()=>setConfirmDelete(site)} className="text-red-600 text-xs border border-red-200 px-2 py-1 rounded hover:bg-red-50">Supprimer</button>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="text-center p-3 bg-slate-50 rounded-lg"><div className="text-lg font-bold text-blue-600">{sVh.length}</div><div className="text-xs text-slate-500">Véhicules</div></div>
+                <div className="text-center p-3 bg-slate-50 rounded-lg"><div className="text-lg font-bold text-violet-600">{sDr.length}</div><div className="text-xs text-slate-500">Chauffeurs</div></div>
+                <div className="text-center p-3 bg-slate-50 rounded-lg"><div className="text-lg font-bold text-emerald-600">{sVh.filter(v=>v.status==="En exploitation").length}</div><div className="text-xs text-slate-500">Actifs</div></div>
+              </div>
+              {site.waveAccount && <div className="p-3 bg-blue-50 rounded-lg"><div className="text-xs text-slate-500">Compte Wave Business</div><div className="font-mono font-semibold text-blue-700">{site.waveAccount}</div></div>}
             </div>
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              <div className="text-center p-3 bg-slate-50 rounded-lg"><div className="text-lg font-bold text-blue-600">{sVh.length}</div><div className="text-xs text-slate-500">Véhicules</div></div>
-              <div className="text-center p-3 bg-slate-50 rounded-lg"><div className="text-lg font-bold text-violet-600">{sDr.length}</div><div className="text-xs text-slate-500">Chauffeurs</div></div>
-              <div className="text-center p-3 bg-slate-50 rounded-lg"><div className="text-lg font-bold text-emerald-600">{sVh.filter(v=>v.status==="En exploitation").length}</div><div className="text-xs text-slate-500">Actifs</div></div>
+          );
+        })}
+      </div>
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-slate-100">
+              <h2 className="text-lg font-bold text-slate-900">{editItem?"Modifier le site":"Ajouter un site"}</h2>
+              <button onClick={()=>setShowModal(false)} className="text-slate-400 hover:text-slate-600 text-xl">✕</button>
             </div>
-            <div className="p-3 bg-blue-50 rounded-lg"><div className="text-xs text-slate-500">Compte Wave Business</div><div className="font-mono font-semibold text-blue-700">{site.waveAccount}</div></div>
+            <div className="p-6 space-y-4">
+              <div><label className="block text-sm font-medium text-slate-700 mb-1">Nom du site *</label><input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: Abidjan"/></div>
+              <div><label className="block text-sm font-medium text-slate-700 mb-1">Ville *</label><input value={form.ville} onChange={e=>setForm({...form,ville:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: Abidjan"/></div>
+              <div><label className="block text-sm font-medium text-slate-700 mb-1">Zone</label><input value={form.zone} onChange={e=>setForm({...form,zone:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: Cocody"/></div>
+              <div><label className="block text-sm font-medium text-slate-700 mb-1">Compte Wave Business</label><input value={form.waveAccount} onChange={e=>setForm({...form,waveAccount:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: WB-ABJ-001"/></div>
+            </div>
+            <div className="flex gap-3 p-6 border-t border-slate-100">
+              <button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-sm font-medium hover:bg-slate-50">Annuler</button>
+              <button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700">Enregistrer</button>
+            </div>
           </div>
-        );
-      })}
+        </div>
+      )}
+      {confirmDelete && <ConfirmDialog message={`Supprimer le site "${confirmDelete.name}" ?`} onConfirm={async()=>{await onDelete(confirmDelete.id);setConfirmDelete(null);}} onCancel={()=>setConfirmDelete(null)}/>}
     </div>
-  </div>
-);
+  );
+};
 
 // ============================================================
 // RBAC PAGE
@@ -1153,10 +1172,39 @@ const SitesPage = ({vehicles, drivers}) => (
 const RbacPage = ({currentUser}) => {
   const [users, setUsers] = useState([ADMIN_DEFAULT]);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [newUser, setNewUser] = useState({name:"",email:"",password:"",role:"ops"});
+  const [userError, setUserError] = useState("");
+  const [showChangePwd, setShowChangePwd] = useState(false);
+  const [pwdForm, setPwdForm] = useState({current:"",next:"",confirm:""});
+  const [pwdError, setPwdError] = useState("");
+  const [pwdSuccess, setPwdSuccess] = useState("");
 
   useEffect(() => {
     getUsers().then(setUsers);
   }, []);
+
+  const handleAddUser = async () => {
+    setUserError("");
+    if (!newUser.name || !newUser.email || !newUser.password) return setUserError("Tous les champs sont requis");
+    if (newUser.password.length < 6) return setUserError("Mot de passe minimum 6 caractères");
+    if (users.find(u=>u.email===newUser.email)) return setUserError("Cet email est déjà utilisé");
+    const u = {...newUser, id:`U-${Date.now()}`};
+    await saveUser(u);
+    setUsers(prev=>[...prev, u]);
+    setShowAddUser(false);
+  };
+
+  const handleChangePwd = async () => {
+    setPwdError(""); setPwdSuccess("");
+    const me = users.find(u=>u.id===currentUser?.id);
+    if (!me || me.password !== pwdForm.current) return setPwdError("Mot de passe actuel incorrect");
+    if (pwdForm.next.length < 6) return setPwdError("Nouveau mot de passe minimum 6 caractères");
+    if (pwdForm.next !== pwdForm.confirm) return setPwdError("Les mots de passe ne correspondent pas");
+    await supabase.from("users").update({password: pwdForm.next}).eq("id", currentUser.id);
+    setPwdSuccess("Mot de passe modifié avec succès !");
+    setPwdForm({current:"",next:"",confirm:""});
+  };
 
   const handleDelete = async (id) => {
     if (id === currentUser?.id) return alert("Vous ne pouvez pas supprimer votre propre compte !");
@@ -1200,6 +1248,9 @@ const RbacPage = ({currentUser}) => {
                 ) : (
                   <Badge color={roleColor(u.role)}>{u.role}</Badge>
                 )}
+                {u.id===currentUser?.id && (
+                  <button onClick={()=>{setShowChangePwd(true);setPwdForm({current:"",next:"",confirm:""});setPwdError("");setPwdSuccess("");}} className="text-blue-600 text-xs border border-blue-200 px-2 py-1 rounded hover:bg-blue-50">Changer mot de passe</button>
+                )}
                 {currentUser?.role==="admin" && u.id!==currentUser?.id && (
                   <button onClick={()=>setConfirmDelete(u)} className="text-red-600 text-xs border border-red-200 px-2 py-1 rounded hover:bg-red-50">Supprimer</button>
                 )}
@@ -1225,6 +1276,59 @@ const RbacPage = ({currentUser}) => {
       </div>
 
       {confirmDelete && <ConfirmDialog message={`Supprimer le compte de ${confirmDelete.name} ?`} onConfirm={()=>handleDelete(confirmDelete.id)} onCancel={()=>setConfirmDelete(null)} />}
+
+      {/* Modal ajout utilisateur */}
+      {showAddUser && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-slate-100">
+              <h2 className="text-lg font-bold text-slate-900">Créer un compte</h2>
+              <button onClick={()=>setShowAddUser(false)} className="text-slate-400 hover:text-slate-600 text-xl">✕</button>
+            </div>
+            <div className="p-6 space-y-4">
+              {userError && <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-3 py-2 rounded-lg">{userError}</div>}
+              <div><label className="block text-sm font-medium text-slate-700 mb-1">Nom complet *</label><input value={newUser.name} onChange={e=>setNewUser({...newUser,name:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Prénom Nom"/></div>
+              <div><label className="block text-sm font-medium text-slate-700 mb-1">Email *</label><input type="email" value={newUser.email} onChange={e=>setNewUser({...newUser,email:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="email@example.com"/></div>
+              <div><label className="block text-sm font-medium text-slate-700 mb-1">Mot de passe *</label><input type="password" value={newUser.password} onChange={e=>setNewUser({...newUser,password:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Minimum 6 caractères"/></div>
+              <div><label className="block text-sm font-medium text-slate-700 mb-1">Rôle</label>
+                <select value={newUser.role} onChange={e=>setNewUser({...newUser,role:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="ops">Ops Manager</option>
+                  <option value="supervisor">Superviseur</option>
+                  <option value="finance">Finance</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3 p-6 border-t border-slate-100">
+              <button onClick={()=>setShowAddUser(false)} className="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-sm font-medium hover:bg-slate-50">Annuler</button>
+              <button onClick={handleAddUser} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700">Créer</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal changement mot de passe */}
+      {showChangePwd && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-slate-100">
+              <h2 className="text-lg font-bold text-slate-900">Modifier mon mot de passe</h2>
+              <button onClick={()=>{setShowChangePwd(false);setPwdError("");setPwdSuccess("");}} className="text-slate-400 hover:text-slate-600 text-xl">✕</button>
+            </div>
+            <div className="p-6 space-y-4">
+              {pwdError && <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-3 py-2 rounded-lg">{pwdError}</div>}
+              {pwdSuccess && <div className="bg-emerald-50 border border-emerald-200 text-emerald-600 text-sm px-3 py-2 rounded-lg">{pwdSuccess}</div>}
+              <div><label className="block text-sm font-medium text-slate-700 mb-1">Mot de passe actuel</label><input type="password" value={pwdForm.current} onChange={e=>setPwdForm({...pwdForm,current:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
+              <div><label className="block text-sm font-medium text-slate-700 mb-1">Nouveau mot de passe</label><input type="password" value={pwdForm.next} onChange={e=>setPwdForm({...pwdForm,next:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Minimum 6 caractères"/></div>
+              <div><label className="block text-sm font-medium text-slate-700 mb-1">Confirmer le nouveau mot de passe</label><input type="password" value={pwdForm.confirm} onChange={e=>setPwdForm({...pwdForm,confirm:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
+            </div>
+            <div className="flex gap-3 p-6 border-t border-slate-100">
+              <button onClick={()=>{setShowChangePwd(false);setPwdError("");setPwdSuccess("");}} className="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-sm font-medium hover:bg-slate-50">Annuler</button>
+              <button onClick={handleChangePwd} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700">Modifier</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -1301,6 +1405,7 @@ const App = () => {
   const rv = useSupabaseTable("reversements");
   const rc = useSupabaseTable("recharges", r => ({...r, kWh: r.kwh, socAv: r.soc_av, socAp: r.soc_ap}));
   const mt = useSupabaseTable("maintenances", r => ({...r, desc: r.description}));
+  const si = useSupabaseTable("sites");
 
   const [alerts] = useState(ALERTS_INIT);
   const [paie] = useState(PAIE_INIT);
@@ -1366,7 +1471,7 @@ const App = () => {
     maintenance: <MaintenancePage maintenances={mt.data} vehicles={vh.data} onAdd={addMaintenance} onUpdate={updateMaintenance} onDelete={removeMaintenance}/>,
     gps: <GpsPage vehicles={vh.data} alerts={alerts}/>,
     reporting: <ReportingPage vehicles={vh.data} drivers={dr.data} recharges={rc.data} maintenances={mt.data}/>,
-    sites: <SitesPage vehicles={vh.data} drivers={dr.data}/>,
+    sites: <SitesPage vehicles={vh.data} drivers={dr.data} sites={si.data.length>0?si.data:SITES_INIT} onAdd={si.add} onUpdate={si.update} onDelete={si.remove}/>,
     rbac: <RbacPage currentUser={user}/>,
   };
 
