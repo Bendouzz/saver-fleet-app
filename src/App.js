@@ -1224,7 +1224,10 @@ const RbacPage = ({currentUser}) => {
 
       {/* Gestion utilisateurs */}
       <div className="bg-white rounded-xl border border-slate-200 p-6">
-        <h2 className="font-semibold text-slate-900 mb-4">Utilisateurs ({users.length})</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold text-slate-900">Utilisateurs ({users.length})</h2>
+          {currentUser?.role==="admin" && <button onClick={()=>{setShowAddUser(true);setNewUser({name:"",email:"",password:"",role:"ops"});setUserError("");}} className="flex items-center gap-1 bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-blue-700">+ Ajouter</button>}
+        </div>
         <div className="space-y-3">
           {users.map(u=>(
             <div key={u.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
