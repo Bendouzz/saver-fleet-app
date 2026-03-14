@@ -5,8 +5,8 @@ import { supabase } from "./supabase";
 // INITIAL DATA
 // ============================================================
 const SITES_INIT = [
-  { id: 1, name: "Abidjan", ville: "Abidjan", zone: "Cocody", waveAccount: "WB-ABJ-001" },
-  { id: 2, name: "Yamoussoukro", ville: "Yamoussoukro", zone: "Centre", waveAccount: "WB-YAM-001" }
+  { id: 1, name: "Abidjan", ville: "Abidjan", zone: "Cocody", waveAccount: "WB-ABJ-001", businessType: "Wave Business" },
+  { id: 2, name: "Yamoussoukro", ville: "Yamoussoukro", zone: "Centre", waveAccount: "WB-YAM-001", businessType: "Wave Business" }
 ];
 
 const VEHICLES_INIT = [];
@@ -1093,10 +1093,10 @@ const ReportingPage = ({vehicles, drivers, recharges, maintenances}) => {
 const SitesPage = ({vehicles, drivers, sites, onAdd, onUpdate, onDelete}) => {
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState(null);
-  const [form, setForm] = useState({name:"", ville:"", zone:"", waveAccount:""});
+  const [form, setForm] = useState({name:"", ville:"", zone:"", waveAccount:"", businessType:"Wave Business"});
   const [confirmDelete, setConfirmDelete] = useState(null);
 
-  const openAdd = () => { setForm({name:"",ville:"",zone:"",waveAccount:""}); setEditItem(null); setShowModal(true); };
+  const openAdd = () => { setForm({name:"",ville:"",zone:"",waveAccount:"",businessType:"Wave Business"}); setEditItem(null); setShowModal(true); };
   const openEdit = (s) => { setForm({...s}); setEditItem(s); setShowModal(true); };
 
   const handleSave = async () => {
@@ -1109,7 +1109,7 @@ const SitesPage = ({vehicles, drivers, sites, onAdd, onUpdate, onDelete}) => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Sites & Comptes Wave</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Sites & Comptes Business</h1>
         <button onClick={openAdd} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
           <span className="text-lg">+</span> Ajouter un site
         </button>
@@ -1133,7 +1133,7 @@ const SitesPage = ({vehicles, drivers, sites, onAdd, onUpdate, onDelete}) => {
                 <div className="text-center p-3 bg-slate-50 rounded-lg"><div className="text-lg font-bold text-violet-600">{sDr.length}</div><div className="text-xs text-slate-500">Chauffeurs</div></div>
                 <div className="text-center p-3 bg-slate-50 rounded-lg"><div className="text-lg font-bold text-emerald-600">{sVh.filter(v=>v.status==="En exploitation").length}</div><div className="text-xs text-slate-500">Actifs</div></div>
               </div>
-              {site.waveAccount && <div className="p-3 bg-blue-50 rounded-lg"><div className="text-xs text-slate-500">Compte Wave Business</div><div className="font-mono font-semibold text-blue-700">{site.waveAccount}</div></div>}
+              {site.waveAccount && <div className="p-3 bg-blue-50 rounded-lg"><div className="text-xs text-slate-500">Compte Business · {site.businessType||"Wave Business"}</div><div className="font-mono font-semibold text-blue-700">{site.waveAccount}</div></div>}
             </div>
           );
         })}
@@ -1150,7 +1150,7 @@ const SitesPage = ({vehicles, drivers, sites, onAdd, onUpdate, onDelete}) => {
               <div><label className="block text-sm font-medium text-slate-700 mb-1">Nom du site *</label><input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: Abidjan"/></div>
               <div><label className="block text-sm font-medium text-slate-700 mb-1">Ville *</label><input value={form.ville} onChange={e=>setForm({...form,ville:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: Abidjan"/></div>
               <div><label className="block text-sm font-medium text-slate-700 mb-1">Zone</label><input value={form.zone} onChange={e=>setForm({...form,zone:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: Cocody"/></div>
-              <div><label className="block text-sm font-medium text-slate-700 mb-1">Compte Wave Business</label><input value={form.waveAccount} onChange={e=>setForm({...form,waveAccount:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: WB-ABJ-001"/></div>
+              <div><label className="block text-sm font-medium text-slate-700 mb-1">Type de compte Business</label><select value={form.businessType} onChange={e=>setForm({...form,businessType:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"><option>Wave Business</option><option>Orange Money Business</option><option>MTN Mobile Money</option><option>Moov Money</option></select></div><div><label className="block text-sm font-medium text-slate-700 mb-1">Numéro de compte Business</label><input value={form.waveAccount} onChange={e=>setForm({...form,waveAccount:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: WB-ABJ-001"/></div>
             </div>
             <div className="flex gap-3 p-6 border-t border-slate-100">
               <button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-sm font-medium hover:bg-slate-50">Annuler</button>
