@@ -1571,8 +1571,8 @@ const App = () => {
   const removeRecharge = async (id) => { await rc.remove(id); };
 
   // Wrappers CRUD Maintenances
-  const addMaintenance = async (item) => { await mt.add({...item, description: item.desc}); };
-  const updateMaintenance = async (id, item) => { await mt.update(id, {...item, description: item.desc}); };
+  const addMaintenance = async (item) => { const {desc, id, ...rest} = item; await mt.add({...rest, description: desc}); };
+  const updateMaintenance = async (id, item) => { const {desc, ...rest} = item; await mt.update(id, {...rest, description: desc}); };
   const removeMaintenance = async (id) => { await mt.remove(id); };
 
   if (!user) return <LoginPage onLogin={async(u)=>{ const {data} = await supabase.from("users").select("*").eq("id",u.id).single(); setUser(data||u); }}/>;
