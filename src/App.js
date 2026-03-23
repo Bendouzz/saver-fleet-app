@@ -456,7 +456,7 @@ const ChauffeursPage = ({drivers, onAdd, onUpdate, onDelete, vehicles}) => {
   const [form, setForm] = useState({nom:"",prenom:"",site:1,vehicule:"",shift:"A",status:"Actif",kpi:80,courses:0,ca:0,pen:0,avance:0});
 
   const siteName = (id) => SITES.find(s=>s.id===id)?.name||"";
-  const vhLabel = (id) => vehicles.find(x=>x.id===id)?.immat||"—";
+  const vhLabel = (id) => vehicles.find(x=>x.id===id||x.id===parseInt(id)||String(x.id)===String(id))?.immat||id||"—";
   const filtered = drivers.filter(d => !search || `${d.prenom} ${d.nom}`.toLowerCase().includes(search.toLowerCase()));
 
   const openAdd = () => { setForm({nom:"",prenom:"",site:1,vehicule:"",shift:"A",status:"Actif",kpi:80,courses:0,ca:0,pen:0,avance:0}); setEditItem(null); setShowModal(true); };
@@ -597,7 +597,7 @@ const PlanningPage = ({shifts, onAdd, onUpdate, onDelete, vehicles, drivers}) =>
   const [form, setForm] = useState({vh:"",ch:"",type:"A",debut:"06:00",fin:"14:00",status:"Planifié",checkIn:false,checkOut:false,recette:0,reverse:0});
 
   const driverName = (id) => { const d=drivers.find(x=>x.id===id); return d?d.prenom+" "+d.nom:"—"; };
-  const vhLabel = (id) => vehicles.find(x=>x.id===id)?.immat||"—";
+  const vhLabel = (id) => vehicles.find(x=>x.id===id||x.id===parseInt(id)||String(x.id)===String(id))?.immat||id||"—";
 
   const openAdd = () => { setForm({vh:"",ch:"",type:"A",debut:"06:00",fin:"14:00",status:"Planifié",checkIn:false,checkOut:false,recette:0,reverse:0}); setEditItem(null); setShowModal(true); };
   const openEdit = (s) => { setForm({...s}); setEditItem(s.id); setShowModal(true); };
@@ -764,7 +764,7 @@ const MaintenancePage = ({maintenances, onAdd, onUpdate, onDelete, vehicles}) =>
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [form, setForm] = useState({vh:"",type:"Préventive",desc:"",status:"Planifiée",date:"",cout:0,garage:""});
 
-  const vhLabel = (id) => vehicles.find(x=>x.id===id)?.immat||"—";
+  const vhLabel = (id) => vehicles.find(x=>x.id===id||x.id===parseInt(id)||String(x.id)===String(id))?.immat||id||"—";
 
   const openAdd = () => { setForm({vh:"",type:"Préventive",desc:"",status:"Planifiée",date:new Date().toISOString().split("T")[0],cout:0,garage:""}); setEditItem(null); setShowModal(true); };
   const openEdit = (m) => { setForm({...m}); setEditItem(m.id); setShowModal(true); };
@@ -850,7 +850,7 @@ const RechargePage = ({recharges, onAdd, onUpdate, onDelete, vehicles, drivers})
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [form, setForm] = useState({vh:"",ch:"",partenaire:"Arnio",kWh:0,cout:0,lieu:"",duree:0,socAv:0,socAp:0,date:new Date().toISOString().split("T")[0]});
 
-  const vhLabel = (id) => vehicles.find(x=>x.id===id)?.immat||"—";
+  const vhLabel = (id) => vehicles.find(x=>x.id===id||x.id===parseInt(id)||String(x.id)===String(id))?.immat||id||"—";
   const driverName = (id) => { const d=drivers.find(x=>x.id===id); return d?d.prenom+" "+d.nom:"—"; };
 
   const openAdd = () => { setForm({vh:"",ch:"",partenaire:"Arnio",kWh:0,cout:0,lieu:"",duree:0,socAv:0,socAp:0,date:new Date().toISOString().split("T")[0]}); setEditItem(null); setShowModal(true); };
@@ -947,50 +947,111 @@ const RechargePage = ({recharges, onAdd, onUpdate, onDelete, vehicles, drivers})
 // ============================================================
 // KPI & PAIE PAGE
 // ============================================================
-const KpiPaiePage = ({paie, drivers}) => {
-  const driverName = (id) => { const d=drivers.find(x=>x.id===id); return d?d.prenom+" "+d.nom:"—"; };
+const KpiPaiePage = ({drivers, shifts, reversements}) => {
+  const FIXE = 75000;
+  const TAUX = FIXE / 160;
+  const KPI_CA = 65000;
+  const KPI_COURSES = 40;
+
+  // Calcul automatique de la paie depuis les données réelles
+  const paieCalculee = drivers.filter(d=>d.status==="Actif").map(d => {
+    const eligible = d.ca >= KPI_CA || d.courses >= KPI_COURSES;
+    const fixe = eligible ? FIXE : 0;
+    const heuresSup = Math.max(0, d.courses - KPI_COURSES);
+    const bonus = eligible ? Math.round(TAUX * 1.1 * heuresSup) : 0;
+    const penalites = d.pen || 0;
+    const avanceRetenue = d.avance || 0;
+    const net = fixe + bonus - penalites - avanceRetenue;
+    return { id: d.id, nom: d.prenom + " " + d.nom, ca: d.ca, courses: d.courses, kpi: d.kpi, fixe, bonus, penalites, avanceRetenue, net, eligible };
+  });
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-slate-900">KPI, Paie & Incentives</h1>
-      <div className="bg-white rounded-xl border border-slate-200 p-6 mb-4">
+
+      {/* Règles */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6">
         <h2 className="font-semibold text-slate-900 mb-3">Règles de rémunération SAVER</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
           <div className="p-4 bg-emerald-50 rounded-lg"><div className="font-semibold text-emerald-800">Fixe</div><div className="text-emerald-700">75 000 F / 2 semaines</div></div>
-          <div className="p-4 bg-blue-50 rounded-lg"><div className="font-semibold text-blue-800">Bonus</div><div className="text-blue-700">(75k/160) x 1.1 x surplus</div></div>
+          <div className="p-4 bg-blue-50 rounded-lg"><div className="font-semibold text-blue-800">Bonus</div><div className="text-blue-700">(75k/160) x 1.1 x surplus courses</div></div>
           <div className="p-4 bg-red-50 rounded-lg"><div className="font-semibold text-red-800">Pénalités</div><div className="text-red-700">Retard: 2k/h · Absence: 10k</div></div>
           <div className="p-4 bg-amber-50 rounded-lg"><div className="font-semibold text-amber-800">KPI minimum</div><div className="text-amber-700">CA ≥ 65k OU ≥ 40 courses</div></div>
         </div>
       </div>
+
+      {/* KPI par chauffeur */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6">
+        <h2 className="font-semibold text-slate-900 mb-4">Scores KPI</h2>
+        {paieCalculee.length === 0 ? (
+          <div className="text-center text-slate-400 py-8">Aucun chauffeur actif enregistré</div>
+        ) : (
+          <div className="space-y-3">
+            {paieCalculee.map(p=>(
+              <div key={p.id} className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl">
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-slate-700">{p.nom}</span>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${p.eligible?"bg-emerald-100 text-emerald-700":"bg-red-100 text-red-700"}`}>{p.eligible?"Éligible":"Inéligible"}</span>
+                  </div>
+                  <div className="w-full bg-slate-200 rounded-full h-2">
+                    <div className={`h-2 rounded-full ${p.kpi>=80?"bg-emerald-500":p.kpi>=60?"bg-amber-500":"bg-red-500"}`} style={{width:`${p.kpi}%`}}/>
+                  </div>
+                  <div className="flex gap-4 mt-1 text-xs text-slate-400">
+                    <span>CA: {fmt(p.ca)}</span>
+                    <span>Courses: {p.courses}</span>
+                    <span>KPI: {p.kpi}/100</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Fiche de paie calculée */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200"><h2 className="font-semibold text-slate-900">Fiche de paie</h2></div>
-        <table className="w-full">
-          <thead><tr className="bg-slate-50 border-b border-slate-200">
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Chauffeur</th>
-            <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Fixe</th>
-            <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Bonus</th>
-            <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Pénalités</th>
-            <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Retenue</th>
-            <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Net</th>
-          </tr></thead>
-          <tbody>{paie.map(p=>(
-            <tr key={p.id} className="border-b border-slate-100">
-              <td className="px-4 py-3 text-sm font-medium text-slate-700">{driverName(p.ch)}</td>
-              <td className="px-4 py-3 text-sm text-right">{p.fixe>0?fmt(p.fixe):<span className="text-red-500">Inéligible</span>}</td>
-              <td className="px-4 py-3 text-sm text-right text-emerald-600">{fmt(p.bonus)}</td>
-              <td className="px-4 py-3 text-sm text-right text-red-600">{p.penalites>0?`-${fmt(p.penalites)}`:"—"}</td>
-              <td className="px-4 py-3 text-sm text-right text-amber-600">{p.avanceRetenue>0?`-${fmt(p.avanceRetenue)}`:"—"}</td>
-              <td className="px-4 py-3 text-sm text-right font-bold">{p.net>=0?<span className="text-emerald-700">{fmt(p.net)}</span>:<span className="text-red-700">{fmt(p.net)}</span>}</td>
-            </tr>
-          ))}</tbody>
-          <tfoot><tr className="bg-slate-50">
-            <td className="px-4 py-3 font-semibold text-sm">TOTAL</td>
-            <td className="px-4 py-3 text-right font-semibold text-sm">{fmt(paie.reduce((a,p)=>a+p.fixe,0))}</td>
-            <td className="px-4 py-3 text-right font-semibold text-sm text-emerald-600">{fmt(paie.reduce((a,p)=>a+p.bonus,0))}</td>
-            <td className="px-4 py-3 text-right font-semibold text-sm text-red-600">-{fmt(paie.reduce((a,p)=>a+p.penalites,0))}</td>
-            <td className="px-4 py-3 text-right font-semibold text-sm text-amber-600">-{fmt(paie.reduce((a,p)=>a+p.avanceRetenue,0))}</td>
-            <td className="px-4 py-3 text-right font-bold text-sm text-blue-700">{fmt(paie.reduce((a,p)=>a+p.net,0))}</td>
-          </tr></tfoot>
-        </table>
+        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+          <h2 className="font-semibold text-slate-900">Fiche de paie (calculée automatiquement)</h2>
+          <span className="text-xs text-slate-400">{paieCalculee.length} chauffeur(s)</span>
+        </div>
+        {paieCalculee.length === 0 ? (
+          <div className="text-center text-slate-400 py-8">Ajoutez des chauffeurs pour voir la paie</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead><tr className="bg-slate-50 border-b border-slate-200">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Chauffeur</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">CA</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Fixe</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Bonus</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Pénalités</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Avance</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Net</th>
+              </tr></thead>
+              <tbody>{paieCalculee.map(p=>(
+                <tr key={p.id} className="border-b border-slate-100">
+                  <td className="px-4 py-3 text-sm font-medium text-slate-700">{p.nom}</td>
+                  <td className="px-4 py-3 text-sm text-right text-slate-600">{fmt(p.ca)}</td>
+                  <td className="px-4 py-3 text-sm text-right">{p.fixe>0?fmt(p.fixe):<span className="text-red-500 text-xs">Inéligible</span>}</td>
+                  <td className="px-4 py-3 text-sm text-right text-emerald-600">{p.bonus>0?fmt(p.bonus):"—"}</td>
+                  <td className="px-4 py-3 text-sm text-right text-red-600">{p.penalites>0?`-${fmt(p.penalites)}`:"—"}</td>
+                  <td className="px-4 py-3 text-sm text-right text-amber-600">{p.avanceRetenue>0?`-${fmt(p.avanceRetenue)}`:"—"}</td>
+                  <td className="px-4 py-3 text-sm text-right font-bold">{p.net>=0?<span className="text-emerald-700">{fmt(p.net)}</span>:<span className="text-red-700">{fmt(p.net)}</span>}</td>
+                </tr>
+              ))}</tbody>
+              <tfoot><tr className="bg-slate-50 font-semibold">
+                <td className="px-4 py-3 text-sm">TOTAL</td>
+                <td className="px-4 py-3 text-sm text-right">{fmt(paieCalculee.reduce((a,p)=>a+p.ca,0))}</td>
+                <td className="px-4 py-3 text-sm text-right">{fmt(paieCalculee.reduce((a,p)=>a+p.fixe,0))}</td>
+                <td className="px-4 py-3 text-sm text-right text-emerald-600">{fmt(paieCalculee.reduce((a,p)=>a+p.bonus,0))}</td>
+                <td className="px-4 py-3 text-sm text-right text-red-600">-{fmt(paieCalculee.reduce((a,p)=>a+p.penalites,0))}</td>
+                <td className="px-4 py-3 text-sm text-right text-amber-600">-{fmt(paieCalculee.reduce((a,p)=>a+p.avanceRetenue,0))}</td>
+                <td className="px-4 py-3 text-sm text-right font-bold text-blue-700">{fmt(paieCalculee.reduce((a,p)=>a+p.net,0))}</td>
+              </tr></tfoot>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1036,11 +1097,69 @@ const GpsPage = ({vehicles, alerts}) => (
 // ============================================================
 // REPORTING PAGE
 // ============================================================
-const ReportingPage = ({vehicles, drivers, recharges, maintenances}) => {
+const ReportingPage = ({vehicles, drivers, recharges, maintenances, shifts, reversements}) => {
   const totalCA = drivers.reduce((a,d)=>a+d.ca,0);
   const totalCourses = drivers.reduce((a,d)=>a+d.courses,0);
   const totalRecharge = recharges.reduce((a,r)=>a+r.cout,0);
   const totalMaint = maintenances.reduce((a,m)=>a+m.cout,0);
+
+  const exportCSV = (data, filename) => {
+    if (!data.length) return alert("Aucune donnée à exporter");
+    const headers = Object.keys(data[0]).join(",");
+    const rows = data.map(r=>Object.values(r).map(v=>typeof v==="string"&&v.includes(",")?`"${v}"`:v).join(",")).join("
+");
+    const blob = new Blob(["﻿"+headers+"
+"+rows], {type:"text/csv;charset=utf-8"});
+    const a = document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=filename; a.click();
+  };
+
+  const exportPDF = (title, rows, headers) => {
+    const w = window.open("","_blank");
+    const date = new Date().toLocaleDateString("fr-FR");
+    const tableRows = rows.map(r=>`<tr>${r.map(c=>`<td style="padding:8px;border:1px solid #e2e8f0;font-size:12px">${c}</td>`).join("")}</tr>`).join("");
+    w.document.write(`<html><head><title>${title}</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th{background:#1e40af;color:white;padding:8px;font-size:12px}h1{color:#1e293b;font-size:18px}</style></head><body><h1>${title}</h1><p style="color:#64748b;font-size:12px">Généré le ${date} — SAVER Fleet Ops</p><table><tr>${headers.map(h=>`<th>${h}</th>`).join("")}</tr>${tableRows}</table></body></html>`);
+    w.document.close(); w.print();
+  };
+
+  const rapports = [
+    {
+      label: "Recettes par chauffeur",
+      desc: "CA, courses, KPI de chaque chauffeur",
+      onExcelClick: () => exportCSV(drivers.map(d=>({Nom:d.nom,Prénom:d.prenom,CA:d.ca,Courses:d.courses,KPI:d.kpi,Statut:d.status})), "recettes_chauffeurs.csv"),
+      onPdfClick: () => exportPDF("Recettes par chauffeur", drivers.map(d=>[d.prenom+" "+d.nom,d.ca+"F",d.courses,d.kpi+"/100",d.status]), ["Chauffeur","CA","Courses","KPI","Statut"])
+    },
+    {
+      label: "Reversements",
+      desc: "Historique des reversements",
+      onExcelClick: () => exportCSV(reversements.map(r=>({ID:r.id,Chauffeur:r.ch,Montant:r.montant,Canal:r.canal,Date:r.date,Statut:r.status})), "reversements.csv"),
+      onPdfClick: () => exportPDF("Reversements", reversements.map(r=>[r.ch,r.montant+"F",r.canal,r.date,r.status]), ["Chauffeur","Montant","Canal","Date","Statut"])
+    },
+    {
+      label: "Recharges EV",
+      desc: "Coûts et kWh par véhicule",
+      onExcelClick: () => exportCSV(recharges.map(r=>({VH:r.vh,kWh:r.kWh,Coût:r.cout,Lieu:r.lieu,Date:r.date})), "recharges.csv"),
+      onPdfClick: () => exportPDF("Recharges EV", recharges.map(r=>[r.vh,r.kWh+" kWh",r.cout+"F",r.lieu,r.date]), ["Véhicule","kWh","Coût","Lieu","Date"])
+    },
+    {
+      label: "Maintenance",
+      desc: "Interventions et coûts par véhicule",
+      onExcelClick: () => exportCSV(maintenances.map(m=>({VH:m.vh,Type:m.type,Description:m.desc,Coût:m.cout,Statut:m.status,Date:m.date})), "maintenances.csv"),
+      onPdfClick: () => exportPDF("Maintenance", maintenances.map(m=>[m.vh,m.type,m.desc,m.cout+"F",m.status,m.date]), ["VH","Type","Description","Coût","Statut","Date"])
+    },
+    {
+      label: "Flotte véhicules",
+      desc: "État et kilométrage de la flotte",
+      onExcelClick: () => exportCSV(vehicles.map(v=>({Immat:v.immat,Modèle:v.modele,Site:v.site,Km:v.km,SOC:v.soc,Statut:v.status})), "flotte.csv"),
+      onPdfClick: () => exportPDF("Flotte véhicules", vehicles.map(v=>[v.immat,v.modele,v.km+" km",v.soc+"%",v.status]), ["Immatriculation","Modèle","Kilométrage","SOC","Statut"])
+    },
+    {
+      label: "Planning shifts",
+      desc: "Historique des shifts",
+      onExcelClick: () => exportCSV(shifts.map(s=>({VH:s.vh,Chauffeur:s.ch,Type:s.type,Début:s.debut,Fin:s.fin,Recette:s.recette,Statut:s.status})), "shifts.csv"),
+      onPdfClick: () => exportPDF("Planning shifts", shifts.map(s=>[s.vh,s.ch,s.type,s.debut+" - "+s.fin,s.recette+"F",s.status]), ["VH","Chauffeur","Type","Horaires","Recette","Statut"])
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-slate-900">Reporting & Exports</h1>
@@ -1053,11 +1172,11 @@ const ReportingPage = ({vehicles, drivers, recharges, maintenances}) => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <h2 className="font-semibold text-slate-900 mb-4">P&L par véhicule</h2>
-          {vehicles.map(v=>{
-            const vDrivers = drivers.filter(d=>d.vehicule===v.id);
+          {vehicles.length === 0 ? <div className="text-slate-400 text-sm text-center py-4">Aucun véhicule enregistré</div> : vehicles.map(v=>{
+            const vDrivers = drivers.filter(d=>d.vehicule===v.id||d.vehicule===v.immat);
             const vCA = vDrivers.reduce((a,d)=>a+d.ca,0);
-            const vRecharge = recharges.filter(r=>r.vh===v.id).reduce((a,r)=>a+r.cout,0);
-            const vMaint = maintenances.filter(m=>m.vh===v.id).reduce((a,m)=>a+m.cout,0);
+            const vRecharge = recharges.filter(r=>String(r.vh)===String(v.id)||r.vh===v.immat).reduce((a,r)=>a+r.cout,0);
+            const vMaint = maintenances.filter(m=>String(m.vh)===String(v.id)||m.vh===v.immat).reduce((a,m)=>a+m.cout,0);
             const margin = vCA - vRecharge - vMaint;
             return (
               <div key={v.id} className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
@@ -1073,12 +1192,18 @@ const ReportingPage = ({vehicles, drivers, recharges, maintenances}) => {
         </div>
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <h2 className="font-semibold text-slate-900 mb-4">Rapports disponibles</h2>
-          <div className="grid grid-cols-1 gap-3">
-            {["Recettes par chauffeur","Reversements & écarts","KPI & seuils","Paie détaillée","Recharge kWh/coût","Maintenance par VH","P&L analytique","Disponibilité flotte"].map(r=>(
-              <button key={r} className="text-left p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-blue-50 hover:border-blue-300 transition-colors">
-                <div className="font-medium text-sm text-slate-700">{r}</div>
-                <div className="text-xs text-slate-400 mt-1">Excel · PDF · API</div>
-              </button>
+          <div className="space-y-3">
+            {rapports.map(r=>(
+              <div key={r.label} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
+                <div>
+                  <div className="font-medium text-sm text-slate-700">{r.label}</div>
+                  <div className="text-xs text-slate-400 mt-0.5">{r.desc}</div>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={r.onExcelClick} className="px-3 py-1.5 bg-emerald-600 text-white text-xs rounded-lg hover:bg-emerald-700 font-medium">CSV</button>
+                  <button onClick={r.onPdfClick} className="px-3 py-1.5 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 font-medium">PDF</button>
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -1467,11 +1592,11 @@ const App = () => {
     chauffeurs: <ChauffeursPage drivers={dr.data} vehicles={vh.data} onAdd={addDriver} onUpdate={updateDriver} onDelete={removeDriver}/>,
     planning: <PlanningPage shifts={sh.data} vehicles={vh.data} drivers={dr.data} onAdd={addShift} onUpdate={updateShift} onDelete={removeShift}/>,
     reversements: <ReversementsPage reversements={rv.data} drivers={dr.data} onAdd={addReversement} onUpdate={updateReversement} onDelete={removeReversement}/>,
-    kpi: <KpiPaiePage paie={paie} drivers={dr.data}/>,
+    kpi: <KpiPaiePage drivers={dr.data} shifts={sh.data} reversements={rv.data}/>,
     recharge: <RechargePage recharges={rc.data} vehicles={vh.data} drivers={dr.data} onAdd={addRecharge} onUpdate={updateRecharge} onDelete={removeRecharge}/>,
     maintenance: <MaintenancePage maintenances={mt.data} vehicles={vh.data} onAdd={addMaintenance} onUpdate={updateMaintenance} onDelete={removeMaintenance}/>,
     gps: <GpsPage vehicles={vh.data} alerts={alerts}/>,
-    reporting: <ReportingPage vehicles={vh.data} drivers={dr.data} recharges={rc.data} maintenances={mt.data}/>,
+    reporting: <ReportingPage vehicles={vh.data} drivers={dr.data} recharges={rc.data} maintenances={mt.data} shifts={sh.data} reversements={rv.data}/>,
     sites: <SitesPage vehicles={vh.data} drivers={dr.data} sites={si.data.length>0?si.data:SITES_INIT} onAdd={si.add} onUpdate={si.update} onDelete={si.remove}/>,
     rbac: <RbacPage currentUser={user}/>,
   };
