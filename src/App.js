@@ -1104,12 +1104,10 @@ const ReportingPage = ({vehicles, drivers, recharges, maintenances, shifts, reve
   const totalMaint = maintenances.reduce((a,m)=>a+m.cout,0);
 
   const exportCSV = (data, filename) => {
-    if (!data.length) return alert("Aucune donnée à exporter");
+    if (!data.length) return alert("Aucune donnee a exporter");
     const headers = Object.keys(data[0]).join(",");
-    const rows = data.map(r=>Object.values(r).map(v=>typeof v==="string"&&v.includes(",")?`"${v}"`:v).join(",")).join("
-");
-    const blob = new Blob(["﻿"+headers+"
-"+rows], {type:"text/csv;charset=utf-8"});
+    const rows = data.map(r=>Object.values(r).map(v=>String(v).includes(",")?'"'+v+'"':v).join(",")).join("\n");
+    const blob = new Blob([headers+"\n"+rows], {type:"text/csv;charset=utf-8"});
     const a = document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=filename; a.click();
   };
 
