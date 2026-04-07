@@ -553,29 +553,183 @@ const VehiculesPage = () => {
 const ChauffeursPage = () => {
   const [search, setSearch] = useState("");
   const [detail, setDetail] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [editItem, setEditItem] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [activeTab, setActiveTab] = useState("profil");
+
   const filtered = DRIVERS.filter(d => !search || `${d.prenom} ${d.nom}`.toLowerCase().includes(search.toLowerCase()));
+
+  // Genere les initiales auto : Yao Koffi -> YK-01
+  const genInitiales = (prenom, nom, existingDrivers) => {
+    const base = (prenom[0]||"X").toUpperCase() + (nom[0]||"X").toUpperCase();
+    const count = (existingDrivers||[]).filter(d => (d.matricule||"").startsWith(base)).length + 1;
+    return base + "-" + String(count).padStart(2,"0");
+  };
+
+  const emptyForm = {
+    nom:"", prenom:"", site:1, vehicule:"", shift:"A", status:"Actif",
+    kpi:80, courses:0, ca:0, pen:0, avance:0,
+    // KYC
+    typeContrat:"Salarie", telephone:"", telephonePerso:"", adresse:"",
+    contactUrgence:"", contactUrgenceTel:"",
+    // Permis
+    permisNum:"", permisDelivrance:"", permisExpiration:"", permisType:"",
+    // Piece identite
+    pieceType:"CNI", pieceNum:"", pieceDelivrance:"", pieceExpiration:"",
+    // Notes
+    noteYango:5.0, noteInterne:80, commentaires:"",
+    // Dettes
+    dettes:0, detteCommentaire:"",
+    matricule:""
+  };
+  const [form, setForm] = useState(emptyForm);
+
+  const openAdd = () => {
+    const mat = genInitiales("X","X",DRIVERS);
+    setForm({...emptyForm});
+    setEditItem(null);
+    setShowModal(true);
+    setActiveTab("profil");
+  };
+  const openEdit = (d) => {
+    setForm({...emptyForm,...d});
+    setEditItem(d);
+    setShowModal(true);
+    setActiveTab("profil");
+  };
+
+  // Alerte permis / piece
+  const getDriverAlerts = (d) => {
+    const alerts = [];
+    if (d.permisExpiration) {
+      const diff = Math.floor((new Date(d.permisExpiration) - new Date()) / (1000*60*60*24));
+      if (diff <= 30) alerts.push("Permis expire dans "+diff+"j");
+    }
+    if (d.pieceExpiration) {
+      const diff = Math.floor((new Date(d.pieceExpiration) - new Date()) / (1000*60*60*24));
+      if (diff <= 30) alerts.push("Piece ID expire dans "+diff+"j");
+    }
+    return alerts;
+  };
 
   if (detail) {
     const d = DRIVERS.find(x=>x.id===detail);
-    const paie = PAIE_HISTORY.find(p=>p.ch===detail);
+    if (!d) { setDetail(null); return null; }
+    const paie = typeof PAIE_HISTORY !== 'undefined' ? PAIE_HISTORY.find(p=>p.ch===detail) : null;
+    const alerts = getDriverAlerts(d);
+    const tabs = [
+      {id:"profil", label:"Profil"},
+      {id:"kyc", label:"KYC"},
+      {id:"performance", label:"Performance"},
+      {id:"incidents", label:"Incidents & Dettes"},
+    ];
     return (
-      <div className="space-y-6">
-        <button onClick={()=>setDetail(null)} className="text-sm text-blue-600 hover:underline">← Retour</button>
+      <div className="space-y-4">
+        <button onClick={()=>setDetail(null)} className="text-sm text-blue-600 hover:underline flex items-center gap-1">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>Retour
+        </button>
+        {alerts.length > 0 && (
+          <div className="space-y-1">{alerts.map((a,i)=>(
+            <div key={i} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-amber-600 bg-amber-50">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>{a}
+            </div>
+          ))}</div>
+        )}
         <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-xl font-bold">{d.prenom[0]}{d.nom[0]}</div>
-            <div><h2 className="text-xl font-bold text-slate-900">{d.prenom} {d.nom}</h2><p className="text-slate-500 text-sm">{d.id} · Shift {d.shift} · {siteName(d.site)}</p><Badge color={sc(d.status)}>{d.status}</Badge></div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-xl font-bold">{d.prenom[0]}{d.nom[0]}</div>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">{d.prenom} {d.nom}</h2>
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  <span className="text-xs font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded">{d.matricule||d.id}</span>
+                  <Badge color="bg-blue-100 text-blue-700">Shift {d.shift}</Badge>
+                  <Badge color={sc(d.status)}>{d.status}</Badge>
+                  <Badge color="bg-violet-100 text-violet-700">{d.typeContrat||"Salarie"}</Badge>
+                </div>
+                <p className="text-slate-500 text-sm mt-1">{siteName(d.site)} · {vhLabel(d.vehicule)}</p>
+              </div>
+            </div>
+            <button onClick={()=>{openEdit(d);setDetail(null);}} className="text-blue-600 border border-blue-200 px-4 py-2 rounded-lg text-sm hover:bg-blue-50">Modifier</button>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="p-4 bg-slate-50 rounded-xl"><div className="text-xs text-slate-500">Véhicule</div><div className="font-semibold text-sm">{vhLabel(d.vehicule)}</div></div>
-            <div className="p-4 bg-slate-50 rounded-xl"><div className="text-xs text-slate-500">Score KPI</div><KpiBar value={d.kpi}/></div>
-            <div className="p-4 bg-slate-50 rounded-xl"><div className="text-xs text-slate-500">Courses totales</div><div className="font-semibold text-sm">{d.courses.toLocaleString()}</div></div>
-            <div className="p-4 bg-slate-50 rounded-xl"><div className="text-xs text-slate-500">CA total</div><div className="font-semibold text-sm text-emerald-600">{fmt(d.ca)}</div></div>
-            <div className="p-4 bg-slate-50 rounded-xl"><div className="text-xs text-slate-500">Pénalités</div><div className="font-semibold text-sm text-red-600">{fmt(d.pen)}</div></div>
-            <div className="p-4 bg-slate-50 rounded-xl"><div className="text-xs text-slate-500">Avance en cours</div><div className="font-semibold text-sm text-amber-600">{fmt(d.avance)}</div></div>
-            {paie && <><div className="p-4 bg-emerald-50 rounded-xl"><div className="text-xs text-slate-500">Dernier net</div><div className="font-semibold text-sm text-emerald-600">{fmt(paie.net)}</div></div>
-            <div className="p-4 bg-blue-50 rounded-xl"><div className="text-xs text-slate-500">Période</div><div className="font-semibold text-sm">{paie.periode}</div></div></>}
+
+          {/* Tabs */}
+          <div className="flex gap-1 border-b border-slate-200 mb-4">
+            {tabs.map(t=>(
+              <button key={t.id} onClick={()=>setActiveTab(t.id)} className={"px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px "+(activeTab===t.id?"border-blue-600 text-blue-600":"border-transparent text-slate-500 hover:text-slate-700")}>{t.label}</button>
+            ))}
           </div>
+
+          {activeTab==="profil" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[
+                ["Telephone travail", d.telephone],["Telephone perso", d.telephonePerso],
+                ["Adresse", d.adresse],["Contact urgence", d.contactUrgence],
+                ["Tel urgence", d.contactUrgenceTel],["Type contrat", d.typeContrat||"Salarie"],
+              ].map(([l,val])=>(
+                <div key={l} className="flex justify-between py-2 border-b border-slate-100">
+                  <span className="text-xs text-slate-500">{l}</span>
+                  <span className="text-xs font-medium text-slate-700">{val||"—"}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {activeTab==="kyc" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="font-semibold text-slate-700 text-sm mb-3">Permis de conduire</h4>
+                {[["Numero",d.permisNum],["Type",d.permisType],["Delivrance",d.permisDelivrance],["Expiration",d.permisExpiration]].map(([l,val])=>(
+                  <div key={l} className={"flex justify-between py-2 border-b border-slate-100"}>
+                    <span className="text-xs text-slate-500">{l}</span>
+                    <span className={"text-xs font-medium "+(l==="Expiration"&&val&&new Date(val)<new Date(Date.now()+30*86400000)?"text-red-600":"text-slate-700")}>{val||"—"}</span>
+                  </div>
+                ))}
+              </div>
+              <div>
+                <h4 className="font-semibold text-slate-700 text-sm mb-3">Piece d identite ({d.pieceType||"CNI"})</h4>
+                {[["Numero",d.pieceNum],["Delivrance",d.pieceDelivrance],["Expiration",d.pieceExpiration]].map(([l,val])=>(
+                  <div key={l} className={"flex justify-between py-2 border-b border-slate-100"}>
+                    <span className="text-xs text-slate-500">{l}</span>
+                    <span className={"text-xs font-medium "+(l==="Expiration"&&val&&new Date(val)<new Date(Date.now()+30*86400000)?"text-red-600":"text-slate-700")}>{val||"—"}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab==="performance" && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-4 bg-slate-50 rounded-xl"><div className="text-xs text-slate-500">Note Yango</div><div className="font-bold text-lg text-amber-500">{d.noteYango||"—"}/5</div></div>
+              <div className="p-4 bg-slate-50 rounded-xl"><div className="text-xs text-slate-500">KPI Interne</div><KpiBar value={d.kpi}/></div>
+              <div className="p-4 bg-slate-50 rounded-xl"><div className="text-xs text-slate-500">Courses</div><div className="font-semibold text-sm">{d.courses.toLocaleString()}</div></div>
+              <div className="p-4 bg-emerald-50 rounded-xl"><div className="text-xs text-slate-500">CA Total</div><div className="font-semibold text-sm text-emerald-600">{fmt(d.ca)}</div></div>
+              <div className="p-4 bg-red-50 rounded-xl"><div className="text-xs text-slate-500">Penalites</div><div className="font-semibold text-sm text-red-600">{fmt(d.pen)}</div></div>
+              <div className="p-4 bg-amber-50 rounded-xl"><div className="text-xs text-slate-500">Avance en cours</div><div className="font-semibold text-sm text-amber-600">{fmt(d.avance)}</div></div>
+              {paie && <>
+                <div className="p-4 bg-emerald-50 rounded-xl"><div className="text-xs text-slate-500">Dernier net</div><div className="font-semibold text-sm text-emerald-600">{fmt(paie.net)}</div></div>
+                <div className="p-4 bg-blue-50 rounded-xl"><div className="text-xs text-slate-500">Periode</div><div className="font-semibold text-sm">{paie.periode}</div></div>
+              </>}
+            </div>
+          )}
+
+          {activeTab==="incidents" && (
+            <div className="space-y-4">
+              <div className="p-4 bg-red-50 rounded-xl border border-red-100">
+                <div className="text-xs text-slate-500 mb-1">Solde dettes en cours</div>
+                <div className="font-bold text-red-600 text-lg">{fmt(d.dettes||0)}</div>
+                {d.detteCommentaire && <div className="text-xs text-slate-500 mt-1">{d.detteCommentaire}</div>}
+              </div>
+              {d.commentaires && (
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <div className="text-xs text-slate-500 mb-1">Commentaires & incidents</div>
+                  <div className="text-sm text-slate-700">{d.commentaires}</div>
+                </div>
+              )}
+              {!d.dettes && !d.commentaires && <div className="text-slate-400 text-sm text-center py-4">Aucun incident enregistre</div>}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -583,35 +737,183 @@ const ChauffeursPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-2xl font-bold text-slate-900">Chauffeurs</h1>
-        <div className="flex gap-2">
-          <div className="relative"><svg className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher..." className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm w-48 focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">+ Ajouter</button>
+        <div className="flex gap-2 flex-wrap">
+          <div className="relative">
+            <svg className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher..." className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm w-48 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+          </div>
+          <button onClick={openAdd} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">+ Ajouter</button>
         </div>
       </div>
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
         <table className="w-full">
-          <thead><tr className="bg-slate-50 border-b border-slate-200"><th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Chauffeur</th><th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Site</th><th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Véhicule</th><th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Shift</th><th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">KPI</th><th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Courses</th><th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th></tr></thead>
+          <thead><tr className="bg-slate-50 border-b border-slate-200">
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Chauffeur</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Matricule</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Site</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Vehicule</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Shift</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Yango</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">KPI</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Actions</th>
+          </tr></thead>
           <tbody>
-            {filtered.map(d=>(
-              <tr key={d.id} onClick={()=>setDetail(d.id)} className="border-b border-slate-100 hover:bg-blue-50 cursor-pointer transition-colors">
-                <td className="px-4 py-3"><div className="flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-violet-400 flex items-center justify-center text-white text-xs font-bold">{d.prenom[0]}{d.nom[0]}</div><div><div className="font-medium text-sm text-slate-800">{d.prenom} {d.nom}</div><div className="text-xs text-slate-400">{d.id}</div></div></div></td>
-                <td className="px-4 py-3 text-sm text-slate-600">{siteName(d.site)}</td>
-                <td className="px-4 py-3 text-sm text-slate-600">{vhLabel(d.vehicule)}</td>
-                <td className="px-4 py-3"><Badge color="bg-blue-100 text-blue-700">Shift {d.shift}</Badge></td>
-                <td className="px-4 py-3"><KpiBar value={d.kpi}/></td>
-                <td className="px-4 py-3 text-sm text-slate-600">{d.courses.toLocaleString()}</td>
-                <td className="px-4 py-3"><Badge color={sc(d.status)}>{d.status}</Badge></td>
-              </tr>
-            ))}
+            {filtered.map(d=>{
+              const alerts = getDriverAlerts(d);
+              return (
+                <tr key={d.id} className="border-b border-slate-100 hover:bg-blue-50 transition-colors">
+                  <td className="px-4 py-3 cursor-pointer" onClick={()=>setDetail(d.id)}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-violet-400 flex items-center justify-center text-white text-xs font-bold">{d.prenom[0]}{d.nom[0]}</div>
+                      <div>
+                        <div className="font-medium text-sm text-slate-800">{d.prenom} {d.nom}</div>
+                        {alerts.length > 0 && <div className="text-xs text-amber-600">⚠ {alerts[0]}</div>}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3"><span className="text-xs font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded">{d.matricule||d.id}</span></td>
+                  <td className="px-4 py-3 text-sm text-slate-600">{siteName(d.site)}</td>
+                  <td className="px-4 py-3 text-sm text-slate-600">{vhLabel(d.vehicule)}</td>
+                  <td className="px-4 py-3"><Badge color="bg-blue-100 text-blue-700">Shift {d.shift}</Badge></td>
+                  <td className="px-4 py-3"><span className="text-sm font-bold text-amber-500">{d.noteYango||"—"}</span><span className="text-xs text-slate-400">/5</span></td>
+                  <td className="px-4 py-3"><KpiBar value={d.kpi}/></td>
+                  <td className="px-4 py-3"><Badge color={sc(d.status)}>{d.status}</Badge></td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-1">
+                      <button onClick={()=>openEdit(d)} className="text-blue-600 text-xs border border-blue-200 px-2 py-1 rounded hover:bg-blue-50">Modifier</button>
+                      <button onClick={()=>setConfirmDelete(d)} className="text-red-600 text-xs border border-red-200 px-2 py-1 rounded hover:bg-red-50">Suppr.</button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
+
+      {/* MODAL */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto my-4">
+            <div className="flex items-center justify-between p-6 border-b border-slate-100 sticky top-0 bg-white z-10">
+              <h2 className="text-lg font-bold text-slate-900">{editItem?"Modifier le chauffeur":"Ajouter un chauffeur"}</h2>
+              <button onClick={()=>setShowModal(false)} className="text-slate-400 hover:text-slate-600 text-xl">X</button>
+            </div>
+            {/* Tabs modal */}
+            <div className="flex gap-1 px-6 pt-4 border-b border-slate-200">
+              {[{id:"profil",label:"Profil"},{id:"kyc",label:"KYC"},{id:"performance",label:"Perf & Notes"},{id:"incidents",label:"Incidents"}].map(t=>(
+                <button key={t.id} onClick={()=>setActiveTab(t.id)} className={"px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors "+(activeTab===t.id?"border-blue-600 text-blue-600":"border-transparent text-slate-500")}>{t.label}</button>
+              ))}
+            </div>
+            <div className="p-6 space-y-4">
+
+              {activeTab==="profil" && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-sm font-medium text-slate-700 mb-1">Nom *</label><input value={form.nom} onChange={e=>setForm({...form,nom:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
+                  <div><label className="block text-sm font-medium text-slate-700 mb-1">Prenom *</label><input value={form.prenom} onChange={e=>setForm({...form,prenom:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
+                  <div><label className="block text-sm font-medium text-slate-700 mb-1">Matricule <span className="text-slate-400 text-xs">(auto)</span></label>
+                    <input value={form.matricule||genInitiales(form.prenom||"X",form.nom||"X",DRIVERS)} onChange={e=>setForm({...form,matricule:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+                  </div>
+                  <div><label className="block text-sm font-medium text-slate-700 mb-1">Type de contrat</label>
+                    <select value={form.typeContrat} onChange={e=>setForm({...form,typeContrat:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <option>Salarie</option><option>Prestataire a l essai</option><option>Freelance</option>
+                    </select>
+                  </div>
+                  <div><label className="block text-sm font-medium text-slate-700 mb-1">Site</label>
+                    <select value={form.site} onChange={e=>setForm({...form,site:parseInt(e.target.value)})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <option value={1}>Abidjan</option><option value={2}>Yamoussoukro</option>
+                    </select>
+                  </div>
+                  <div><label className="block text-sm font-medium text-slate-700 mb-1">Shift</label>
+                    <select value={form.shift} onChange={e=>setForm({...form,shift:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <option value="A">Shift A (06h-14h)</option><option value="B">Shift B (15h-23h)</option><option value="C">Shift C (22h-06h)</option>
+                    </select>
+                  </div>
+                  <div><label className="block text-sm font-medium text-slate-700 mb-1">Statut</label>
+                    <select value={form.status} onChange={e=>setForm({...form,status:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <option>Actif</option><option>Suspendu</option><option>Inactif</option>
+                    </select>
+                  </div>
+                  <div><label className="block text-sm font-medium text-slate-700 mb-1">Tel. travail</label><input value={form.telephone} onChange={e=>setForm({...form,telephone:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="+225..."/></div>
+                  <div><label className="block text-sm font-medium text-slate-700 mb-1">Tel. personnel</label><input value={form.telephonePerso} onChange={e=>setForm({...form,telephonePerso:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
+                  <div className="col-span-2"><label className="block text-sm font-medium text-slate-700 mb-1">Adresse</label><input value={form.adresse} onChange={e=>setForm({...form,adresse:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Commune, quartier"/></div>
+                  <div><label className="block text-sm font-medium text-slate-700 mb-1">Contact urgence</label><input value={form.contactUrgence} onChange={e=>setForm({...form,contactUrgence:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
+                  <div><label className="block text-sm font-medium text-slate-700 mb-1">Tel urgence</label><input value={form.contactUrgenceTel} onChange={e=>setForm({...form,contactUrgenceTel:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
+                </div>
+              )}
+
+              {activeTab==="kyc" && (
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 pb-1 border-b">Permis de conduire</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div><label className="block text-sm font-medium text-slate-700 mb-1">Numero permis</label><input value={form.permisNum} onChange={e=>setForm({...form,permisNum:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
+                      <div><label className="block text-sm font-medium text-slate-700 mb-1">Type</label><input value={form.permisType} onChange={e=>setForm({...form,permisType:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="B, D..."/></div>
+                      <div><label className="block text-sm font-medium text-slate-700 mb-1">Date delivrance</label><input type="date" value={form.permisDelivrance} onChange={e=>setForm({...form,permisDelivrance:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
+                      <div><label className="block text-sm font-medium text-slate-700 mb-1">Expiration <span className="text-amber-600 text-xs">(alerte 30j)</span></label><input type="date" value={form.permisExpiration} onChange={e=>setForm({...form,permisExpiration:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 pb-1 border-b">Piece d identite</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div><label className="block text-sm font-medium text-slate-700 mb-1">Type</label>
+                        <select value={form.pieceType} onChange={e=>setForm({...form,pieceType:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                          <option>CNI</option><option>Passeport</option><option>Titre sejour</option>
+                        </select>
+                      </div>
+                      <div><label className="block text-sm font-medium text-slate-700 mb-1">Numero</label><input value={form.pieceNum} onChange={e=>setForm({...form,pieceNum:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
+                      <div><label className="block text-sm font-medium text-slate-700 mb-1">Date delivrance</label><input type="date" value={form.pieceDelivrance} onChange={e=>setForm({...form,pieceDelivrance:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
+                      <div><label className="block text-sm font-medium text-slate-700 mb-1">Expiration <span className="text-amber-600 text-xs">(alerte 30j)</span></label><input type="date" value={form.pieceExpiration} onChange={e=>setForm({...form,pieceExpiration:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab==="performance" && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-sm font-medium text-slate-700 mb-1">Note Yango <span className="text-xs text-slate-400">(sur 5)</span></label><input type="number" min="0" max="5" step="0.1" value={form.noteYango} onChange={e=>setForm({...form,noteYango:parseFloat(e.target.value)})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
+                  <div><label className="block text-sm font-medium text-slate-700 mb-1">KPI Interne <span className="text-xs text-slate-400">(note standard: 80)</span></label><input type="number" min="0" max="100" value={form.kpi} onChange={e=>setForm({...form,kpi:parseInt(e.target.value)})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
+                  <div><label className="block text-sm font-medium text-slate-700 mb-1">Courses</label><input type="number" value={form.courses} onChange={e=>setForm({...form,courses:parseInt(e.target.value)})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
+                  <div><label className="block text-sm font-medium text-slate-700 mb-1">CA (F CFA)</label><input type="number" value={form.ca} onChange={e=>setForm({...form,ca:parseInt(e.target.value)})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
+                  <div><label className="block text-sm font-medium text-slate-700 mb-1">Penalites (F CFA)</label><input type="number" value={form.pen} onChange={e=>setForm({...form,pen:parseInt(e.target.value)})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
+                  <div><label className="block text-sm font-medium text-slate-700 mb-1">Avance en cours (F CFA)</label><input type="number" value={form.avance} onChange={e=>setForm({...form,avance:parseInt(e.target.value)})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
+                </div>
+              )}
+
+              {activeTab==="incidents" && (
+                <div className="space-y-4">
+                  <div><label className="block text-sm font-medium text-slate-700 mb-1">Solde dettes en cours (F CFA)</label><input type="number" value={form.dettes||0} onChange={e=>setForm({...form,dettes:parseInt(e.target.value)})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
+                  <div><label className="block text-sm font-medium text-slate-700 mb-1">Detail de la dette</label><input value={form.detteCommentaire||""} onChange={e=>setForm({...form,detteCommentaire:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: manquant du 01/04..."/></div>
+                  <div><label className="block text-sm font-medium text-slate-700 mb-1">Commentaires et incidents</label><textarea value={form.commentaires||""} onChange={e=>setForm({...form,commentaires:e.target.value})} rows={4} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Historique des incidents, remarques..."/></div>
+                </div>
+              )}
+
+            </div>
+            <div className="flex gap-3 p-6 border-t border-slate-100 sticky bottom-0 bg-white">
+              <button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-sm font-medium hover:bg-slate-50">Annuler</button>
+              <button onClick={()=>setShowModal(false)} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700">{editItem?"Enregistrer":"Ajouter"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {confirmDelete && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6">
+            <h3 className="font-bold text-slate-900 mb-2">Supprimer ce chauffeur ?</h3>
+            <p className="text-sm text-slate-500 mb-4">{confirmDelete.prenom} {confirmDelete.nom}</p>
+            <div className="flex gap-3">
+              <button onClick={()=>setConfirmDelete(null)} className="flex-1 border border-slate-200 py-2 rounded-lg text-sm">Annuler</button>
+              <button onClick={()=>setConfirmDelete(null)} className="flex-1 bg-red-600 text-white py-2 rounded-lg text-sm">Supprimer</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
-
 // ============================================================
 // PAGE: PLANNING
 // ============================================================
