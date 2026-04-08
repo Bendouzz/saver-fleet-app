@@ -1081,7 +1081,7 @@ const RechargePage = () => {
           ))}</tbody>
         </table>
       </div>
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4"><h3 className="font-semibold text-blue-800 text-sm mb-2">Anti-fraude recharge</h3><div className="text-sm text-blue-700">Bornes whitelistees uniquement · Recharge obligatoire si SOC < 70% au handover · Corrélation kWh / km</div></div>
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4"><h3 className="font-semibold text-blue-800 text-sm mb-2">Anti-fraude recharge</h3><div className="text-sm text-blue-700">Bornes whitelistees uniquement · Recharge obligatoire si SOC inf. 70% au handover · Correlation kWh / km</div></div>
     </div>
   );
 };
