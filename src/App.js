@@ -931,7 +931,7 @@ const PlanningPage = () => (
     <div className="bg-white rounded-xl border border-slate-200 p-6">
       <h2 className="font-semibold text-slate-900 mb-4">Règles de planning SAVER</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-        <div className="p-4 bg-slate-50 rounded-lg"><div className="font-semibold text-slate-700 mb-1">Handover</div><div className="text-slate-500">30 min passation + 30 min recharge si SOC < 70%</div></div>
+        <div className="p-4 bg-slate-50 rounded-lg"><div className="font-semibold text-slate-700 mb-1">Handover</div><div className="text-slate-500">30 min passation + 30 min recharge si SOC inf. 70%</div></div>
         <div className="p-4 bg-slate-50 rounded-lg"><div className="font-semibold text-slate-700 mb-1">Jours travaillés</div><div className="text-slate-500">6j/7 · ½ journée repos / 2 semaines</div></div>
         <div className="p-4 bg-slate-50 rounded-lg"><div className="font-semibold text-slate-700 mb-1">Heures sup</div><div className="text-slate-500">Interdites sauf rattrapage validé</div></div>
       </div>
