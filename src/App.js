@@ -284,22 +284,40 @@ const NavIcon = ({d, className}) => <svg className={className} fill="none" viewB
 // ============================================================
 // LOGIN PAGE
 // ============================================================
+const ROLE_ACCOUNTS = [
+  {role:"admin", label:"Administrateur", email:"admin@saver.ci", icon:"shield", color:"from-red-500 to-red-600"},
+  {role:"ops", label:"Ops Manager", email:"ops@saver.ci", icon:"truck", color:"from-blue-500 to-blue-600"},
+  {role:"finance", label:"Finance", email:"finance@saver.ci", icon:"cash", color:"from-emerald-500 to-emerald-600"},
+  {role:"supervisor", label:"Superviseur Logistique", email:"superviseur@saver.ci", icon:"eye", color:"from-violet-500 to-violet-600"},
+  {role:"dispatcher", label:"Dispatcher", email:"dispatcher@saver.ci", icon:"map", color:"from-amber-500 to-amber-600"},
+];
+
+const RoleIcon = ({icon}) => {
+  const icons = {
+    shield: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
+    truck: "M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0",
+    cash: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
+    eye: "M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z",
+    map: "M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7",
+  };
+  return <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={icons[icon]}/></svg>;
+};
+
 const LoginPage = ({onLogin}) => {
-  const [email, setEmail] = useState("");
+  const [selectedRole, setSelectedRole] = useState(null);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
+    if (!selectedRole) return setError("Veuillez choisir un profil");
+    if (!password) return setError("Mot de passe requis");
     setError(""); setLoading(true);
-    if (!email || !password) { setLoading(false); return setError("Email et mot de passe requis"); }
     const users = await getUsers();
-    const found = users.find(u => u.email===email && u.password===password);
+    const found = users.find(u => u.email===selectedRole.email && u.password===password);
     setLoading(false);
-    if (!found) return setError("Email ou mot de passe incorrect");
-    const {data} = await supabase.from("users").select("*").eq("id", found.id).single().then(r=>r).catch(()=>({data:found}));
-    
-    onLogin(data || found);
+    if (!found) return setError("Mot de passe incorrect");
+    onLogin(found);
   };
 
   return (
@@ -312,18 +330,50 @@ const LoginPage = ({onLogin}) => {
           <h1 className="text-3xl font-bold text-white">SAVER Fleet Ops</h1>
           <p className="text-blue-300 mt-2">Gestion de flotte VTC electrique</p>
         </div>
+
         <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-8 border border-white/20">
-          <div className="flex gap-2 mb-6">
-            <button className="flex-1 py-2 rounded-lg text-sm font-medium bg-white text-slate-900">Connexion</button>
+          <h2 className="text-white font-semibold text-center mb-5">Choisissez votre profil</h2>
+
+          {/* Grille des roles */}
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            {ROLE_ACCOUNTS.map(r=>(
+              <button key={r.role} onClick={()=>{setSelectedRole(r);setError("");setPassword("");}}
+                className={"flex items-center gap-3 p-3 rounded-xl border transition-all "+(selectedRole?.role===r.role?"border-white bg-white/20 scale-105":"border-white/20 bg-white/5 hover:bg-white/10")}>
+                <div className={"w-9 h-9 rounded-lg bg-gradient-to-br "+r.color+" flex items-center justify-center flex-shrink-0"}>
+                  <RoleIcon icon={r.icon}/>
+                </div>
+                <span className="text-white text-xs font-medium text-left leading-tight">{r.label}</span>
+              </button>
+            ))}
           </div>
-          {error && <div className="bg-red-500/20 border border-red-500/50 text-red-200 text-sm px-4 py-2 rounded-lg mb-4">{error}</div>}
-          <div className="space-y-4">
-            <div><label className="block text-sm text-blue-200 mb-1.5">Email</label><input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="votre@email.com" className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-400"/></div>
-            <div><label className="block text-sm text-blue-200 mb-1.5">Mot de passe</label><input type="password" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleLogin()} placeholder="••••••••" className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-400"/></div>
-            <button onClick={handleLogin} disabled={loading} className="w-full bg-gradient-to-r from-emerald-500 to-blue-500 text-white py-3 rounded-lg font-semibold hover:from-emerald-600 hover:to-blue-600 transition-all shadow-lg disabled:opacity-50">
-              {loading ? "Connexion..." : "Se connecter"}
-            </button>
-          </div>
+
+          {/* Mot de passe — visible seulement si role selectionne */}
+          {selectedRole && (
+            <div className="space-y-4">
+              <div className={"p-3 rounded-xl bg-gradient-to-r "+selectedRole.color+" flex items-center gap-3"}>
+                <RoleIcon icon={selectedRole.icon}/>
+                <div>
+                  <div className="text-white text-sm font-semibold">{selectedRole.label}</div>
+                  <div className="text-white/70 text-xs">{selectedRole.email}</div>
+                </div>
+              </div>
+              {error && <div className="bg-red-500/20 border border-red-500/50 text-red-200 text-sm px-4 py-2 rounded-lg">{error}</div>}
+              <div>
+                <label className="block text-sm text-blue-200 mb-1.5">Mot de passe</label>
+                <input type="password" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleLogin()} placeholder="••••••••" autoFocus
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-400"/>
+              </div>
+              <button onClick={handleLogin} disabled={loading}
+                className={"w-full bg-gradient-to-r "+selectedRole.color+" text-white py-3 rounded-lg font-semibold transition-all shadow-lg disabled:opacity-50 hover:opacity-90"}>
+                {loading ? "Connexion..." : "Se connecter en tant que "+selectedRole.label}
+              </button>
+              <button onClick={()=>setSelectedRole(null)} className="w-full text-blue-300 text-sm hover:text-white transition-colors">
+                Changer de profil
+              </button>
+            </div>
+          )}
+
+          {!selectedRole && error && <div className="bg-red-500/20 border border-red-500/50 text-red-200 text-sm px-4 py-2 rounded-lg mt-3">{error}</div>}
         </div>
       </div>
     </div>
