@@ -297,7 +297,8 @@ const LoginPage = ({onLogin}) => {
     const found = users.find(u => u.email===email && u.password===password);
     setLoading(false);
     if (!found) return setError("Email ou mot de passe incorrect");
-    const {data} = await supabase.from("users").select("*").eq("id", found.id).single().catch(()=>({data:found}));
+    const {data} = await supabase.from("users").select("*").eq("id", found.id).single().then(r=>r).catch(()=>({data:found}));
+    
     onLogin(data || found);
   };
 
@@ -1792,8 +1793,12 @@ const App = () => {
   };
 
   const handleLogin = async (u) => {
-    const {data} = await supabase.from("users").select("*").eq("id",u.id).single().catch(()=>({data:u}));
-    setUser(data||u);
+    try {
+      const {data} = await supabase.from("users").select("*").eq("id",u.id).single();
+      setUser(data||u);
+    } catch {
+      setUser(u);
+    }
   };
 
   if (!user) return <LoginPage onLogin={handleLogin}/>;
