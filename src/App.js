@@ -1861,7 +1861,7 @@ const App = () => {
           <button onClick={()=>setSideOpen(!sideOpen)} className="text-slate-400 hover:text-slate-600">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
-          <div className="text-sm font-semibold text-slate-700 lg:hidden">{NAV.find(n=>n.id===page)?.label}</div>
+          <div className="text-sm font-semibold text-slate-700 lg:hidden">{ALL_NAV.find(n=>n.id===page)?.label}</div>
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex items-center gap-2">
               <div className="h-8 w-px bg-slate-200"/>
