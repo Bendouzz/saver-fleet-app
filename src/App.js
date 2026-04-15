@@ -327,7 +327,7 @@ const LoginPage = ({onLogin}) => {
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
           </div>
-          <h1 className="text-3xl font-bold text-white">SAVER Fleet Ops</h1>
+          <h1 className="text-3xl font-bold text-white">Easy by Saver</h1>
           <p className="text-blue-300 mt-2">Gestion de flotte VTC electrique</p>
         </div>
 
@@ -1491,7 +1491,7 @@ const ReportingPage = ({vehicles, drivers, recharges, maintenances, shifts, reve
   const exportPDF = (title, rows, headers) => {
     const w = window.open("","_blank");
     const tableRows = rows.map(r=>`<tr>${r.map(c=>`<td style="padding:8px;border:1px solid #e2e8f0;font-size:12px">${c}</td>`).join("")}</tr>`).join("");
-    w.document.write(`<html><head><title>${title}</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th{background:#1e40af;color:white;padding:8px;font-size:12px}h1{color:#1e293b}</style></head><body><h1>${title}</h1><p style="color:#64748b;font-size:12px">SAVER Fleet Ops · ${new Date().toLocaleDateString("fr-FR")}</p><table><tr>${headers.map(h=>`<th>${h}</th>`).join("")}</tr>${tableRows}</table></body></html>`);
+    w.document.write(`<html><head><title>${title}</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th{background:#1e40af;color:white;padding:8px;font-size:12px}h1{color:#1e293b}</style></head><body><h1>${title}</h1><p style="color:#64748b;font-size:12px">Easy by Saver · ${new Date().toLocaleDateString("fr-FR")}</p><table><tr>${headers.map(h=>`<th>${h}</th>`).join("")}</tr>${tableRows}</table></body></html>`);
     w.document.close(); w.print();
   };
 
@@ -1888,7 +1888,7 @@ const App = () => {
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center flex-shrink-0">
             <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
           </div>
-          {sideOpen&&<div><div className="font-bold text-sm">SAVER Fleet Ops</div><div className="text-xs text-slate-400">Flotte VTC electrique</div></div>}
+          {sideOpen&&<div><div className="font-bold text-sm">Easy by Saver</div><div className="text-xs text-slate-400">Gestion de flotte VTC</div></div>}
         </div>
         <nav className="flex-1 py-4 overflow-y-auto">
           {getNav(user?.role).map(n=>(
