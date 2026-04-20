@@ -318,17 +318,21 @@ const RoleIcon = ({icon}) => {
 const LoginPage = ({onLogin}) => {
   const [selectedRole, setSelectedRole] = useState(null);
   const [password, setPassword] = useState("");
+  const [customEmail, setCustomEmail] = useState("");
+  const [useCustom, setUseCustom] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!selectedRole) return setError("Veuillez choisir un profil");
+    const emailToCheck = useCustom ? customEmail : selectedRole?.email;
+    if (!emailToCheck) return setError("Veuillez choisir un profil ou saisir votre email");
     if (!password) return setError("Mot de passe requis");
     setError(""); setLoading(true);
     const users = await getUsers();
-    const found = users.find(u => u.email===selectedRole.email && u.password===password);
+    const found = users.find(u => u.email===emailToCheck && u.password===password);
     setLoading(false);
-    if (!found) return setError("Mot de passe incorrect");
+    if (!found) return setError("Email ou mot de passe incorrect");
+    if (found.invite_pending) return setError("Vous devez d abord definir votre mot de passe via le lien d invitation");
     onLogin(found);
   };
 
@@ -386,6 +390,40 @@ const LoginPage = ({onLogin}) => {
           )}
 
           {!selectedRole && error && <div className="bg-red-500/20 border border-red-500/50 text-red-200 text-sm px-4 py-2 rounded-lg mt-3">{error}</div>}
+
+          {/* Option connexion avec email perso */}
+          {!selectedRole && !useCustom && (
+            <button onClick={()=>setUseCustom(true)} className="w-full text-blue-300 text-sm hover:text-white transition-colors mt-3 text-center">
+              Connexion avec mon propre email
+            </button>
+          )}
+
+          {useCustom && (
+            <div className="space-y-4 mt-3">
+              <div className="p-3 rounded-xl bg-white/10 border border-white/20">
+                <div className="text-white text-sm font-semibold mb-1">Connexion personnalisee</div>
+                <div className="text-white/60 text-xs">Pour les comptes crees par l administrateur</div>
+              </div>
+              {error && <div className="bg-red-500/20 border border-red-500/50 text-red-200 text-sm px-4 py-2 rounded-lg">{error}</div>}
+              <div>
+                <label className="block text-sm text-blue-200 mb-1.5">Votre email</label>
+                <input type="email" value={customEmail} onChange={e=>setCustomEmail(e.target.value)} placeholder="votre@email.com" autoFocus
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-400"/>
+              </div>
+              <div>
+                <label className="block text-sm text-blue-200 mb-1.5">Mot de passe</label>
+                <input type="password" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleLogin()} placeholder="••••••••"
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-400"/>
+              </div>
+              <button onClick={handleLogin} disabled={loading}
+                className="w-full bg-gradient-to-r from-emerald-500 to-blue-500 text-white py-3 rounded-lg font-semibold hover:opacity-90 transition-all shadow-lg disabled:opacity-50">
+                {loading ? "Connexion..." : "Se connecter"}
+              </button>
+              <button onClick={()=>{setUseCustom(false);setError("");setCustomEmail("");}} className="w-full text-blue-300 text-sm hover:text-white transition-colors">
+                Retour aux profils
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
