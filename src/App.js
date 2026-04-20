@@ -29,7 +29,9 @@ const useSupabase = (table, mapper = x=>x) => {
   useEffect(() => { load(); }, []);
 
   const add = async (item) => {
-    const { error } = await supabase.from(table).insert(item);
+    console.log("INSERT into", table, JSON.stringify(item));
+    const { error, data } = await supabase.from(table).insert(item).select();
+    console.log("RESULT error:", error, "data:", data);
     if (!error) load();
     return error;
   };
