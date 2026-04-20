@@ -1789,14 +1789,15 @@ const App = () => {
   const buildVehiclePayload = (item) => ({
     immat:item.immat||null, marque:item.marque||null, modele:item.modele||null,
     site:item.site||1, autonomie:item.autonomie||0, km:item.km||0, soc:item.soc||0,
-    status:item.status||"En exploitation", typeContrat:item.typeContrat||"Interne SAVER",
+    status:item.status||"En exploitation", typecontrat:item.typeContrat||"Interne SAVER",
     vin_number:item.vin||null, battery_capacity_kwh:item.capaciteBatterie||null,
     vehicle_year:item.annee||null, vehicle_color:item.couleur||null,
     service_type:item.typeService||"VTC", service_class:item.classesService||[],
     technical_visit_expiry:item.visiteDate||null, insurance_expiry:item.assuranceFin||null,
-    assuranceNum:item.assuranceNum||null, assuranceDebut:item.assuranceDebut||null,
-    carteGriseNum:item.carteGriseNum||null, carteGriseDate:item.carteGriseDate||null,
-    carteGriseProprietaire:item.carteGriseProprietaire||null, numeroChassis:item.numeroChassis||null,
+    assurancenum:item.assuranceNum||null, assurancedebut:item.assuranceDebut||null,
+    assurancefin:item.assuranceFin||null,
+    cartegrisenum:item.carteGriseNum||null, cartegrisedate:item.carteGriseDate||null,
+    cartegriseproprietaire:item.carteGriseProprietaire||null, numerochassis:item.numeroChassis||null,
   });
   const addVehicle = async (item) => await vh.add({...buildVehiclePayload(item), id:"VH-"+Date.now()});
   const updateVehicle = async (id, item) => await vh.update(id, buildVehiclePayload(item));
