@@ -29,9 +29,7 @@ const useSupabase = (table, mapper = x=>x) => {
   useEffect(() => { load(); }, []);
 
   const add = async (item) => {
-    console.log("INSERT into", table, JSON.stringify(item));
-    const { error, data } = await supabase.from(table).insert(item).select();
-    console.log("RESULT error:", error, "data:", data);
+    const { error } = await supabase.from(table).insert(item);
     if (!error) load();
     return error;
   };
@@ -1802,14 +1800,24 @@ const App = () => {
   const addVehicle = async (item) => await vh.add({...buildVehiclePayload(item), id:"VH-"+Date.now()});
   const updateVehicle = async (id, item) => await vh.update(id, buildVehiclePayload(item));
 
-  const addDriver = async (item) => {
-    const { matricule, noteYango, typeContrat, permisNum, permisExpiration, pieceNum, pieceExpiration, contactUrgence, contactUrgenceTel, ...rest } = item;
-    return await dr.add({ ...rest, driver_code:matricule, yango_score:noteYango, contract_type:typeContrat, license_number:permisNum, license_expiry_date:permisExpiration||null, id_card_number:pieceNum, id_card_expiry_date:pieceExpiration||null, emergency_contact:(contactUrgence||"")+" - "+(contactUrgenceTel||"") });
-  };
-  const updateDriver = async (id, item) => {
-    const { matricule, noteYango, typeContrat, permisNum, permisExpiration, pieceNum, pieceExpiration, contactUrgence, contactUrgenceTel, ...rest } = item;
-    return await dr.update(id, { ...rest, driver_code:matricule, yango_score:noteYango, contract_type:typeContrat, license_number:permisNum, license_expiry_date:permisExpiration||null, id_card_number:pieceNum, id_card_expiry_date:pieceExpiration||null, emergency_contact:(contactUrgence||"")+" - "+(contactUrgenceTel||"") });
-  };
+  const buildDriverPayload = (item) => ({
+    nom:item.nom||null, prenom:item.prenom||null,
+    site:item.site||1, vehicule:item.vehicule||null,
+    shift:item.shift||"A", status:item.status||"Actif",
+    kpi:item.kpi||80, courses:item.courses||0,
+    ca:item.ca||0, pen:item.pen||0, avance:item.avance||0,
+    driver_code:item.matricule||null,
+    contract_type:item.typeContrat||"Salarie",
+    yango_score:item.noteYango||4.0,
+    internal_score:item.noteInterne||80,
+    license_number:item.permisNum||null,
+    license_expiry_date:item.permisExpiration||null,
+    id_card_number:item.pieceNum||null,
+    id_card_expiry_date:item.pieceExpiration||null,
+    emergency_contact:(item.contactUrgence||"")+" - "+(item.contactUrgenceTel||""),
+  });
+  const addDriver = async (item) => await dr.add({...buildDriverPayload(item), id:"CH-"+Date.now()});
+  const updateDriver = async (id, item) => await dr.update(id, buildDriverPayload(item));
 
   const addShift = async (item) => {
     const { type, date, checkIn, checkOut, heureDebutReelle, heureFinReelle, kmParcourus, autonomieDebut, autonomieFin, nbCourses, revenusGeneres, commissionYango, depensesAutorisees, noteYangoShift, ...rest } = item;
