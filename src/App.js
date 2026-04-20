@@ -58,6 +58,18 @@ const saveUser = async (user) => {
   await supabase.from("users").upsert(user);
 };
 
+// Supabase Auth - inviter un utilisateur par email
+const inviteUser = async (email, name, role) => {
+  // On cree le compte dans la table users avec un token d invitation
+  const token = Math.random().toString(36).substring(2, 10).toUpperCase();
+  const id = "U-"+Date.now();
+  const { error } = await supabase.from("users").insert({
+    id, name, email, role, password:"", invite_token:token, invite_pending:true
+  });
+  if (error) return { error };
+  return { token, id };
+};
+
 // ============================================================
 // MAPPERS Supabase → App
 // ============================================================
@@ -374,6 +386,71 @@ const LoginPage = ({onLogin}) => {
           )}
 
           {!selectedRole && error && <div className="bg-red-500/20 border border-red-500/50 text-red-200 text-sm px-4 py-2 rounded-lg mt-3">{error}</div>}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================
+// PAGE DEFINITION MOT DE PASSE (nouveaux utilisateurs)
+// ============================================================
+const SetPasswordPage = ({token, onDone}) => {
+  const [pwd, setPwd] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [userInfo, setUserInfo] = useState(null);
+
+  useEffect(() => {
+    supabase.from("users").select("*").eq("invite_token", token).single()
+      .then(({data}) => { if(data) setUserInfo(data); else setError("Lien invalide ou expire."); });
+  }, [token]);
+
+  const handleSetPassword = async () => {
+    if(pwd.length < 6) return setError("Mot de passe minimum 6 caracteres");
+    if(pwd !== confirm) return setError("Les mots de passe ne correspondent pas");
+    setLoading(true);
+    const { error: err } = await supabase.from("users")
+      .update({ password: pwd, invite_token: null, invite_pending: false })
+      .eq("invite_token", token);
+    setLoading(false);
+    if(err) return setError("Erreur: "+err.message);
+    onDone();
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          </div>
+          <h1 className="text-3xl font-bold text-white">Easy by Saver</h1>
+          <p className="text-blue-300 mt-2">Definir votre mot de passe</p>
+        </div>
+        <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-8 border border-white/20">
+          {error && <div className="bg-red-500/20 border border-red-500/50 text-red-200 text-sm px-4 py-2 rounded-lg mb-4">{error}</div>}
+          {userInfo && (
+            <div className="bg-white/10 rounded-xl p-4 mb-5">
+              <div className="text-white font-semibold">{userInfo.name}</div>
+              <div className="text-blue-300 text-sm">{userInfo.email}</div>
+              <div className="text-blue-300 text-sm capitalize mt-1">Role : {userInfo.role}</div>
+            </div>
+          )}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm text-blue-200 mb-1.5">Nouveau mot de passe</label>
+              <input type="password" value={pwd} onChange={e=>setPwd(e.target.value)} placeholder="Minimum 6 caracteres" className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-400"/>
+            </div>
+            <div>
+              <label className="block text-sm text-blue-200 mb-1.5">Confirmer le mot de passe</label>
+              <input type="password" value={confirm} onChange={e=>setConfirm(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleSetPassword()} placeholder="Retapez votre mot de passe" className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-400"/>
+            </div>
+            <button onClick={handleSetPassword} disabled={loading} className="w-full bg-gradient-to-r from-emerald-500 to-blue-500 text-white py-3 rounded-lg font-semibold hover:from-emerald-600 hover:to-blue-600 transition-all shadow-lg disabled:opacity-50">
+              {loading ? "Enregistrement..." : "Definir mon mot de passe"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1640,26 +1717,30 @@ const SitesPage = ({sites, vehicles, drivers, onAdd, onUpdate, onDelete}) => {
 const RbacPage = ({currentUser}) => {
   const [users, setUsers] = useState([]);
   const [showAddUser, setShowAddUser] = useState(false);
-  const [newUser, setNewUser] = useState({name:"",email:"",password:"",role:"ops"});
+  const [newUser, setNewUser] = useState({name:"",email:"",role:"ops"});
   const [userError, setUserError] = useState("");
+  const [userSuccess, setUserSuccess] = useState("");
   const [showChangePwd, setShowChangePwd] = useState(false);
   const [pwdForm, setPwdForm] = useState({current:"",next:"",confirm:""});
   const [pwdError, setPwdError] = useState("");
   const [pwdSuccess, setPwdSuccess] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [inviteInfo, setInviteInfo] = useState(null);
 
   useEffect(() => { getUsers().then(setUsers); }, []);
 
   const handleAddUser = async () => {
-    setUserError("");
-    if(!newUser.name||!newUser.email||!newUser.password) return setUserError("Tous les champs sont requis");
-    if(newUser.password.length<6) return setUserError("Mot de passe minimum 6 caracteres");
+    setUserError(""); setUserSuccess("");
+    if(!newUser.name||!newUser.email) return setUserError("Nom et email requis");
+    if(!newUser.email.includes("@")) return setUserError("Email invalide");
     if(users.find(u=>u.email===newUser.email)) return setUserError("Email deja utilise");
-    const u={...newUser,id:"U-"+Date.now()};
-    await saveUser(u);
-    setUsers(prev=>[...prev,u]);
+    const result = await inviteUser(newUser.email, newUser.name, newUser.role);
+    if(result.error) return setUserError("Erreur: "+result.error.message);
+    const lien = window.location.origin+"?token="+result.token;
+    setInviteInfo({ name:newUser.name, email:newUser.email, lien, token:result.token });
+    getUsers().then(setUsers);
     setShowAddUser(false);
-    setNewUser({name:"",email:"",password:"",role:"ops"});
+    setNewUser({name:"",email:"",role:"ops"});
   };
 
   const handleDelete = async (id) => {
@@ -1685,52 +1766,113 @@ const RbacPage = ({currentUser}) => {
     setPwdForm({current:"",next:"",confirm:""});
   };
 
-  const roleColor = (r) => ({"admin":"bg-red-100 text-red-700","ops":"bg-blue-100 text-blue-700","finance":"bg-emerald-100 text-emerald-700","supervisor":"bg-violet-100 text-violet-700"}[r]||"bg-slate-100 text-slate-600");
+  const roleColor = (r) => ({"admin":"bg-red-100 text-red-700","ops":"bg-blue-100 text-blue-700","finance":"bg-emerald-100 text-emerald-700","supervisor":"bg-violet-100 text-violet-700","dispatcher":"bg-amber-100 text-amber-700"}[r]||"bg-slate-100 text-slate-600");
+  const roleLabel = (r) => ({"admin":"Administrateur","ops":"Ops Manager","finance":"Finance","supervisor":"Superviseur Logistique","dispatcher":"Dispatcher"}[r]||r);
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900">RBAC et Audit</h1>
+      <h1 className="text-2xl font-bold text-slate-900">Gestion des comptes</h1>
+
+      {/* Alerte lien invitation */}
+      {inviteInfo && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="font-semibold text-emerald-800 mb-1">Compte cree pour {inviteInfo.name}</div>
+              <div className="text-sm text-emerald-700 mb-3">Envoyez ce lien a {inviteInfo.email} pour qu il definisse son mot de passe :</div>
+              <div className="bg-white border border-emerald-200 rounded-lg px-4 py-2 font-mono text-sm text-slate-700 break-all">{inviteInfo.lien}</div>
+              <div className="text-xs text-emerald-600 mt-2">Token : {inviteInfo.token}</div>
+            </div>
+            <button onClick={()=>setInviteInfo(null)} className="text-emerald-400 hover:text-emerald-600 ml-4 text-xl font-bold">x</button>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-xl border border-slate-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-slate-900">Utilisateurs ({users.length})</h2>
-          {currentUser?.role==="admin"&&<button onClick={()=>{setShowAddUser(true);setUserError("");}} className="flex items-center gap-1 bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-blue-700">+ Ajouter</button>}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="font-semibold text-slate-900">Utilisateurs ({users.length})</h2>
+            <p className="text-xs text-slate-400 mt-0.5">Seul l administrateur peut creer et modifier les comptes</p>
+          </div>
+          {currentUser?.role==="admin"&&(
+            <button onClick={()=>{setShowAddUser(true);setUserError("");setUserSuccess("");}} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
+              + Creer un compte
+            </button>
+          )}
         </div>
         <div className="space-y-3">
           {users.map(u=>(
-            <div key={u.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
+            <div key={u.id} className={"flex items-center justify-between p-4 rounded-xl border "+(u.invite_pending?"bg-amber-50 border-amber-200":"bg-slate-50 border-slate-100")}>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-violet-400 flex items-center justify-center text-white font-bold">{(u.name||"?")[0]}</div>
-                <div><div className="font-medium text-sm">{u.name} {u.id===currentUser?.id&&<span className="text-xs text-blue-500">(vous)</span>}</div><div className="text-xs text-slate-400">{u.email}</div></div>
+                <div className={"w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm "+(u.invite_pending?"bg-amber-400":"bg-gradient-to-br from-blue-500 to-violet-500")}>
+                  {(u.name||"?")[0].toUpperCase()}
+                </div>
+                <div>
+                  <div className="font-medium text-sm text-slate-800">
+                    {u.name}
+                    {u.id===currentUser?.id&&<span className="text-xs text-blue-500 ml-2">(vous)</span>}
+                    {u.invite_pending&&<span className="text-xs text-amber-600 ml-2">— invitation en attente</span>}
+                  </div>
+                  <div className="text-xs text-slate-400">{u.email}</div>
+                </div>
               </div>
               <div className="flex items-center gap-3">
-                {u.id===currentUser?.id&&<button onClick={()=>{setShowChangePwd(true);setPwdForm({current:"",next:"",confirm:""});setPwdError("");setPwdSuccess("");}} className="text-blue-600 text-xs border border-blue-200 px-2 py-1 rounded hover:bg-blue-50">Changer mot de passe</button>}
-                {currentUser?.role==="admin"&&u.id!==currentUser?.id?(<select value={u.role} onChange={e=>handleRoleChange(u.id,e.target.value)} className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white focus:outline-none"><option value="admin">Admin</option><option value="ops">Ops</option><option value="finance">Finance</option><option value="supervisor">Superviseur</option></select>):(<Badge color={roleColor(u.role)}>{u.role}</Badge>)}
-                {currentUser?.role==="admin"&&u.id!==currentUser?.id&&<button onClick={()=>setConfirmDelete(u)} className="text-red-600 text-xs border border-red-200 px-2 py-1 rounded hover:bg-red-50">Supprimer</button>}
+                {u.id===currentUser?.id&&(
+                  <button onClick={()=>{setShowChangePwd(true);setPwdForm({current:"",next:"",confirm:""});setPwdError("");setPwdSuccess("");}} className="text-blue-600 text-xs border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50">
+                    Modifier mot de passe
+                  </button>
+                )}
+                {currentUser?.role==="admin"&&u.id!==currentUser?.id?(
+                  <select value={u.role} onChange={e=>handleRoleChange(u.id,e.target.value)} className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="admin">Administrateur</option>
+                    <option value="ops">Ops Manager</option>
+                    <option value="finance">Finance</option>
+                    <option value="supervisor">Superviseur</option>
+                    <option value="dispatcher">Dispatcher</option>
+                  </select>
+                ):(
+                  <Badge color={roleColor(u.role)}>{roleLabel(u.role)}</Badge>
+                )}
+                {currentUser?.role==="admin"&&u.id!==currentUser?.id&&(
+                  <button onClick={()=>setConfirmDelete(u)} className="text-red-500 text-xs border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50">
+                    Supprimer
+                  </button>
+                )}
               </div>
             </div>
           ))}
         </div>
       </div>
 
+      {/* MODAL CREER COMPTE */}
       {showAddUser&&(
-        <Modal title="Creer un compte" onClose={()=>setShowAddUser(false)}
-          footer={<><button onClick={()=>setShowAddUser(false)} className="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleAddUser} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm">Creer</button></>}>
+        <Modal title="Creer un nouveau compte" onClose={()=>setShowAddUser(false)}
+          footer={<><button onClick={()=>setShowAddUser(false)} className="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleAddUser} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium">Envoyer invitation</button></>}>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700 mb-2">
+            Un lien sera genere pour que l utilisateur definisse son propre mot de passe.
+          </div>
           {userError&&<div className="bg-red-50 border border-red-200 text-red-600 text-sm px-3 py-2 rounded-lg">{userError}</div>}
-          <Input label="Nom complet" value={newUser.name} onChange={v=>setNewUser({...newUser,name:v})}/>
-          <Input label="Email" value={newUser.email} onChange={v=>setNewUser({...newUser,email:v})} type="email"/>
-          <Input label="Mot de passe" value={newUser.password} onChange={v=>setNewUser({...newUser,password:v})} type="password"/>
-          <Select label="Role" value={newUser.role} onChange={v=>setNewUser({...newUser,role:v})} options={[{value:"ops",label:"Ops Manager"},{value:"supervisor",label:"Superviseur"},{value:"finance",label:"Finance"},{value:"admin",label:"Admin"}]}/>
+          <Input label="Nom complet" value={newUser.name} onChange={v=>setNewUser({...newUser,name:v})} required/>
+          <Input label="Email" value={newUser.email} onChange={v=>setNewUser({...newUser,email:v})} type="email" required/>
+          <Select label="Role" value={newUser.role} onChange={v=>setNewUser({...newUser,role:v})} options={[
+            {value:"ops",label:"Ops Manager"},
+            {value:"supervisor",label:"Superviseur Logistique"},
+            {value:"finance",label:"Finance"},
+            {value:"dispatcher",label:"Dispatcher"},
+            {value:"admin",label:"Administrateur"},
+          ]}/>
         </Modal>
       )}
 
+      {/* MODAL CHANGER MOT DE PASSE */}
       {showChangePwd&&(
         <Modal title="Modifier mon mot de passe" onClose={()=>{setShowChangePwd(false);setPwdError("");setPwdSuccess("");}}>
           {pwdError&&<div className="bg-red-50 border border-red-200 text-red-600 text-sm px-3 py-2 rounded-lg">{pwdError}</div>}
           {pwdSuccess&&<div className="bg-emerald-50 border border-emerald-200 text-emerald-600 text-sm px-3 py-2 rounded-lg">{pwdSuccess}</div>}
           <Input label="Mot de passe actuel" value={pwdForm.current} onChange={v=>setPwdForm({...pwdForm,current:v})} type="password"/>
           <Input label="Nouveau mot de passe" value={pwdForm.next} onChange={v=>setPwdForm({...pwdForm,next:v})} type="password"/>
-          <Input label="Confirmer" value={pwdForm.confirm} onChange={v=>setPwdForm({...pwdForm,confirm:v})} type="password"/>
-          <button onClick={handleChangePwd} className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm">Modifier</button>
+          <Input label="Confirmer le nouveau mot de passe" value={pwdForm.confirm} onChange={v=>setPwdForm({...pwdForm,confirm:v})} type="password"/>
+          <button onClick={handleChangePwd} className="w-full bg-blue-600 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700">Modifier le mot de passe</button>
         </Modal>
       )}
 
@@ -1738,7 +1880,6 @@ const RbacPage = ({currentUser}) => {
     </div>
   );
 };
-
 // ============================================================
 // NAVIGATION
 // ============================================================
@@ -1891,6 +2032,11 @@ const App = () => {
       setUser(u);
     }
   };
+
+  // Verifier si c est un lien d invitation
+  const urlParams = new URLSearchParams(window.location.search);
+  const inviteToken = urlParams.get("token");
+  if (inviteToken) return <SetPasswordPage token={inviteToken} onDone={()=>window.location.href=window.location.pathname}/>;
 
   if (!user) return <LoginPage onLogin={handleLogin}/>;
 
