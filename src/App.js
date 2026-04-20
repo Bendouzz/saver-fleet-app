@@ -1784,15 +1784,20 @@ const App = () => {
   const mt = useSupabase("maintenances", mapMaintenance);
   const si = useSupabase("sites", mapSite);
 
-  // Handlers avec mapping inverse
-  const addVehicle = async (item) => {
-    const { vin, capaciteBatterie, annee, couleur, typeService, classesService, visiteDate, assuranceFin, ...rest } = item;
-    return await vh.add({ ...rest, vin_number:vin, battery_capacity_kwh:capaciteBatterie, vehicle_year:annee, vehicle_color:couleur, service_type:typeService, service_class:classesService, technical_visit_expiry:visiteDate||null, insurance_expiry:assuranceFin||null });
-  };
-  const updateVehicle = async (id, item) => {
-    const { vin, capaciteBatterie, annee, couleur, typeService, classesService, visiteDate, assuranceFin, ...rest } = item;
-    return await vh.update(id, { ...rest, vin_number:vin, battery_capacity_kwh:capaciteBatterie, vehicle_year:annee, vehicle_color:couleur, service_type:typeService, service_class:classesService, technical_visit_expiry:visiteDate||null, insurance_expiry:assuranceFin||null });
-  };
+  const buildVehiclePayload = (item) => ({
+    immat:item.immat||null, marque:item.marque||null, modele:item.modele||null,
+    site:item.site||1, autonomie:item.autonomie||0, km:item.km||0, soc:item.soc||0,
+    status:item.status||"En exploitation", typeContrat:item.typeContrat||"Interne SAVER",
+    vin_number:item.vin||null, battery_capacity_kwh:item.capaciteBatterie||null,
+    vehicle_year:item.annee||null, vehicle_color:item.couleur||null,
+    service_type:item.typeService||"VTC", service_class:item.classesService||[],
+    technical_visit_expiry:item.visiteDate||null, insurance_expiry:item.assuranceFin||null,
+    assuranceNum:item.assuranceNum||null, assuranceDebut:item.assuranceDebut||null,
+    carteGriseNum:item.carteGriseNum||null, carteGriseDate:item.carteGriseDate||null,
+    carteGriseProprietaire:item.carteGriseProprietaire||null, numeroChassis:item.numeroChassis||null,
+  });
+  const addVehicle = async (item) => await vh.add({...buildVehiclePayload(item), id:"VH-"+Date.now()});
+  const updateVehicle = async (id, item) => await vh.update(id, buildVehiclePayload(item));
 
   const addDriver = async (item) => {
     const { matricule, noteYango, typeContrat, permisNum, permisExpiration, pieceNum, pieceExpiration, contactUrgence, contactUrgenceTel, ...rest } = item;
