@@ -1819,25 +1819,40 @@ const App = () => {
   const addDriver = async (item) => await dr.add({...buildDriverPayload(item), id:"CH-"+Date.now()});
   const updateDriver = async (id, item) => await dr.update(id, buildDriverPayload(item));
 
-  const addShift = async (item) => {
-    const { type, date, checkIn, checkOut, heureDebutReelle, heureFinReelle, kmParcourus, autonomieDebut, autonomieFin, nbCourses, revenusGeneres, commissionYango, depensesAutorisees, noteYangoShift, ...rest } = item;
-    return await sh.add({ ...rest, shift_type:"Shift "+type, type, planned_start_date:date||null, date, check_in:checkIn||false, check_out:checkOut||false, real_start_time:heureDebutReelle||null, real_end_time:heureFinReelle||null, km_driven:kmParcourus||0, battery_start:autonomieDebut||0, battery_end:autonomieFin||0, courses_count:nbCourses||0, revenue_cash:revenusGeneres||0, yango_commission:commissionYango||0, authorized_expenses:depensesAutorisees||0, yango_rating:noteYangoShift||0 });
-  };
+  const buildShiftPayload = (item) => ({
+    vh:item.vh||null, ch:item.ch||null,
+    type:item.type||"A", shift_type:"Shift "+(item.type||"A"),
+    planned_start_date:item.date||null, debut:item.debut||"06:00", fin:item.fin||"14:00",
+    status:item.status||"Planifie", recette:item.recette||0,
+    check_in:item.checkIn||false, check_out:item.checkOut||false,
+    real_start_time:item.heureDebutReelle||null, real_end_time:item.heureFinReelle||null,
+    km_driven:item.kmParcourus||0, battery_start:item.autonomieDebut||0, battery_end:item.autonomieFin||0,
+    courses_count:item.nbCourses||0, revenue_cash:item.revenusGeneres||0,
+    yango_commission:item.commissionYango||0, authorized_expenses:item.depensesAutorisees||0,
+    yango_rating:item.noteYangoShift||0,
+  });
+  const addShift = async (item) => await sh.add({...buildShiftPayload(item), id:"SH-"+Date.now()});
   const updateShift = async (id, item) => {
-    const payload = {...item};
-    if(item.type) payload.shift_type = "Shift "+item.type;
+    const payload = {};
+    if(item.status!==undefined) payload.status = item.status;
+    if(item.check_in!==undefined) payload.check_in = item.check_in;
+    if(item.check_out!==undefined) payload.check_out = item.check_out;
     if(item.checkIn!==undefined) payload.check_in = item.checkIn;
     if(item.checkOut!==undefined) payload.check_out = item.checkOut;
-    if(item.heureDebutReelle!==undefined) { payload.real_start_time = item.heureDebutReelle||null; delete payload.heureDebutReelle; }
-    if(item.heureFinReelle!==undefined) { payload.real_end_time = item.heureFinReelle||null; delete payload.heureFinReelle; }
-    if(item.kmParcourus!==undefined) { payload.km_driven = item.kmParcourus; delete payload.kmParcourus; }
-    if(item.autonomieDebut!==undefined) { payload.battery_start = item.autonomieDebut; delete payload.autonomieDebut; }
-    if(item.autonomieFin!==undefined) { payload.battery_end = item.autonomieFin; delete payload.autonomieFin; }
-    if(item.nbCourses!==undefined) { payload.courses_count = item.nbCourses; delete payload.nbCourses; }
-    if(item.revenusGeneres!==undefined) { payload.revenue_cash = item.revenusGeneres; delete payload.revenusGeneres; }
-    if(item.commissionYango!==undefined) { payload.yango_commission = item.commissionYango; delete payload.commissionYango; }
-    if(item.depensesAutorisees!==undefined) { payload.authorized_expenses = item.depensesAutorisees; delete payload.depensesAutorisees; }
-    if(item.noteYangoShift!==undefined) { payload.yango_rating = item.noteYangoShift; delete payload.noteYangoShift; }
+    if(item.recette!==undefined) payload.recette = item.recette;
+    if(item.real_start_time!==undefined) payload.real_start_time = item.real_start_time;
+    if(item.real_end_time!==undefined) payload.real_end_time = item.real_end_time;
+    if(item.heureDebutReelle!==undefined) payload.real_start_time = item.heureDebutReelle||null;
+    if(item.heureFinReelle!==undefined) payload.real_end_time = item.heureFinReelle||null;
+    if(item.kmParcourus!==undefined) payload.km_driven = item.kmParcourus;
+    if(item.autonomieDebut!==undefined) payload.battery_start = item.autonomieDebut;
+    if(item.autonomieFin!==undefined) payload.battery_end = item.autonomieFin;
+    if(item.nbCourses!==undefined) payload.courses_count = item.nbCourses;
+    if(item.revenusGeneres!==undefined) { payload.revenue_cash = item.revenusGeneres; payload.recette = item.revenusGeneres; }
+    if(item.commissionYango!==undefined) payload.yango_commission = item.commissionYango;
+    if(item.depensesAutorisees!==undefined) payload.authorized_expenses = item.depensesAutorisees;
+    if(item.noteYangoShift!==undefined) payload.yango_rating = item.noteYangoShift;
+    if(item.commentaireShift!==undefined) payload.commentaireshift = item.commentaireShift;
     return await sh.update(id, payload);
   };
 
