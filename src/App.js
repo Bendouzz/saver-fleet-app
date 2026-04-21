@@ -1007,7 +1007,7 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
 // ============================================================
 // PLANNING PAGE
 // ============================================================
-const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, sites}) => {
+const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sites}) => {
   const [showModal, setShowModal] = useState(false);
   const [showDDModal, setShowDDModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -1015,6 +1015,7 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, sites}) => {
   const [filterDate, setFilterDate] = useState(new Date().toISOString().split("T")[0]);
   const [ddForm, setDDForm] = useState({});
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null);
   const sitesList = sites.length>0?sites:[{id:1,name:"Abidjan"},{id:2,name:"Yamoussoukro"}];
 
   const emptyShift = {vh:"",ch:"",type:"A",date:new Date().toISOString().split("T")[0],debut:"06:00",fin:"14:00",status:"Planifie",lieuDebut:"",lieuFin:"",responsableZone:"",recette:0,commentaireShift:""};
@@ -1199,6 +1200,11 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, sites}) => {
                         {s.status==="En cours"&&(
                           <button onClick={()=>handleCheckout(s)} className="flex-1 text-xs bg-violet-500 text-white px-2 py-1.5 rounded-lg hover:bg-violet-600 font-medium">
                             Check-out
+                          </button>
+                        )}
+                        {isTermine&&(
+                          <button onClick={()=>setConfirmDelete(s)} className="text-xs text-red-500 border border-red-200 px-2 py-1.5 rounded-lg hover:bg-red-50">
+                            Suppr.
                           </button>
                         )}
                         {isTermine&&(
@@ -2293,7 +2299,7 @@ const App = () => {
     dashboard: <DashboardPage vehicles={vh.data} drivers={dr.data} shifts={sh.data} reversements={rv.data}/>,
     vehicules: <VehiculesPage vehicles={vh.data} onAdd={addVehicle} onUpdate={updateVehicle} onDelete={vh.remove} sites={si.data}/>,
     chauffeurs: <ChauffeursPage drivers={dr.data} vehicles={vh.data} onAdd={addDriver} onUpdate={updateDriver} onDelete={dr.remove} sites={si.data}/>,
-    planning: <PlanningPage shifts={sh.data} vehicles={vh.data} drivers={dr.data} onAdd={addShift} onUpdate={updateShift} sites={si.data}/>,
+    planning: <PlanningPage shifts={sh.data} vehicles={vh.data} drivers={dr.data} onAdd={addShift} onUpdate={updateShift} onDelete={sh.remove} sites={si.data}/>,
     reversements: <ReversementsPage reversements={rv.data} drivers={dr.data} onAdd={addReversement} onUpdate={updateReversement} onDelete={rv.remove}/>,
     kpi: <KpiPaiePage drivers={dr.data} shifts={sh.data}/>,
     recharge: <RechargePage recharges={rc.data} vehicles={vh.data} drivers={dr.data} onAdd={addRecharge} onUpdate={updateRecharge} onDelete={rc.remove}/>,
