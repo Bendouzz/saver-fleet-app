@@ -1259,10 +1259,7 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
       )}
 
       {/* MODAL DD DRIVING DATAS */}
-      {showDDModal&&selectedShift&&(()=>{
-        const driver = getDriver(selectedShift.ch);
-        const vehicle = getVehicle(selectedShift.vh);
-        return (
+      {showDDModal&&selectedShift&&(()=>{const driver=getDriver(selectedShift.ch);const vehicle=getVehicle(selectedShift.vh);return(
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
             <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto my-4">
               {/* Header DD */}
@@ -1373,9 +1370,20 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
               </div>
             </div>
           </div>
-        );
+      );
       })()}
-      {confirmDelete&&<Confirm msg={"Supprimer ce shift ?"} onConfirm={async()=>{await onDelete(confirmDelete.id);setConfirmDelete(null);}} onCancel={()=>setConfirmDelete(null)}/>}
+      {confirmDelete&&(
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6">
+            <h3 className="font-bold text-slate-900 mb-2">Supprimer ce shift ?</h3>
+            <p className="text-sm text-slate-500 mb-4">Cette action est irreversible.</p>
+            <div className="flex gap-3">
+              <button onClick={()=>setConfirmDelete(null)} className="flex-1 border border-slate-200 py-2 rounded-lg text-sm">Annuler</button>
+              <button onClick={async()=>{await onDelete(confirmDelete.id);setConfirmDelete(null);}} className="flex-1 bg-red-600 text-white py-2 rounded-lg text-sm font-medium">Supprimer</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
