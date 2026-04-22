@@ -1375,6 +1375,7 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
           </div>
         );
       })()}
+      {confirmDelete&&<Confirm msg={"Supprimer ce shift ?"} onConfirm={async()=>{await onDelete(confirmDelete.id);setConfirmDelete(null);}} onCancel={()=>setConfirmDelete(null)}/>}
     </div>
   );
 };
