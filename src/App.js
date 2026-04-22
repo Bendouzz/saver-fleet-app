@@ -1394,81 +1394,150 @@ const ReversementsPage = ({reversements, drivers, onAdd, onUpdate, onDelete}) =>
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
-  const [filterPeriode, setFilterPeriode] = useState("all");
   const [filterDriver, setFilterDriver] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
 
   const emptyForm = {ch:"",montant:0,canal:"Wave Business",date:new Date().toISOString().split("T")[0],status:"En attente",ecart:0,depensesAutorisees:0,preuve:"",commentaire:""};
   const [form, setForm] = useState(emptyForm);
 
   const openAdd = () => { setForm(emptyForm); setEditItem(null); setShowModal(true); };
-  const openEdit = (r) => { setForm({...emptyForm,...r}); setEditItem(r); setShowModal(true); };
+  const openEdit = (r) => {
+    setForm({...emptyForm,
+      ch:r.ch||"", montant:r.montant||0, canal:r.canal||"Wave Business",
+      date:r.date||"", status:r.status||"En attente", ecart:r.ecart||0,
+      depensesAutorisees:r.authorized_expenses||r.depensesAutorisees||0,
+      preuve:r.transaction_proof_url||r.preuve||"",
+      commentaire:r.commentaire||""
+    });
+    setEditItem(r);
+    setShowModal(true);
+  };
+
+  // Calcul ecart automatique - tolerance 1% frais Wave
+  const calcEcart = (montantVerse, montantDeclare, depenses, canal) => {
+    const tolerance = canal==="Wave Business" ? montantDeclare * 0.01 : 0;
+    const montantAttendu = montantDeclare - depenses;
+    const ecart = montantAttendu - montantVerse - tolerance;
+    return Math.max(0, Math.round(ecart));
+  };
 
   const handleSave = async () => {
     if(!form.ch||!form.montant) return alert("Chauffeur et montant requis");
+    const ecartAuto = calcEcart(form.montant, form.montant, form.depensesAutorisees||0, form.canal);
+    const statusAuto = ecartAuto > 0 ? "Ecart detecte" : form.status;
     const payload = {
-      ch:form.ch, driver_id:form.ch,
-      montant:form.montant, amount_sent:form.montant, amount_requested:form.montant,
-      canal:form.canal, date:form.date, status:form.status,
-      ecart:form.ecart||0, authorized_expenses:form.depensesAutorisees||0,
-      transaction_proof_url:form.preuve||"",
+      ch:form.ch, montant:form.montant, canal:form.canal,
+      date:form.date, status:statusAuto, ecart:ecartAuto||form.ecart||0,
+      authorized_expenses:form.depensesAutorisees||0,
+      transaction_proof_url:form.preuve||null,
+      commentaire:form.commentaire||null,
     };
-    if(editItem){await onUpdate(editItem.id,payload);}
-    else{await onAdd({...payload,id:"RV-"+Date.now()});}
+    if(editItem){await onUpdate(editItem.id, payload);}
+    else{await onAdd({...payload, id:"RV-"+Date.now()});}
     setShowModal(false);
   };
 
   const filtered = reversements
-    .filter(r=>filterDriver==="all"||r.ch===filterDriver);
+    .filter(r=>filterDriver==="all"||r.ch===filterDriver)
+    .filter(r=>filterStatus==="all"||r.status===filterStatus);
 
   const total = filtered.reduce((a,r)=>a+(r.montant||0),0);
-  const ecarts = filtered.filter(r=>r.ecart>0||r.status==="Ecart detecte"||r.status==="Écart détecté");
+  const totalEcart = filtered.reduce((a,r)=>a+(r.ecart||0),0);
+  const nbEcarts = filtered.filter(r=>(r.ecart||0)>0).length;
+  const nbEnAttente = filtered.filter(r=>r.status==="En attente").length;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl font-bold text-slate-900">Recettes et Reversements</h1>
-        <button onClick={openAdd} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">+ Ajouter</button>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Recettes et Reversements</h1>
+          <p className="text-xs text-slate-500 mt-0.5">Suivi quotidien des versements Wave / Orange Money</p>
+        </div>
+        <button onClick={openAdd} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
+          Ajouter reversement
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard label="Total reverse" value={fmtK(total)+" F"} color="text-emerald-600"/>
-        <StatCard label="Valides" value={filtered.filter(r=>r.status==="Validé"||r.status==="Valide"||r.status==="Complété").length.toString()} color="text-emerald-600"/>
-        <StatCard label="Ecarts detectes" value={ecarts.length.toString()} color="text-red-600"/>
-        <StatCard label="En attente" value={filtered.filter(r=>r.status==="En attente").length.toString()} color="text-amber-600"/>
+        <StatCard label="En attente" value={nbEnAttente.toString()} color="text-amber-600"/>
+        <StatCard label="Ecarts detectes" value={nbEcarts.toString()} color="text-red-600"/>
+        <StatCard label="Total ecarts" value={fmtK(totalEcart)+" F"} color="text-red-600"/>
       </div>
 
+      {/* Alerte ecarts */}
+      {nbEcarts > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+          <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+          <div>
+            <div className="font-semibold text-red-800 text-sm">{nbEcarts} ecart(s) detecte(s)</div>
+            <div className="text-xs text-red-700 mt-0.5">Total des ecarts : {fmt(totalEcart)} — Verifier les reversements en rouge</div>
+          </div>
+        </div>
+      )}
+
+      {/* Filtres */}
       <div className="flex gap-3 flex-wrap">
         <select value={filterDriver} onChange={e=>setFilterDriver(e.target.value)} className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white">
           <option value="all">Tous les chauffeurs</option>
           {drivers.map(d=><option key={d.id} value={d.id}>{d.prenom} {d.nom}</option>)}
         </select>
+        <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)} className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white">
+          <option value="all">Tous les statuts</option>
+          <option value="En attente">En attente</option>
+          <option value="Validé">Valides</option>
+          <option value="Ecart detecte">Ecarts detectes</option>
+        </select>
       </div>
 
+      {/* Table */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
         <table className="w-full">
           <thead><tr className="bg-slate-50 border-b border-slate-200">
             <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Chauffeur</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Montant</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Montant verse</th>
             <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Canal</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Depenses</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Depenses aut.</th>
             <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Preuve</th>
             <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Date</th>
             <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Ecart</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Statut</th>
             <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Actions</th>
           </tr></thead>
           <tbody>
+            {filtered.length===0&&<tr><td colSpan={9} className="text-center py-8 text-slate-400 text-sm">Aucun reversement</td></tr>}
             {filtered.map(r=>{
               const driver=drivers.find(d=>d.id===r.ch);
+              const hasEcart = (r.ecart||0)>0;
+              const depenses = r.authorized_expenses||r.depensesAutorisees||0;
               return (
-                <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="px-4 py-3 text-sm font-medium text-slate-700">{driver?`${driver.prenom} ${driver.nom}`:"—"}</td>
+                <tr key={r.id} className={"border-b border-slate-100 hover:bg-slate-50"+(hasEcart?" bg-red-50/30":"")}>
+                  <td className="px-4 py-3">
+                    <div className="font-medium text-sm text-slate-800">{driver?driver.prenom+" "+driver.nom:"—"}</div>
+                    <div className="text-xs text-slate-400">{driver?.matricule||""}</div>
+                  </td>
                   <td className="px-4 py-3 text-sm font-semibold text-emerald-600">{fmt(r.montant||0)}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600">{r.canal}</td>
-                  <td className="px-4 py-3 text-sm text-amber-600">{r.depensesAutorisees>0?fmt(r.depensesAutorisees):"—"}</td>
-                  <td className="px-4 py-3">{r.preuve?<a href={r.preuve} target="_blank" rel="noreferrer" className="text-xs text-blue-600 underline">Voir</a>:<span className="text-xs text-slate-400">—</span>}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600">{r.date}</td>
-                  <td className="px-4 py-3">{r.ecart>0?<span className="text-xs font-semibold text-red-600">-{fmt(r.ecart)}</span>:<span className="text-xs text-emerald-500">OK</span>}</td>
+                  <td className="px-4 py-3"><Badge color="bg-blue-100 text-blue-700">{r.canal||"—"}</Badge></td>
+                  <td className="px-4 py-3 text-sm text-amber-600">{depenses>0?fmt(depenses):"—"}</td>
+                  <td className="px-4 py-3">
+                    {(r.transaction_proof_url||r.preuve)?
+                      <a href={r.transaction_proof_url||r.preuve} target="_blank" rel="noreferrer" className="text-xs text-blue-600 underline flex items-center gap-1">
+                        Voir preuve
+                      </a>:
+                      <span className="text-xs text-slate-400">Pas de preuve</span>
+                    }
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-600">{r.date||"—"}</td>
+                  <td className="px-4 py-3">
+                    {hasEcart?
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-100 px-2 py-1 rounded-full">
+                        -{fmt(r.ecart||0)}
+                      </span>:
+                      <span className="text-xs text-emerald-500 font-medium">OK</span>
+                    }
+                  </td>
                   <td className="px-4 py-3"><Badge color={sc(r.status)}>{r.status}</Badge></td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
@@ -1484,26 +1553,41 @@ const ReversementsPage = ({reversements, drivers, onAdd, onUpdate, onDelete}) =>
         </table>
       </div>
 
+      {/* MODAL */}
       {showModal&&(
         <Modal title={editItem?"Modifier reversement":"Ajouter reversement"} onClose={()=>setShowModal(false)}
-          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm">{editItem?"Enregistrer":"Ajouter"}</button></>}>
+          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium">{editItem?"Enregistrer":"Ajouter"}</button></>}>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-700 mb-2">
+            L ecart est calcule automatiquement. Tolerance de 1% pour les frais Wave Business.
+          </div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2"><Select label="Chauffeur" value={form.ch} onChange={v=>setForm({...form,ch:v})} options={[{value:"",label:"-- Choisir --"},...drivers.map(d=>({value:d.id,label:`${d.prenom} ${d.nom}`}))]}/></div>
-            <Input label="Montant (F CFA)" value={form.montant} onChange={v=>setForm({...form,montant:parseInt(v)||0})} type="number" required/>
+            <div className="col-span-2">
+              <Select label="Chauffeur" value={form.ch} onChange={v=>setForm({...form,ch:v})} options={[{value:"",label:"-- Choisir --"},...drivers.map(d=>({value:d.id,label:d.prenom+" "+d.nom+" ("+(d.matricule||d.id)+")"}))]}/> 
+            </div>
+            <Input label="Montant verse (F CFA)" value={form.montant} onChange={v=>setForm({...form,montant:parseInt(v)||0})} type="number" required/>
             <Select label="Canal" value={form.canal} onChange={v=>setForm({...form,canal:v})} options={["Wave Business","Orange Money Business","MTN Mobile Money","Moov Money","Cash"]}/>
             <Input label="Date" value={form.date} onChange={v=>setForm({...form,date:v})} type="date"/>
-            <Select label="Statut" value={form.status} onChange={v=>setForm({...form,status:v})} options={["En attente","Validé","Rejete","Ecart detecte"]}/>
             <Input label="Depenses autorisees (F CFA)" value={form.depensesAutorisees||0} onChange={v=>setForm({...form,depensesAutorisees:parseInt(v)||0})} type="number"/>
-            <Input label="Ecart detecte (F CFA)" value={form.ecart||0} onChange={v=>setForm({...form,ecart:parseInt(v)||0})} type="number"/>
-            <div className="col-span-2"><Input label="URL preuve de paiement (screenshot Wave...)" value={form.preuve||""} onChange={v=>setForm({...form,preuve:v})} placeholder="https://..."/></div>
+            <div className="col-span-2">
+              <Input label="URL preuve de paiement (screenshot Wave / Orange Money)" value={form.preuve||""} onChange={v=>setForm({...form,preuve:v})} placeholder="https://..."/>
+            </div>
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-slate-700 mb-1">Commentaire</label>
+              <textarea value={form.commentaire||""} onChange={e=>setForm({...form,commentaire:e.target.value})} rows={2} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Remarques eventuelles..."/>
+            </div>
           </div>
+          {form.montant>0&&(
+            <div className="bg-slate-50 rounded-lg p-3 mt-2 text-xs text-slate-600">
+              Ecart calcule automatiquement : {fmt(calcEcart(form.montant,form.montant,form.depensesAutorisees||0,form.canal))} 
+              {form.canal==="Wave Business"&&<span className="text-slate-400"> (tolerance 1% frais Wave deduite)</span>}
+            </div>
+          )}
         </Modal>
       )}
-      {confirmDelete&&<Confirm msg={"Supprimer ce reversement ?"} onConfirm={async()=>{await onDelete(confirmDelete.id);setConfirmDelete(null);}} onCancel={()=>setConfirmDelete(null)}/>}
+      {confirmDelete&&<Confirm msg={"Supprimer le reversement de "+(drivers.find(d=>d.id===confirmDelete.ch)?.prenom||"ce chauffeur")+" ?"} onConfirm={async()=>{await onDelete(confirmDelete.id);setConfirmDelete(null);}} onCancel={()=>setConfirmDelete(null)}/>}
     </div>
   );
 };
-
 // ============================================================
 // KPI & PAIE PAGE - Nouveau systeme SAVER
 // ============================================================
@@ -2261,14 +2345,22 @@ const App = () => {
     return await sh.update(id, payload);
   };
 
-  const addReversement = async (item) => {
-    const { ch, montant, depensesAutorisees, preuve, ...rest } = item;
-    return await rv.add({ ...rest, ch, driver_id:ch, montant, amount_sent:montant, amount_requested:montant, authorized_expenses:depensesAutorisees||0, transaction_proof_url:preuve||"" });
-  };
-  const updateReversement = async (id, item) => {
-    const { ch, montant, depensesAutorisees, preuve, ...rest } = item;
-    return await rv.update(id, { ...rest, ch, driver_id:ch, montant, amount_sent:montant, amount_requested:montant, authorized_expenses:depensesAutorisees||0, transaction_proof_url:preuve||"" });
-  };
+  const buildReversementPayload = (item) => ({
+    ch: item.ch||null,
+    driver_id: item.ch||null,
+    montant: item.montant||0,
+    amount_sent: item.montant||0,
+    amount_requested: item.montant||0,
+    canal: item.canal||"Wave Business",
+    date: item.date||new Date().toISOString().split("T")[0],
+    status: item.status||"En attente",
+    ecart: item.ecart||0,
+    authorized_expenses: item.depensesAutorisees||0,
+    transaction_proof_url: item.preuve||null,
+    commentaire: item.commentaire||null,
+  });
+  const addReversement = async (item) => await rv.add({...buildReversementPayload(item), id:"RV-"+Date.now()});
+  const updateReversement = async (id, item) => await rv.update(id, buildReversementPayload(item));
 
   const addRecharge = async (item) => {
     const { kWh, socAv, socAp, ...rest } = item;
