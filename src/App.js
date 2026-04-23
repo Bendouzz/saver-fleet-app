@@ -1606,15 +1606,15 @@ const KpiPaiePage = ({drivers, shifts}) => {
     const salaireBase = joursTravailes * FIXE_JOURNALIER;
 
     const totalRecettesNettes = shiftsDriver.reduce((a,s)=>{
-      const rev = s.revenusGeneres||s.recette||0;
-      const commission = s.commissionYango||0;
+      const rev = s.revenue_cash||s.revenusGeneres||s.recette||0;
+      const commission = s.yango_commission||s.commissionYango||0;
       return a + (rev - commission);
     },(0));
 
     const objectifRecettes = joursTravailes * KPI_RECETTES;
     const surplus = Math.max(0, totalRecettesNettes - objectifRecettes);
 
-    const totalCourses = shiftsDriver.reduce((a,s)=>a+(s.nbCourses||0),0);
+    const totalCourses = shiftsDriver.reduce((a,s)=>a+(s.courses_count||s.nbCourses||0),0);
     const objectifCourses = joursTravailes * KPI_COURSES;
     const coursesSup = Math.max(0, totalCourses - objectifCourses);
 
@@ -1637,11 +1637,80 @@ const KpiPaiePage = ({drivers, shifts}) => {
     return { d, joursTravailes, salaireBase, totalRecettesNettes, objectifRecettes, surplus, totalCourses, objectifCourses, coursesSup, palierPct, bonus, avances, manquants, net };
   };
 
-  const paies = drivers.filter(d=>d.status==="Actif").map(calcPaie);
+  // Filtrer les shifts par periode
+  const shiftsFiltres = (periodeDebut && periodeFin)
+    ? shifts.filter(s => {
+        const d = s.planned_start_date||s.date||"";
+        return d >= periodeDebut && d <= periodeFin;
+      })
+    : shifts;
+
+  const calcPaieFiltre = (d) => {
+    const shiftsDriver = shiftsFiltres.filter(s=>(s.status==="Terminé"||s.status==="Termine")&&s.ch===d.id);
+    const joursTravailes = shiftsDriver.length;
+    const salaireBase = joursTravailes * FIXE_JOURNALIER;
+    const totalRecettesNettes = shiftsDriver.reduce((a,s)=>{
+      const rev = s.revenue_cash||s.revenusGeneres||s.recette||0;
+      const commission = s.yango_commission||s.commissionYango||0;
+      return a + (rev - commission);
+    },0);
+    const objectifRecettes = joursTravailes * KPI_RECETTES;
+    const surplus = Math.max(0, totalRecettesNettes - objectifRecettes);
+    const totalCourses = shiftsDriver.reduce((a,s)=>a+(s.courses_count||s.nbCourses||0),0);
+    const objectifCourses = joursTravailes * KPI_COURSES;
+    const coursesSup = Math.max(0, totalCourses - objectifCourses);
+    let palierPct = 0;
+    if(coursesSup>=36) palierPct=0.75;
+    else if(coursesSup>=26) palierPct=0.50;
+    else if(coursesSup>=20) palierPct=0.35;
+    else if(coursesSup>=11) palierPct=0.25;
+    else if(coursesSup>=1) palierPct=0.10;
+    const bonusBrut = surplus * palierPct;
+    const bonus = Math.min(bonusBrut, BONUS_MAX);
+    const avances = shiftsDriver.reduce((a,s)=>a+(s.authorized_expenses||0),0);
+    const manquants = d.dettes||0;
+    const net = salaireBase + bonus - avances - manquants;
+    return { d, joursTravailes, salaireBase, totalRecettesNettes, objectifRecettes, surplus, totalCourses, objectifCourses, coursesSup, palierPct, bonus, avances, manquants, net };
+  };
+
+  const paies = drivers.filter(d=>d.status==="Actif").map(calcPaieFiltre);
+
+  const exportCSV = () => {
+    const header = "Chauffeur,Matricule,Jours,Recettes nettes,Surplus,Courses sup,Palier,Salaire base,Bonus,Deductions,NET A PAYER";
+    const rows = paies.map(({d,joursTravailes,totalRecettesNettes,surplus,coursesSup,palierPct,salaireBase,bonus,avances,manquants,net})=>
+      `${d.prenom} ${d.nom},${d.matricule||d.driver_code||""},${joursTravailes},${Math.round(totalRecettesNettes)},${Math.round(surplus)},${coursesSup},${Math.round(palierPct*100)}%,${salaireBase},${Math.round(bonus)},${Math.round(avances+manquants)},${Math.round(net)}`
+    );
+    const csv = [header,...rows].join("\n");
+    const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "paie_easy_by_saver.csv"; a.click();
+  };
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900">KPI, Paie et Incentives</h1>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h1 className="text-2xl font-bold text-slate-900">KPI, Paie et Incentives</h1>
+        <button onClick={exportCSV} className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Exporter CSV
+        </button>
+      </div>
+
+      {/* Filtre periode */}
+      <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-wrap items-center gap-4">
+        <div className="font-semibold text-slate-700 text-sm">Periode de calcul :</div>
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-slate-500">Du</label>
+          <input type="date" value={periodeDebut} onChange={e=>setPeriodeDebut(e.target.value)} className="text-sm border border-slate-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-slate-500">Au</label>
+          <input type="date" value={periodeFin} onChange={e=>setPeriodeFin(e.target.value)} className="text-sm border border-slate-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+        </div>
+        {(periodeDebut||periodeFin)&&<button onClick={()=>{setPeriodeDebut("");setPeriodeFin("");}} className="text-xs text-slate-500 hover:text-red-500 border border-slate-200 px-3 py-1.5 rounded-lg">Effacer</button>}
+        <div className="ml-auto text-xs text-slate-400">{paies.length} chauffeur(s) actifs · {shiftsFiltres.filter(s=>s.status==="Terminé"||s.status==="Termine").length} shifts termines</div>
+      </div>
 
       <div className="bg-white rounded-xl border border-slate-200 p-6">
         <h2 className="font-semibold text-slate-900 mb-4">Regles de remuneration SAVER</h2>
