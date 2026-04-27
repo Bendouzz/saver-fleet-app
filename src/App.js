@@ -357,11 +357,11 @@ const LoginPage = ({onLogin}) => {
           {error && <div className="bg-red-500/20 border border-red-500/50 text-red-200 text-sm px-4 py-2 rounded-lg mb-4">{error}</div>}
 
           <div className="space-y-4">
-            {/* Email */}
+            {/* Login / Email */}
             <div>
-              <label className="block text-sm text-blue-200 mb-1.5">Email</label>
+              <label className="block text-sm text-blue-200 mb-1.5">Login</label>
               <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
-                placeholder="votre@email.com"
+                placeholder="votre@email.com" autoFocus
                 className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-400"/>
             </div>
 
@@ -371,7 +371,7 @@ const LoginPage = ({onLogin}) => {
               <select value={role} onChange={e=>{
                 setRole(e.target.value);
                 const found = ROLE_ACCOUNTS.find(r=>r.role===e.target.value);
-                if(found) setEmail(found.email);
+                if(found && !email) setEmail(found.email);
               }} className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-emerald-400 [&>option]:bg-slate-800">
                 <option value="">-- Choisir votre role --</option>
                 {ROLE_ACCOUNTS.map(r=><option key={r.role} value={r.role}>{r.label}</option>)}
