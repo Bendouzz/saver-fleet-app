@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import * as XLSX from "xlsx";
 import { createClient } from "@supabase/supabase-js";
 
 // ============================================================
@@ -124,12 +125,17 @@ const mapDriver = (r) => ({
   noteYango: r.yango_score || 4.0,
   noteInterne: r.internal_score || 80,
   telephone: r.telephone || "",
-  telephonePerso: r.telephonePerso || "",
+  telephonePerso: r.telephoneperso || r.telephonePerso || "",
   adresse: r.adresse || "",
   dettes: r.dettes || 0,
+  detteCommentaire: r.dettecommentaire || r.detteCommentaire || "",
   commentaires: r.commentaires || "",
   vehicule: r.vehicule || "",
   shift: r.shift || "A",
+  permisType: r.permistype || r.permisType || "",
+  permisDelivrance: r.permisdelivrance || r.permisDelivrance || "",
+  pieceType: r.piecetype || r.pieceType || "CNI",
+  pieceDelivrance: r.piecedelivrance || r.pieceDelivrance || "",
 });
 
 const mapShift = (r) => ({
@@ -316,20 +322,18 @@ const RoleIcon = ({icon}) => {
 };
 
 const LoginPage = ({onLogin}) => {
-  const [selectedRole, setSelectedRole] = useState(null);
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [customEmail, setCustomEmail] = useState("");
-  const [useCustom, setUseCustom] = useState(false);
+  const [role, setRole] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    const emailToCheck = useCustom ? customEmail : selectedRole?.email;
-    if (!emailToCheck) return setError("Veuillez choisir un profil ou saisir votre email");
+    if (!email) return setError("Email requis");
     if (!password) return setError("Mot de passe requis");
     setError(""); setLoading(true);
     const users = await getUsers();
-    const found = users.find(u => u.email===emailToCheck && u.password===password);
+    const found = users.find(u => u.email===email && u.password===password);
     setLoading(false);
     if (!found) return setError("Email ou mot de passe incorrect");
     if (found.invite_pending) return setError("Vous devez d abord definir votre mot de passe via le lien d invitation");
@@ -338,7 +342,7 @@ const LoginPage = ({onLogin}) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
@@ -348,86 +352,52 @@ const LoginPage = ({onLogin}) => {
         </div>
 
         <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-8 border border-white/20">
-          <h2 className="text-white font-semibold text-center mb-5">Choisissez votre profil</h2>
+          <h2 className="text-white font-semibold text-center mb-6">Connexion</h2>
 
-          {/* Grille des roles */}
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            {ROLE_ACCOUNTS.map(r=>(
-              <button key={r.role} onClick={()=>{setSelectedRole(r);setError("");setPassword("");}}
-                className={"flex items-center gap-3 p-3 rounded-xl border transition-all "+(selectedRole?.role===r.role?"border-white bg-white/20 scale-105":"border-white/20 bg-white/5 hover:bg-white/10")}>
-                <div className={"w-9 h-9 rounded-lg bg-gradient-to-br "+r.color+" flex items-center justify-center flex-shrink-0"}>
-                  <RoleIcon icon={r.icon}/>
-                </div>
-                <span className="text-white text-xs font-medium text-left leading-tight">{r.label}</span>
-              </button>
-            ))}
-          </div>
+          {error && <div className="bg-red-500/20 border border-red-500/50 text-red-200 text-sm px-4 py-2 rounded-lg mb-4">{error}</div>}
 
-          {/* Mot de passe — visible seulement si role selectionne */}
-          {selectedRole && (
-            <div className="space-y-4">
-              <div className={"p-3 rounded-xl bg-gradient-to-r "+selectedRole.color+" flex items-center gap-3"}>
-                <RoleIcon icon={selectedRole.icon}/>
-                <div>
-                  <div className="text-white text-sm font-semibold">{selectedRole.label}</div>
-                  <div className="text-white/70 text-xs">{selectedRole.email}</div>
-                </div>
-              </div>
-              {error && <div className="bg-red-500/20 border border-red-500/50 text-red-200 text-sm px-4 py-2 rounded-lg">{error}</div>}
-              <div>
-                <label className="block text-sm text-blue-200 mb-1.5">Mot de passe</label>
-                <input type="password" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleLogin()} placeholder="••••••••" autoFocus
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-400"/>
-              </div>
-              <button onClick={handleLogin} disabled={loading}
-                className={"w-full bg-gradient-to-r "+selectedRole.color+" text-white py-3 rounded-lg font-semibold transition-all shadow-lg disabled:opacity-50 hover:opacity-90"}>
-                {loading ? "Connexion..." : "Se connecter en tant que "+selectedRole.label}
-              </button>
-              <button onClick={()=>setSelectedRole(null)} className="w-full text-blue-300 text-sm hover:text-white transition-colors">
-                Changer de profil
-              </button>
+          <div className="space-y-4">
+            {/* Email */}
+            <div>
+              <label className="block text-sm text-blue-200 mb-1.5">Email</label>
+              <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
+                placeholder="votre@email.com"
+                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-400"/>
             </div>
-          )}
 
-          {!selectedRole && error && <div className="bg-red-500/20 border border-red-500/50 text-red-200 text-sm px-4 py-2 rounded-lg mt-3">{error}</div>}
+            {/* Role */}
+            <div>
+              <label className="block text-sm text-blue-200 mb-1.5">Role</label>
+              <select value={role} onChange={e=>{
+                setRole(e.target.value);
+                const found = ROLE_ACCOUNTS.find(r=>r.role===e.target.value);
+                if(found) setEmail(found.email);
+              }} className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-emerald-400 [&>option]:bg-slate-800">
+                <option value="">-- Choisir votre role --</option>
+                {ROLE_ACCOUNTS.map(r=><option key={r.role} value={r.role}>{r.label}</option>)}
+                <option value="custom">Autre compte</option>
+              </select>
+            </div>
 
-          {/* Option connexion avec email perso */}
-          {!selectedRole && !useCustom && (
-            <button onClick={()=>setUseCustom(true)} className="w-full text-blue-300 text-sm hover:text-white transition-colors mt-3 text-center">
-              Connexion avec mon propre email
+            {/* Mot de passe */}
+            <div>
+              <label className="block text-sm text-blue-200 mb-1.5">Mot de passe</label>
+              <input type="password" value={password} onChange={e=>setPassword(e.target.value)}
+                onKeyDown={e=>e.key==="Enter"&&handleLogin()}
+                placeholder="••••••••"
+                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-400"/>
+            </div>
+
+            <button onClick={handleLogin} disabled={loading}
+              className="w-full bg-gradient-to-r from-emerald-500 to-blue-500 text-white py-3 rounded-lg font-semibold hover:from-emerald-600 hover:to-blue-600 transition-all shadow-lg disabled:opacity-50">
+              {loading ? "Connexion..." : "Se connecter"}
             </button>
-          )}
-
-          {useCustom && (
-            <div className="space-y-4 mt-3">
-              <div className="p-3 rounded-xl bg-white/10 border border-white/20">
-                <div className="text-white text-sm font-semibold mb-1">Connexion personnalisee</div>
-                <div className="text-white/60 text-xs">Pour les comptes crees par l administrateur</div>
-              </div>
-              {error && <div className="bg-red-500/20 border border-red-500/50 text-red-200 text-sm px-4 py-2 rounded-lg">{error}</div>}
-              <div>
-                <label className="block text-sm text-blue-200 mb-1.5">Votre email</label>
-                <input type="email" value={customEmail} onChange={e=>setCustomEmail(e.target.value)} placeholder="votre@email.com" autoFocus
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-400"/>
-              </div>
-              <div>
-                <label className="block text-sm text-blue-200 mb-1.5">Mot de passe</label>
-                <input type="password" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleLogin()} placeholder="••••••••"
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-400"/>
-              </div>
-              <button onClick={handleLogin} disabled={loading}
-                className="w-full bg-gradient-to-r from-emerald-500 to-blue-500 text-white py-3 rounded-lg font-semibold hover:opacity-90 transition-all shadow-lg disabled:opacity-50">
-                {loading ? "Connexion..." : "Se connecter"}
-              </button>
-              <button onClick={()=>{setUseCustom(false);setError("");setCustomEmail("");}} className="w-full text-blue-300 text-sm hover:text-white transition-colors">
-                Retour aux profils
-              </button>
-            </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
   );
+
 };
 
 // ============================================================
@@ -655,7 +625,7 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
               <h3 className="text-xs font-semibold text-slate-500 uppercase">Technique</h3>
-              {[["VIN",v.vin],["Chassis",v.numeroChassis],["Autonomie",v.autonomie+"km"],["Batterie",v.capaciteBatterie+"kWh"],["Classes",(v.classesService||[]).join(", ")||"—"]].map(([l,val])=>(
+              {[["Num. Chassis",v.vin||v.numeroChassis||"—"],["Autonomie",v.autonomie+"km"],["Batterie",(v.capaciteBatterie||"—")+"kWh"],["Classes",(v.classesService||[]).join(", ")||"—"],["Carte grise",v.carteGriseNum||"—"],["Visite tech.",v.visiteDate||v.technical_visit_expiry||"—"],["Assurance",v.assuranceFin||v.insurance_expiry||"—"]].map(([l,val])=>(
                 <div key={l} className="flex justify-between py-1.5 border-b border-slate-100"><span className="text-xs text-slate-500">{l}</span><span className="text-xs font-medium text-slate-700">{val||"—"}</span></div>
               ))}
               <div className="flex justify-between py-1.5 border-b border-slate-100"><span className="text-xs text-slate-500">Km</span><span className="text-xs font-medium text-slate-700">{(v.km||0).toLocaleString()}</span></div>
@@ -740,10 +710,20 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
               <div className="col-span-2"><Input label="Immatriculation" value={form.immat} onChange={v=>setForm({...form,immat:v})} required placeholder="Ex: AB-1234-CI"/></div>
               <Input label="Marque" value={form.marque} onChange={v=>setForm({...form,marque:v})} placeholder="BYD"/>
               <Input label="Modele" value={form.modele} onChange={v=>setForm({...form,modele:v})} placeholder="e6"/>
-              <Input label="Couleur" value={form.couleur} onChange={v=>setForm({...form,couleur:v})}/>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Couleur</label>
+                <div className="flex gap-2 flex-wrap">
+                  {["Blanc","Noir","Gris","Argent","Bleu","Rouge","Vert","Jaune","Orange","Marron","Beige","Autre"].map(c=>(
+                    <button key={c} type="button" onClick={()=>setForm({...form,couleur:c})}
+                      className={"px-3 py-1.5 rounded-lg text-xs font-medium border transition-all "+(form.couleur===c?"bg-blue-600 text-white border-blue-600":"bg-white text-slate-600 border-slate-200 hover:border-blue-300")}>
+                      {c}
+                    </button>
+                  ))}
+                </div>
+                {form.couleur&&<div className="text-xs text-slate-500 mt-1">Selectionnee : <strong>{form.couleur}</strong></div>}
+              </div>
               <Input label="Annee" value={form.annee} onChange={v=>setForm({...form,annee:parseInt(v)||new Date().getFullYear()})} type="number"/>
-              <Input label="VIN" value={form.vin} onChange={v=>setForm({...form,vin:v})} placeholder="17 caracteres"/>
-              <Input label="N Chassis" value={form.numeroChassis} onChange={v=>setForm({...form,numeroChassis:v})}/>
+              <Input label="Numero de Chassis (VIN)" value={form.vin} onChange={v=>setForm({...form,vin:v,numeroChassis:v})} placeholder="Ex: VF1RFD00X56789012"/>
               <Input label="Capacite batterie (kWh)" value={form.capaciteBatterie} onChange={v=>setForm({...form,capaciteBatterie:parseInt(v)||0})} type="number"/>
               <Input label="Autonomie (km)" value={form.autonomie} onChange={v=>setForm({...form,autonomie:parseInt(v)||0})} type="number"/>
               <Input label="Kilometrage" value={form.km} onChange={v=>setForm({...form,km:parseInt(v)||0})} type="number"/>
@@ -808,7 +788,7 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
   const filtered = drivers.filter(d=>!search||`${d.prenom} ${d.nom}`.toLowerCase().includes(search.toLowerCase()));
 
   const genMatricule = (prenom, nom) => {
-    const base=((prenom||"X")[0]+(nom||"X")[0]).toUpperCase();
+    const base=((nom||"X")[0]+(prenom||"X")[0]).toUpperCase();
     const count=drivers.filter(d=>(d.matricule||"").startsWith(base)).length+1;
     return base+"-"+String(count).padStart(2,"0");
   };
@@ -1675,25 +1655,99 @@ const KpiPaiePage = ({drivers, shifts}) => {
 
   const paies = drivers.filter(d=>d.status==="Actif").map(calcPaieFiltre);
 
-  const exportCSV = () => {
-    const header = "Chauffeur,Matricule,Jours,Recettes nettes,Surplus,Courses sup,Palier,Salaire base,Bonus,Deductions,NET A PAYER";
-    const rows = paies.map(({d,joursTravailes,totalRecettesNettes,surplus,coursesSup,palierPct,salaireBase,bonus,avances,manquants,net})=>
-      `${d.prenom} ${d.nom},${d.matricule||d.driver_code||""},${joursTravailes},${Math.round(totalRecettesNettes)},${Math.round(surplus)},${coursesSup},${Math.round(palierPct*100)}%,${salaireBase},${Math.round(bonus)},${Math.round(avances+manquants)},${Math.round(net)}`
-    );
-    const csv = [header,...rows].join("\n");
-    const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = "paie_easy_by_saver.csv"; a.click();
+  const exportExcelTD01 = () => {
+    const wb = XLSX.utils.book_new();
+
+    // ---- Feuille 1 : Setup ----
+    const setupData = [
+      ["PARAMETRES (modifiable en bleu)", "", "", ""],
+      ["Periode de paie", "", "", ""],
+      ["Date debut", periodeDebut||"", "Date fin", periodeFin||""],
+      ["Nb semaines KPI dans la periode", 2, "", ""],
+      ["Parametre", "Valeur", "Unite / note", ""],
+      ["Commission Yango+partenaires", 0.1836, "% du brut encaisse", ""],
+      ["KPI recette par shift", KPI_RECETTES, "FCFA / shift (8h)", ""],
+      ["KPI commandes par shift", KPI_COURSES, "commandes / shift", ""],
+      ["Shifts KPI par semaine", 7, "ex: 7 shifts = 161k/semaine", ""],
+      ["Heures par shift", 8, "heures", ""],
+      ["Tarif journalier par defaut", FIXE_JOURNALIER, "FCFA / jour", ""],
+    ];
+    const wsSetup = XLSX.utils.aoa_to_sheet(setupData);
+    XLSX.utils.book_append_sheet(wb, wsSetup, "Setup");
+
+    // ---- Feuille 2 : Drivers ----
+    const driversData = [
+      ["LISTE CHAUFFEURS", "", "", "", "", ""],
+      ["Driver_ID", "Nom", "Tarif journalier (FCFA)", "Notes", "Actif (Oui/Non)", "Matricule"],
+      ...paies.map(({d}) => [
+        d.id, d.prenom+" "+d.nom, FIXE_JOURNALIER,
+        "", d.status==="Actif"?"Oui":"Non", d.matricule||d.driver_code||""
+      ])
+    ];
+    const wsDrivers = XLSX.utils.aoa_to_sheet(driversData);
+    XLSX.utils.book_append_sheet(wb, wsDrivers, "Drivers");
+
+    // ---- Feuille 3 : Daily_Data ----
+    const dailyHeader = ["Date", "Driver_ID", "Shifts", "Heures", "Recettes especes versees (FCFA)", "Commandes", "Avance versee (FCFA)", "Manquant constate (FCFA)", "Commentaire"];
+    const dailyRows = shiftsFiltres
+      .filter(s => s.status==="Terminé"||s.status==="Termine")
+      .map(s => [
+        s.planned_start_date||s.date||"",
+        s.ch||"",
+        1,
+        8,
+        s.revenue_cash||s.recette||0,
+        s.courses_count||s.nbCourses||0,
+        s.authorized_expenses||0,
+        0,
+        ""
+      ]);
+    const wsDailyData = XLSX.utils.aoa_to_sheet([dailyHeader, ...dailyRows]);
+    XLSX.utils.book_append_sheet(wb, wsDailyData, "Daily_Data");
+
+    // ---- Feuille 4 : Payroll ----
+    const payrollHeader = [
+      "Driver_ID", "Nom", "Tarif/jour", "Jours (comptes)", "Salaire base",
+      "Shifts total", "Recettes especes versees", "Net apres commission",
+      "KPI recettes (periode)", "Surplus", "Commandes", "KPI commandes (periode)",
+      "Cmd +", "% bonus chauffeur", "Bonus chauffeur",
+      "Avances periode", "Manquant total", "NET A PAYER"
+    ];
+    const payrollRows = paies.map(({d, joursTravailes, salaireBase, totalRecettesNettes, objectifRecettes, surplus, totalCourses, objectifCourses, coursesSup, palierPct, bonus, avances, manquants, net}) => [
+      d.id,
+      d.prenom+" "+d.nom,
+      FIXE_JOURNALIER,
+      joursTravailes,
+      salaireBase,
+      joursTravailes,
+      Math.round(totalRecettesNettes),
+      Math.round(totalRecettesNettes),
+      objectifRecettes,
+      Math.round(surplus),
+      totalCourses,
+      objectifCourses,
+      coursesSup,
+      Math.round(palierPct*100)+"%",
+      Math.round(bonus),
+      Math.round(avances),
+      Math.round(manquants),
+      Math.round(net),
+    ]);
+    const wsPayroll = XLSX.utils.aoa_to_sheet([payrollHeader, ...payrollRows]);
+    XLSX.utils.book_append_sheet(wb, wsPayroll, "Payroll");
+
+    // Export
+    const periode = periodeDebut&&periodeFin ? `_${periodeDebut}_au_${periodeFin}` : "";
+    XLSX.writeFile(wb, `Paie_EasyBySaver${periode}.xlsx`);
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-2xl font-bold text-slate-900">KPI, Paie et Incentives</h1>
-        <button onClick={exportCSV} className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700">
+        <button onClick={exportExcelTD01} className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-          Exporter CSV
+          Exporter Excel (TD01)
         </button>
       </div>
 
