@@ -2716,7 +2716,7 @@ const App = () => {
     dettecommentaire:item.detteCommentaire||null,
   });
   const addDriver = async (item) => await dr.add({...buildDriverPayload(item), id:"CH-"+Date.now()});
-  const updateDriver = async (id, item) => await dr.update(id, buildDriverPayload(item));
+  const updateDriver = async (id, item) => await dr.update(id, item.license_number !== undefined ? item : buildDriverPayload(item));
 
   const buildShiftPayload = (item) => ({
     vh:item.vh||null, ch:item.ch||null,
