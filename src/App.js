@@ -82,9 +82,8 @@ const mapVehicle = (r) => ({
   autonomie: r.autonomie || 0,
   modele: r.modele || "",
   immat: r.immat || "",
-  marque: r.marque || "",
   status: r.status || "En exploitation",
-  // Nouvelles colonnes — Supabase renvoie en lowercase
+  // Nouvelles colonnes
   vin: r.vin_number || "",
   capaciteBatterie: r.battery_capacity_kwh || 0,
   annee: r.vehicle_year || "",
@@ -92,14 +91,15 @@ const mapVehicle = (r) => ({
   typeService: r.service_type || "VTC",
   classesService: r.service_class || [],
   visiteDate: r.technical_visit_expiry || "",
-  assuranceFin: r.insurance_expiry || r.assurancefin || r.assuranceFin || "",
-  typeContrat: r.typecontrat || r.typeContrat || "Interne SAVER",
-  assuranceNum: r.assurancenum || r.assuranceNum || "",
-  assuranceDebut: r.assurancedebut || r.assuranceDebut || "",
-  carteGriseNum: r.cartegrisenum || r.carteGriseNum || "",
-  carteGriseDate: r.cartegrisedate || r.carteGriseDate || "",
-  carteGriseProprietaire: r.cartegriseproprietaire || r.carteGriseProprietaire || "",
-  numeroChassis: r.numerochassis || r.numeroChassis || "",
+  assuranceFin: r.insurance_expiry || "",
+  typeContrat: r.typeContrat || "Interne SAVER",
+  assuranceNum: r.assuranceNum || "",
+  assuranceDebut: r.assuranceDebut || "",
+  carteGriseNum: r.carteGriseNum || "",
+  carteGriseDate: r.carteGriseDate || "",
+  carteGriseProprietaire: r.carteGriseProprietaire || "",
+  marque: r.marque || "",
+  numeroChassis: r.numeroChassis || "",
   binome: r.binome || [],
 });
 
@@ -114,28 +114,28 @@ const mapDriver = (r) => ({
   ca: r.ca || 0,
   pen: r.pen || 0,
   avance: r.avance || 0,
-  matricule:        r.driver_code || r.matricule || r.id,
-  permisNum:        r.license_number || "",
-  permisType:       r.permistype || "",
-  permisDelivrance: r.permisdelivrance || "",
+  // Nouvelles colonnes
+  matricule: r.driver_code || r.id,
+  permisNum: r.license_number || "",
   permisExpiration: r.license_expiry_date || "",
-  pieceNum:         r.id_card_number || "",
-  pieceType:        r.piecetype || "CNI",
-  pieceDelivrance:  r.piecedelivrance || "",
-  pieceExpiration:  r.id_card_expiry_date || "",
-  typeContrat:      r.contract_type || r.typecontrat || "Salarie",
-  contactUrgence:   r.emergency_contact || r.contacturgence || "",
-  contactUrgenceTel:r.contacturgencetel || "",
-  noteYango:        r.yango_score || r.noteyango || 4.0,
-  noteInterne:      r.internal_score || r.noteinterne || 80,
-  telephone:        r.telephone || "",
-  telephonePerso:   r.telephoneperso || "",
-  adresse:          r.adresse || "",
-  dettes:           r.dettes || 0,
-  detteCommentaire: r.dettecommentaire || "",
-  commentaires:     r.commentaires || "",
-  vehicule:         r.vehicule || "",
-  shift:            r.shift || "A",
+  pieceNum: r.id_card_number || "",
+  pieceExpiration: r.id_card_expiry_date || "",
+  typeContrat: r.contract_type || "Salarie",
+  contactUrgence: r.emergency_contact || "",
+  noteYango: r.yango_score || 4.0,
+  noteInterne: r.internal_score || 80,
+  telephone: r.telephone || "",
+  telephonePerso: r.telephoneperso || r.telephonePerso || "",
+  adresse: r.adresse || "",
+  dettes: r.dettes || 0,
+  detteCommentaire: r.dettecommentaire || r.detteCommentaire || "",
+  commentaires: r.commentaires || "",
+  vehicule: r.vehicule || "",
+  shift: r.shift || "A",
+  permisType: r.permistype || r.permisType || "",
+  permisDelivrance: r.permisdelivrance || r.permisDelivrance || "",
+  pieceType: r.piecetype || r.pieceType || "CNI",
+  pieceDelivrance: r.piecedelivrance || r.pieceDelivrance || "",
 });
 
 const mapShift = (r) => ({
@@ -302,13 +302,24 @@ const NavIcon = ({d, className}) => <svg className={className} fill="none" viewB
 // ============================================================
 // LOGIN PAGE
 // ============================================================
-const ROLES_LABELS = [
-  {value:"admin", label:"Administrateur"},
-  {value:"ops", label:"Ops Manager"},
-  {value:"finance", label:"Finance"},
-  {value:"supervisor", label:"Superviseur Logistique"},
-  {value:"dispatcher", label:"Dispatcher"},
+const ROLE_ACCOUNTS = [
+  {role:"admin", label:"Administrateur", email:"admin@saver.ci", icon:"shield", color:"from-red-500 to-red-600"},
+  {role:"ops", label:"Ops Manager", email:"ops@saver.ci", icon:"truck", color:"from-blue-500 to-blue-600"},
+  {role:"finance", label:"Finance", email:"finance@saver.ci", icon:"cash", color:"from-emerald-500 to-emerald-600"},
+  {role:"supervisor", label:"Superviseur Logistique", email:"superviseur@saver.ci", icon:"eye", color:"from-violet-500 to-violet-600"},
+  {role:"dispatcher", label:"Dispatcher", email:"dispatcher@saver.ci", icon:"map", color:"from-amber-500 to-amber-600"},
 ];
+
+const RoleIcon = ({icon}) => {
+  const icons = {
+    shield: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
+    truck: "M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0",
+    cash: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
+    eye: "M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z",
+    map: "M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7",
+  };
+  return <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={icons[icon]}/></svg>;
+};
 
 const LoginPage = ({onLogin}) => {
   const [email, setEmail] = useState("");
@@ -318,15 +329,14 @@ const LoginPage = ({onLogin}) => {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!email) return setError("Veuillez saisir votre login");
-    if (!role) return setError("Veuillez choisir votre role");
-    if (!password) return setError("Veuillez saisir votre mot de passe");
+    if (!email) return setError("Email requis");
+    if (!password) return setError("Mot de passe requis");
     setError(""); setLoading(true);
     const users = await getUsers();
     const found = users.find(u => u.email===email && u.password===password);
     setLoading(false);
-    if (!found) return setError("Login ou mot de passe incorrect");
-    if (found.invite_pending) return setError("Definissez d abord votre mot de passe via le lien d invitation");
+    if (!found) return setError("Email ou mot de passe incorrect");
+    if (found.invite_pending) return setError("Vous devez d abord definir votre mot de passe via le lien d invitation");
     onLogin(found);
   };
 
@@ -334,81 +344,60 @@ const LoginPage = ({onLogin}) => {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/30">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Easy by Saver</h1>
-          <p className="text-blue-300 mt-2 text-sm">Gestion de flotte VTC electrique</p>
-          <p className="text-slate-500 text-xs mt-1">by SMARTAPS</p>
+          <h1 className="text-3xl font-bold text-white">Easy by Saver</h1>
+          <p className="text-blue-300 mt-2">Gestion de flotte VTC electrique</p>
         </div>
 
-        <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-8 border border-white/20 shadow-2xl">
-          <h2 className="text-white font-semibold text-center mb-6 text-lg">Connexion</h2>
+        <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-8 border border-white/20">
+          <h2 className="text-white font-semibold text-center mb-6">Connexion</h2>
 
-          {error && (
-            <div className="flex items-center gap-2 bg-red-500/20 border border-red-500/40 text-red-200 text-sm px-4 py-3 rounded-lg mb-5">
-              <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              {error}
-            </div>
-          )}
+          {error && <div className="bg-red-500/20 border border-red-500/50 text-red-200 text-sm px-4 py-2 rounded-lg mb-4">{error}</div>}
 
           <div className="space-y-4">
+            {/* Login / Email */}
             <div>
-              <label className="block text-sm font-medium text-blue-200 mb-1.5">Login (email)</label>
-              <input
-                type="email"
-                value={email}
-                onChange={e=>setEmail(e.target.value)}
-                placeholder="votre@email.com"
-                autoFocus
-                onKeyDown={e=>e.key==="Enter"&&handleLogin()}
-                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-blue-300/40 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all"
-              />
+              <label className="block text-sm text-blue-200 mb-1.5">Login</label>
+              <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
+                placeholder="votre@email.com" autoFocus
+                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-400"/>
             </div>
 
+            {/* Role */}
             <div>
-              <label className="block text-sm font-medium text-blue-200 mb-1.5">Role</label>
-              <select
-                value={role}
-                onChange={e=>setRole(e.target.value)}
-                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all [&>option]:bg-slate-800 [&>option]:text-white"
-              >
+              <label className="block text-sm text-blue-200 mb-1.5">Role</label>
+              <select value={role} onChange={e=>{
+                setRole(e.target.value);
+                const found = ROLE_ACCOUNTS.find(r=>r.role===e.target.value);
+                if(found && !email) setEmail(found.email);
+              }} className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-emerald-400 [&>option]:bg-slate-800">
                 <option value="">-- Choisir votre role --</option>
-                {ROLES_LABELS.map(r=><option key={r.value} value={r.value}>{r.label}</option>)}
+                {ROLE_ACCOUNTS.map(r=><option key={r.role} value={r.role}>{r.label}</option>)}
+                <option value="custom">Autre compte</option>
               </select>
             </div>
 
+            {/* Mot de passe */}
             <div>
-              <label className="block text-sm font-medium text-blue-200 mb-1.5">Mot de passe</label>
-              <input
-                type="password"
-                value={password}
-                onChange={e=>setPassword(e.target.value)}
+              <label className="block text-sm text-blue-200 mb-1.5">Mot de passe</label>
+              <input type="password" value={password} onChange={e=>setPassword(e.target.value)}
                 onKeyDown={e=>e.key==="Enter"&&handleLogin()}
                 placeholder="••••••••"
-                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-blue-300/40 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all"
-              />
+                className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-400"/>
             </div>
 
-            <button
-              onClick={handleLogin}
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-emerald-500 to-blue-500 text-white py-3 rounded-xl font-semibold hover:from-emerald-600 hover:to-blue-600 transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                  Connexion...
-                </span>
-              ) : "Se connecter"}
+            <button onClick={handleLogin} disabled={loading}
+              className="w-full bg-gradient-to-r from-emerald-500 to-blue-500 text-white py-3 rounded-lg font-semibold hover:from-emerald-600 hover:to-blue-600 transition-all shadow-lg disabled:opacity-50">
+              {loading ? "Connexion..." : "Se connecter"}
             </button>
           </div>
         </div>
-
-        <p className="text-center text-slate-600 text-xs mt-6">SAVER Fleet Management · v1.0</p>
       </div>
     </div>
   );
+
 };
 
 // ============================================================
@@ -479,337 +468,87 @@ const SetPasswordPage = ({token, onDone}) => {
 // ============================================================
 // DASHBOARD PAGE
 // ============================================================
-// ---- Dashboard helpers ----
-const DashKpi = ({label, value, sub, color="text-slate-800", icon, bg="bg-white"}) => (
-  <div className={"rounded-2xl border border-slate-200 p-5 flex flex-col gap-1 shadow-sm "+bg}>
-    <div className="flex items-center justify-between">
-      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{label}</span>
-      {icon&&<span className="text-lg">{icon}</span>}
-    </div>
-    <div className={"text-2xl font-extrabold "+color}>{value}</div>
-    {sub&&<div className="text-xs text-slate-400 mt-0.5">{sub}</div>}
-  </div>
-);
+const DashboardPage = ({vehicles, drivers, shifts, reversements}) => {
+  const [periode, setPeriode] = useState("jour");
 
-const DashAlert = ({items, emptyMsg}) => (
-  <div className="space-y-2">
-    {items.length===0
-      ? <div className="text-slate-400 text-sm text-center py-6">{emptyMsg||"Aucune alerte"}</div>
-      : items.map((a,i)=>(
-        <div key={i} className={"flex items-start gap-3 px-4 py-3 rounded-xl text-sm "+(a.level==="red"?"bg-red-50 border border-red-200 text-red-700":a.level==="amber"?"bg-amber-50 border border-amber-200 text-amber-700":"bg-blue-50 border border-blue-200 text-blue-700")}>
-          <span className="mt-0.5 flex-shrink-0">{a.level==="red"?"🔴":a.level==="amber"?"🟡":"🔵"}</span>
-          <div><div className="font-medium">{a.title}</div>{a.sub&&<div className="text-xs opacity-80 mt-0.5">{a.sub}</div>}</div>
-        </div>
-      ))
-    }
-  </div>
-);
-
-const DashCard = ({title, children, action}) => (
-  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-      <h3 className="font-bold text-slate-800">{title}</h3>
-      {action}
-    </div>
-    <div className="p-6">{children}</div>
-  </div>
-);
-
-const MiniBar = ({value, max, color="bg-emerald-500"}) => (
-  <div className="w-full bg-slate-100 rounded-full h-1.5">
-    <div className={color+" h-1.5 rounded-full transition-all"} style={{width:max>0?Math.min((value/max)*100,100)+"%":"0%"}}/>
-  </div>
-);
-
-const DashboardPage = ({vehicles, drivers, shifts, reversements, userRole}) => {
-  const today = new Date();
-  const todayStr = today.toISOString().slice(0,10);
-
-  // ---- KPIs communs ----
-  const activeVh    = vehicles.filter(v=>v.status==="En exploitation").length;
-  const enRechargeVh= vehicles.filter(v=>v.status==="En recharge").length;
-  const immobiliseVh= vehicles.filter(v=>["Immobilise","Immobilisé","Maintenance"].includes(v.status)).length;
-  const avgSoc      = vehicles.length>0 ? Math.round(vehicles.reduce((a,v)=>a+(v.soc||0),0)/vehicles.length) : 0;
-  const activeDrivers= drivers.filter(d=>d.status==="Actif").length;
+  const activeVh = vehicles.filter(v=>v.status==="En exploitation").length;
+  const enRechargeVh = vehicles.filter(v=>v.status==="En recharge").length;
+  const immobiliseVh = vehicles.filter(v=>v.status==="Immobilise"||v.status==="Immobilisé"||v.status==="Maintenance").length;
+  const avgSoc = vehicles.length > 0 ? Math.round(vehicles.reduce((a,v)=>a+(v.soc||0),0)/vehicles.length) : 0;
   const shiftEnCours = shifts.filter(s=>s.status==="En cours").length;
-  const shiftPlanifie= shifts.filter(s=>["Planifie","Planifié"].includes(s.status)).length;
-  const shiftToday   = shifts.filter(s=>(s.date||"").slice(0,10)===todayStr);
+  const shiftPlanifie = shifts.filter(s=>s.status==="Planifie"||s.status==="Planifié").length;
+  const totalDrivers = drivers.filter(d=>d.status==="Actif").length;
+  const totalReverse = reversements.filter(r=>r.status==="Validé"||r.status==="Valide"||r.status==="Complété").reduce((a,r)=>a+(r.montant||0),0);
   const totalRecette = shifts.reduce((a,s)=>a+(s.recette||0),0);
-  const recetteToday = shiftToday.reduce((a,s)=>a+(s.recette||0),0);
-  const totalReverse = reversements.filter(r=>["Validé","Valide","Complété"].includes(r.status)).reduce((a,r)=>a+(r.montant||0),0);
-  const reverseEnAttente = reversements.filter(r=>["En attente","Pending"].includes(r.status)).reduce((a,r)=>a+(r.montant||0),0);
-  const topDrivers   = [...drivers].sort((a,b)=>(b.ca||0)-(a.ca||0)).slice(0,5);
-  const avgKpi       = drivers.length>0 ? Math.round(drivers.reduce((a,d)=>a+(d.kpi||0),0)/drivers.length) : 0;
-  const avgYango     = drivers.length>0 ? (drivers.reduce((a,d)=>a+(d.noteYango||0),0)/drivers.length).toFixed(1) : "—";
+  const topDrivers = [...drivers].sort((a,b)=>(b.ca||0)-(a.ca||0)).slice(0,5);
 
-  // ---- Alertes documentaires véhicules ----
-  const alertsVh = [];
-  vehicles.forEach(v=>{
-    if(v.assuranceFin){const diff=Math.floor((new Date(v.assuranceFin)-today)/86400000);if(diff<=30)alertsVh.push({level:diff<=7?"red":"amber",title:v.immat+" — Assurance expire dans "+diff+"j",sub:v.assuranceFin});}
-    if(v.visiteDate){const diff=Math.floor((new Date(v.visiteDate)-today)/86400000);if(diff<=30)alertsVh.push({level:diff<=7?"red":"amber",title:v.immat+" — Visite technique dans "+diff+"j",sub:v.visiteDate});}
-    if(v.soc<=15)alertsVh.push({level:"red",title:v.immat+" — SOC critique "+v.soc+"%",sub:v.status});
-  });
-  const alertsCh = [];
-  drivers.forEach(d=>{
-    if(d.permisExpiration){const diff=Math.floor((new Date(d.permisExpiration)-today)/86400000);if(diff<=30)alertsCh.push({level:diff<=7?"red":"amber",title:d.prenom+" "+d.nom+" — Permis expire dans "+diff+"j"});}
-    if(d.pieceExpiration){const diff=Math.floor((new Date(d.pieceExpiration)-today)/86400000);if(diff<=30)alertsCh.push({level:diff<=7?"red":"amber",title:d.prenom+" "+d.nom+" — Piece ID expire dans "+diff+"j"});}
-  });
-  const allAlerts = [...alertsVh,...alertsCh].sort((a,b)=>a.level==="red"?-1:1);
-
-  const dateLabel = today.toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
-
-  // ======= DISPATCHER =======
-  if(userRole==="dispatcher") return (
-    <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold text-slate-900">Tableau de bord — Dispatcher</h1><p className="text-slate-500 text-sm capitalize">{dateLabel}</p></div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <DashKpi label="Shifts en cours"   value={shiftEnCours}  sub="actifs maintenant"      color="text-emerald-600" icon="🟢"/>
-        <DashKpi label="Shifts planifies"  value={shiftPlanifie} sub="a venir aujourd'hui"     color="text-blue-600"    icon="📅"/>
-        <DashKpi label="Chauffeurs actifs" value={activeDrivers} sub={"sur "+drivers.length+" total"} color="text-violet-600" icon="👨‍✈️"/>
-        <DashKpi label="Vehicules dispo"   value={activeVh}      sub={enRechargeVh+" en recharge"} color="text-amber-600" icon="🚗"/>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <DashCard title="Shifts du jour">
-          {shiftToday.length===0
-            ? <p className="text-slate-400 text-sm">Aucun shift aujourd'hui</p>
-            : <div className="space-y-2">
-                {shiftToday.slice(0,8).map(s=>{
-                  const dr=drivers.find(d=>d.id===s.ch);
-                  const vh=vehicles.find(v=>v.id===s.vh);
-                  return <div key={s.id} className="flex items-center justify-between py-2 border-b border-slate-100">
-                    <div><div className="text-sm font-medium">{dr?dr.prenom+" "+dr.nom:"—"}</div><div className="text-xs text-slate-400">{vh?vh.immat:"—"} · Shift {s.type}</div></div>
-                    <Badge color={s.status==="En cours"?"bg-emerald-100 text-emerald-700":s.status==="Termine"?"bg-slate-100 text-slate-600":"bg-blue-100 text-blue-700"}>{s.status}</Badge>
-                  </div>;
-                })}
-              </div>}
-        </DashCard>
-        <DashCard title="Etat de la flotte">
-          <div className="space-y-3 mb-4">
-            {[["En exploitation",activeVh,"bg-emerald-500","bg-emerald-50 border-emerald-200 text-emerald-700"],["En recharge",enRechargeVh,"bg-amber-500","bg-amber-50 border-amber-200 text-amber-700"],["Immobilises",immobiliseVh,"bg-red-500","bg-red-50 border-red-200 text-red-700"]].map(([l,n,bar,badge])=>(
-              <div key={l} className="flex items-center gap-3">
-                <div className="flex-1"><div className="flex justify-between text-xs mb-1"><span className="text-slate-500">{l}</span><span className="font-bold">{n}</span></div><MiniBar value={n} max={vehicles.length} color={bar}/></div>
-              </div>
-            ))}
-          </div>
-          <div className="pt-3 border-t border-slate-100"><div className="flex items-center justify-between"><span className="text-xs text-slate-500">SOC moyen flotte</span><span className="font-bold text-blue-600">{avgSoc}%</span></div><MiniBar value={avgSoc} max={100} color={avgSoc>=60?"bg-emerald-500":avgSoc>=30?"bg-amber-500":"bg-red-500"}/></div>
-        </DashCard>
-      </div>
-    </div>
-  );
-
-  // ======= SUPERVISOR =======
-  if(userRole==="supervisor") return (
-    <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold text-slate-900">Tableau de bord — Superviseur</h1><p className="text-slate-500 text-sm capitalize">{dateLabel}</p></div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <DashKpi label="Flotte active"   value={activeVh+"/"+vehicles.length} sub={"SOC moy "+avgSoc+"%"}     color="text-emerald-600" icon="🚗"/>
-        <DashKpi label="Alertes"         value={allAlerts.length}              sub={alertsVh.filter(a=>a.level==="red").length+" critiques"} color="text-red-600" icon="🚨"/>
-        <DashKpi label="Shifts en cours" value={shiftEnCours}                  sub={shiftPlanifie+" planifies"} color="text-blue-600"    icon="🟢"/>
-        <DashKpi label="Recette du jour" value={fmtK(recetteToday)+" F"}       sub="shifts aujourd'hui"       color="text-violet-600"  icon="💰"/>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <DashCard title={"Alertes actives ("+allAlerts.length+")"}>
-          <DashAlert items={allAlerts.slice(0,6)} emptyMsg="Aucune alerte — tout est OK ✅"/>
-        </DashCard>
-        <DashCard title="SOC Flotte en temps réel">
-          {vehicles.length===0
-            ? <p className="text-slate-400 text-sm">Aucun vehicule</p>
-            : <div className="space-y-3">
-                {[...vehicles].sort((a,b)=>(a.soc||0)-(b.soc||0)).slice(0,7).map(v=>(
-                  <div key={v.id} className="flex items-center gap-3">
-                    <div className="w-24 text-sm font-medium text-slate-700 flex-shrink-0">{v.immat}</div>
-                    <div className="flex-1"><MiniBar value={v.soc||0} max={100} color={v.soc<=15?"bg-red-500":v.soc<=30?"bg-amber-500":"bg-emerald-500"}/></div>
-                    <div className={"text-xs font-bold w-10 text-right "+(v.soc<=15?"text-red-600":v.soc<=30?"text-amber-600":"text-emerald-600")}>{v.soc||0}%</div>
-                  </div>
-                ))}
-              </div>}
-        </DashCard>
-      </div>
-    </div>
-  );
-
-  // ======= FINANCE =======
-  if(userRole==="finance") return (
-    <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold text-slate-900">Tableau de bord — Finance</h1><p className="text-slate-500 text-sm capitalize">{dateLabel}</p></div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <DashKpi label="Recettes totales"   value={fmtK(totalRecette)+" F"}    sub="tous shifts"             color="text-emerald-600" icon="💵"/>
-        <DashKpi label="Reverses valides"   value={fmtK(totalReverse)+" F"}    sub="paiements confirmes"     color="text-blue-600"    icon="✅"/>
-        <DashKpi label="En attente"         value={fmtK(reverseEnAttente)+" F"} sub="a valider"              color="text-amber-600"   icon="⏳"/>
-        <DashKpi label="KPI moyen"          value={avgKpi+"%"}                  sub="tous chauffeurs"        color="text-violet-600"  icon="📊"/>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <DashCard title="Top chauffeurs par CA">
-          {topDrivers.length===0
-            ? <p className="text-slate-400 text-sm">Aucun chauffeur</p>
-            : <div className="space-y-3">
-                {topDrivers.map((d,i)=>(
-                  <div key={d.id} className="flex items-center gap-3">
-                    <div className={"w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 "+(i===0?"bg-yellow-500":i===1?"bg-slate-400":i===2?"bg-amber-600":"bg-slate-300")}>{i+1}</div>
-                    <div className="flex-1">
-                      <div className="flex justify-between mb-1"><span className="text-sm font-medium text-slate-700">{d.prenom} {d.nom}</span><span className="text-sm font-bold text-emerald-600">{fmt(d.ca||0)}</span></div>
-                      <MiniBar value={d.ca||0} max={topDrivers[0]?.ca||1} color="bg-emerald-500"/>
-                    </div>
-                  </div>
-                ))}
-              </div>}
-        </DashCard>
-        <DashCard title="Reversements recents">
-          {reversements.length===0
-            ? <p className="text-slate-400 text-sm">Aucun reversement</p>
-            : <div className="space-y-2">
-                {reversements.slice(0,6).map(r=>{
-                  const dr=drivers.find(d=>d.id===r.driver_id||d.id===r.chauffeur_id);
-                  return <div key={r.id} className="flex items-center justify-between py-2 border-b border-slate-100">
-                    <div><div className="text-sm font-medium">{dr?dr.prenom+" "+dr.nom:r.chauffeur||"—"}</div><div className="text-xs text-slate-400">{r.date||r.created_at?.slice(0,10)||"—"}</div></div>
-                    <div className="text-right"><div className="text-sm font-bold text-emerald-600">{fmt(r.montant||0)}</div><Badge color={r.status==="Validé"||r.status==="Valide"?"bg-emerald-100 text-emerald-700":"bg-amber-100 text-amber-700"}>{r.status||"—"}</Badge></div>
-                  </div>;
-                })}
-              </div>}
-        </DashCard>
-      </div>
-    </div>
-  );
-
-  // ======= OPS MANAGER =======
-  if(userRole==="ops") return (
-    <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold text-slate-900">Tableau de bord — Ops Manager</h1><p className="text-slate-500 text-sm capitalize">{dateLabel}</p></div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <DashKpi label="Flotte active"    value={activeVh+"/"+vehicles.length} sub={enRechargeVh+" en recharge · "+immobiliseVh+" immo"} color="text-emerald-600" icon="🚗"/>
-        <DashKpi label="Chauffeurs actifs"value={activeDrivers}                sub={"moy Yango: "+avgYango+"/5"}                         color="text-violet-600" icon="👨‍✈️"/>
-        <DashKpi label="Shifts en cours"  value={shiftEnCours}                 sub={shiftPlanifie+" planifies"}                          color="text-blue-600"   icon="🟢"/>
-        <DashKpi label="Alertes"          value={allAlerts.length}             sub={allAlerts.filter(a=>a.level==="red").length+" critiques"} color={allAlerts.some(a=>a.level==="red")?"text-red-600":"text-slate-600"} icon="🚨"/>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[["En exploitation",activeVh,"text-emerald-700","bg-emerald-50 border border-emerald-200","bg-emerald-500"],["En recharge",enRechargeVh,"text-amber-700","bg-amber-50 border border-amber-200","bg-amber-500"],["Immobilises",immobiliseVh,"text-red-700","bg-red-50 border border-red-200","bg-red-500"]].map(([l,n,tc,bg,bar])=>(
-          <div key={l} className={"rounded-xl p-5 "+bg}>
-            <div className="flex justify-between mb-3"><span className={"text-sm font-semibold "+tc}>{l}</span><span className={"text-2xl font-extrabold "+tc}>{n}</span></div>
-            <MiniBar value={n} max={vehicles.length} color={bar}/>
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <DashCard title={"Alertes actives ("+allAlerts.length+")"}>
-          <DashAlert items={allAlerts.slice(0,5)} emptyMsg="Aucune alerte — tout est OK ✅"/>
-        </DashCard>
-        <DashCard title="Etat de charge flotte">
-          {vehicles.length===0
-            ? <p className="text-slate-400 text-sm">Aucun vehicule</p>
-            : <div className="space-y-3">
-                {[...vehicles].sort((a,b)=>(a.soc||0)-(b.soc||0)).slice(0,6).map(v=>(
-                  <div key={v.id} className="flex items-center gap-3">
-                    <div className="w-24 flex-shrink-0">
-                      <div className="text-sm font-medium text-slate-700">{v.immat}</div>
-                      <div className="text-xs text-slate-400">{v.modele||"—"}</div>
-                    </div>
-                    <div className="flex-1"><MiniBar value={v.soc||0} max={100} color={v.soc<=15?"bg-red-500":v.soc<=30?"bg-amber-500":"bg-emerald-500"}/></div>
-                    <div className={"text-xs font-bold w-10 text-right "+(v.soc<=15?"text-red-600":v.soc<=30?"text-amber-600":"text-emerald-600")}>{v.soc||0}%</div>
-                  </div>
-                ))}
-              </div>}
-        </DashCard>
-      </div>
-    </div>
-  );
-
-  // ======= ADMIN (vue complète) =======
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Tableau de bord — Admin</h1>
-          <p className="text-slate-500 text-sm capitalize">{dateLabel}</p>
+          <h1 className="text-2xl font-bold text-slate-900">Tableau de bord</h1>
+          <p className="text-slate-500 text-sm">{new Date().toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-slate-400">
-          <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"/>
-          Temps réel
+        <div className="flex gap-2">
+          {["jour","semaine","mois"].map(p=>(
+            <button key={p} onClick={()=>setPeriode(p)} className={"px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all "+(periode===p?"bg-blue-600 text-white":"bg-white border border-slate-200 text-slate-600 hover:bg-slate-50")}>{p}</button>
+          ))}
         </div>
       </div>
 
-      {/* KPIs top */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <DashKpi label="Recettes totales"    value={fmtK(totalRecette)+" F"}    sub={shiftEnCours+" shifts en cours"}      color="text-emerald-600" icon="💵"/>
-        <DashKpi label="Reverses valides"    value={fmtK(totalReverse)+" F"}    sub={fmtK(reverseEnAttente)+" F en attente"} color="text-blue-600"  icon="✅"/>
-        <DashKpi label="Chauffeurs actifs"   value={activeDrivers+"/"+drivers.length} sub={"KPI moy: "+avgKpi+"%"}          color="text-violet-600"  icon="👨‍✈️"/>
-        <DashKpi label="Flotte active"       value={activeVh+"/"+vehicles.length} sub={"SOC moy: "+avgSoc+"%"}             color="text-emerald-600" icon="🚗"/>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label="Recettes cumulees" value={fmtK(totalRecette)+" F"} sub={shiftEnCours+" shifts en cours"} color="text-emerald-600"/>
+        <StatCard label="Reverses valides" value={fmtK(totalReverse)+" F"} sub="total valide" color="text-blue-600"/>
+        <StatCard label="Chauffeurs actifs" value={totalDrivers.toString()} sub={shiftPlanifie+" shifts planifies"} color="text-violet-600"/>
+        <StatCard label="Flotte active" value={activeVh+"/"+vehicles.length} sub={"SOC moy: "+avgSoc+"%"} color="text-emerald-600"/>
       </div>
 
-      {/* Flotte statuts */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[["En exploitation",activeVh,"text-emerald-700","bg-emerald-50 border border-emerald-200","bg-emerald-500"],["En recharge",enRechargeVh,"text-amber-700","bg-amber-50 border border-amber-200","bg-amber-500"],["Immobilises",immobiliseVh,"text-red-700","bg-red-50 border border-red-200","bg-red-500"]].map(([l,n,tc,bg,bar])=>(
-          <div key={l} className={"rounded-xl p-5 "+bg}>
-            <div className="flex justify-between mb-3"><span className={"text-sm font-semibold "+tc}>{l}</span><span className={"text-2xl font-extrabold "+tc}>{n}</span></div>
-            <MiniBar value={n} max={vehicles.length} color={bar}/>
-          </div>
-        ))}
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5">
+          <div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-emerald-700">En exploitation</span><span className="text-2xl font-bold text-emerald-700">{activeVh}</span></div>
+          <div className="w-full bg-emerald-200 rounded-full h-2"><div className="bg-emerald-500 h-2 rounded-full" style={{width:vehicles.length>0?(activeVh/vehicles.length)*100+"%":"0%"}}/></div>
+        </div>
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
+          <div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-amber-700">En recharge</span><span className="text-2xl font-bold text-amber-700">{enRechargeVh}</span></div>
+          <div className="w-full bg-amber-200 rounded-full h-2"><div className="bg-amber-500 h-2 rounded-full" style={{width:vehicles.length>0?(enRechargeVh/vehicles.length)*100+"%":"0%"}}/></div>
+        </div>
+        <div className="bg-red-50 border border-red-200 rounded-xl p-5">
+          <div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-red-700">Immobilises</span><span className="text-2xl font-bold text-red-700">{immobiliseVh}</span></div>
+          <div className="w-full bg-red-200 rounded-full h-2"><div className="bg-red-500 h-2 rounded-full" style={{width:vehicles.length>0?(immobiliseVh/vehicles.length)*100+"%":"0%"}}/></div>
+        </div>
       </div>
 
-      {/* Grille principale */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Alertes */}
-        <DashCard title={"🚨 Alertes ("+allAlerts.length+")"}>
-          <DashAlert items={allAlerts.slice(0,5)} emptyMsg="Aucune alerte — tout est OK ✅"/>
-        </DashCard>
-
-        {/* Top chauffeurs */}
-        <DashCard title="🏆 Top chauffeurs">
-          {topDrivers.length===0
-            ? <p className="text-slate-400 text-sm">Aucun chauffeur</p>
-            : <div className="space-y-3">
-                {topDrivers.map((d,i)=>(
-                  <div key={d.id} className="flex items-center gap-3">
-                    <div className={"w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 "+(i===0?"bg-yellow-500":i===1?"bg-slate-400":i===2?"bg-amber-600":"bg-slate-300")}>{i+1}</div>
-                    <div className="flex-1">
-                      <div className="flex justify-between mb-1"><span className="text-sm font-medium text-slate-700">{d.prenom} {d.nom}</span><span className="text-xs font-bold text-emerald-600">{fmtK(d.ca||0)} F</span></div>
-                      <MiniBar value={d.ca||0} max={topDrivers[0]?.ca||1} color="bg-emerald-500"/>
-                    </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <h2 className="font-semibold text-slate-900 mb-4">Top chauffeurs par CA</h2>
+          {topDrivers.length===0 ? <p className="text-slate-400 text-sm">Aucun chauffeur</p> : (
+            <div className="space-y-3">
+              {topDrivers.map((d,i)=>(
+                <div key={d.id} className="flex items-center gap-3">
+                  <div className={"w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white "+(i===0?"bg-yellow-500":i===1?"bg-slate-400":i===2?"bg-amber-600":"bg-slate-300")}>{i+1}</div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between"><span className="text-sm font-medium text-slate-700">{d.prenom} {d.nom}</span><span className="text-sm font-semibold text-emerald-600">{fmt(d.ca||0)}</span></div>
+                    <div className="w-full bg-slate-100 rounded-full h-1.5 mt-1"><div className="bg-emerald-500 h-1.5 rounded-full" style={{width:topDrivers[0]?.ca>0?((d.ca||0)/(topDrivers[0].ca||1))*100+"%":"0%"}}/></div>
                   </div>
-                ))}
-              </div>}
-        </DashCard>
-
-        {/* SOC flotte */}
-        <DashCard title="⚡ SOC Flotte">
-          {vehicles.length===0
-            ? <p className="text-slate-400 text-sm">Aucun vehicule</p>
-            : <div className="space-y-3">
-                {[...vehicles].sort((a,b)=>(a.soc||0)-(b.soc||0)).slice(0,6).map(v=>(
-                  <div key={v.id} className="flex items-center gap-3">
-                    <div className="w-20 flex-shrink-0 text-sm font-medium text-slate-700">{v.immat}</div>
-                    <div className="flex-1"><MiniBar value={v.soc||0} max={100} color={v.soc<=15?"bg-red-500":v.soc<=30?"bg-amber-500":"bg-emerald-500"}/></div>
-                    <div className={"text-xs font-bold w-9 text-right "+(v.soc<=15?"text-red-600":v.soc<=30?"text-amber-600":"text-emerald-600")}>{v.soc||0}%</div>
-                  </div>
-                ))}
-              </div>}
-        </DashCard>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <h2 className="font-semibold text-slate-900 mb-4">Etat de charge flotte</h2>
+          {vehicles.length===0 ? <p className="text-slate-400 text-sm">Aucun vehicule</p> : (
+            <div className="space-y-3">
+              {vehicles.slice(0,6).map(v=>(
+                <div key={v.id} className="flex items-center justify-between">
+                  <div><div className="text-sm font-medium text-slate-700">{v.immat}</div><div className="text-xs text-slate-400">{v.modele}</div></div>
+                  <div className="flex items-center gap-3"><SocBar soc={v.soc||0}/><Badge color={sc(v.status)}>{v.status}</Badge></div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-
-      {/* Shifts récents */}
-      <DashCard title="📋 Shifts récents">
-        {shifts.length===0
-          ? <p className="text-slate-400 text-sm">Aucun shift</p>
-          : <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead><tr className="border-b border-slate-100">{["Chauffeur","Vehicule","Shift","Debut","Fin","Recette","Statut"].map(h=><th key={h} className="text-left text-xs font-semibold text-slate-500 pb-2 pr-4">{h}</th>)}</tr></thead>
-                <tbody>
-                  {shifts.slice(0,6).map(s=>{
-                    const dr=drivers.find(d=>d.id===s.ch);
-                    const vh=vehicles.find(v=>v.id===s.vh);
-                    return <tr key={s.id} className="border-b border-slate-50">
-                      <td className="py-2 pr-4 font-medium text-slate-700">{dr?dr.prenom+" "+dr.nom:"—"}</td>
-                      <td className="py-2 pr-4 text-slate-500">{vh?vh.immat:"—"}</td>
-                      <td className="py-2 pr-4"><Badge color="bg-blue-100 text-blue-700">Shift {s.type}</Badge></td>
-                      <td className="py-2 pr-4 text-slate-500">{s.debut||"—"}</td>
-                      <td className="py-2 pr-4 text-slate-500">{s.fin||"—"}</td>
-                      <td className="py-2 pr-4 font-semibold text-emerald-600">{fmt(s.recette||0)}</td>
-                      <td className="py-2"><Badge color={s.status==="En cours"?"bg-emerald-100 text-emerald-700":s.status==="Termine"?"bg-slate-100 text-slate-600":"bg-blue-100 text-blue-700"}>{s.status}</Badge></td>
-                    </tr>;
-                  })}
-                </tbody>
-              </table>
-            </div>}
-      </DashCard>
     </div>
   );
 };
@@ -1043,8 +782,7 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
-  const [detailTab, setDetailTab] = useState("profil");
-  const [modalTab, setModalTab] = useState("profil");
+  const [activeTab, setActiveTab] = useState("profil");
 
   const sitesList = sites.length>0?sites:[{id:1,name:"Abidjan"},{id:2,name:"Yamoussoukro"}];
   const filtered = drivers.filter(d=>!search||`${d.prenom} ${d.nom}`.toLowerCase().includes(search.toLowerCase()));
@@ -1058,8 +796,8 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
   const emptyForm = {nom:"",prenom:"",site:1,vehicule:"",shift:"A",status:"Actif",kpi:80,courses:0,ca:0,pen:0,avance:0,typeContrat:"Salarie",telephone:"",telephonePerso:"",adresse:"",contactUrgence:"",contactUrgenceTel:"",permisNum:"",permisDelivrance:"",permisExpiration:"",permisType:"",pieceType:"CNI",pieceNum:"",pieceDelivrance:"",pieceExpiration:"",noteYango:4.0,noteInterne:80,commentaires:"",dettes:0,detteCommentaire:"",matricule:""};
   const [form, setForm] = useState(emptyForm);
 
-  const openAdd = () => { setForm(emptyForm); setEditItem(null); setShowModal(true); setModalTab("profil"); };
-  const openEdit = (d) => { setForm({...emptyForm,...d}); setEditItem(d); setShowModal(true); setModalTab("profil"); };
+  const openAdd = () => { setForm(emptyForm); setEditItem(null); setShowModal(true); setActiveTab("profil"); };
+  const openEdit = (d) => { setForm({...emptyForm,...d}); setEditItem(d); setShowModal(true); setActiveTab("profil"); };
 
   const getDriverAlerts = (d) => {
     const alerts=[];
@@ -1071,39 +809,21 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
   const handleSave = async () => {
     if (!form.nom||!form.prenom) return;
     const mat = form.matricule||genMatricule(form.prenom,form.nom);
-    // Payload avec UNIQUEMENT les colonnes qui existent dans Supabase
     const payload = {
-      nom:            form.nom,
-      prenom:         form.prenom,
-      site:           form.site,
-      vehicule:       form.vehicule||null,
-      shift:          form.shift,
-      status:         form.status,
-      kpi:            form.kpi||80,
-      courses:        form.courses||0,
-      ca:             form.ca||0,
-      pen:            form.pen||0,
-      avance:         form.avance||0,
-      driver_code:    mat,
-      contract_type:  form.typeContrat||"Salarie",
-      telephone:      form.telephone||null,
-      telephoneperso: form.telephonePerso||null,
-      adresse:        form.adresse||null,
-      emergency_contact: form.contactUrgence||null,
-      contacturgencetel: form.contactUrgenceTel||null,
-      yango_score:    form.noteYango||4.0,
-      internal_score: form.noteInterne||80,
-      license_number:      form.permisNum||null,
-      license_expiry_date: form.permisExpiration||null,
-      permistype:          form.permisType||null,
-      permisdelivrance:    form.permisDelivrance||null,
-      id_card_number:      form.pieceNum||null,
-      id_card_expiry_date: form.pieceExpiration||null,
-      piecetype:           form.pieceType||"CNI",
-      piecedelivrance:     form.pieceDelivrance||null,
-      commentaires:        form.commentaires||null,
-      dettes:              form.dettes||0,
-      dettecommentaire:    form.detteCommentaire||null,
+      nom:form.nom, prenom:form.prenom, site:form.site, vehicule:form.vehicule,
+      shift:form.shift, status:form.status, kpi:form.kpi, courses:form.courses,
+      ca:form.ca, pen:form.pen, avance:form.avance,
+      driver_code:mat, matricule:mat,
+      contract_type:form.typeContrat, typeContrat:form.typeContrat,
+      telephone:form.telephone, telephonePerso:form.telephonePerso,
+      adresse:form.adresse,
+      emergency_contact:form.contactUrgence+" - "+form.contactUrgenceTel,
+      contactUrgence:form.contactUrgence, contactUrgenceTel:form.contactUrgenceTel,
+      license_number:form.permisNum, license_expiry_date:form.permisExpiration||null,
+      id_card_number:form.pieceNum, id_card_expiry_date:form.pieceExpiration||null,
+      yango_score:form.noteYango, noteYango:form.noteYango,
+      internal_score:form.noteInterne,
+      commentaires:form.commentaires, dettes:form.dettes, detteCommentaire:form.detteCommentaire,
     };
     if(editItem){await onUpdate(editItem.id,payload);}
     else{await onAdd({...payload,id:"CH-"+Date.now()});}
@@ -1118,10 +838,7 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
     const alerts=getDriverAlerts(d);
     return (
       <div className="space-y-4">
-        <button onClick={()=>{setDetail(null);setDetailTab("profil");}} className="text-sm text-blue-600 hover:underline flex items-center gap-1">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
-          Retour
-        </button>
+        <button onClick={()=>setDetail(null)} className="text-sm text-blue-600 hover:underline">← Retour</button>
         {alerts.map((a,i)=><div key={i} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-amber-600 bg-amber-50">{a}</div>)}
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <div className="flex items-center justify-between mb-4">
@@ -1141,12 +858,12 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
             <button onClick={()=>{openEdit(d);setDetail(null);}} className="text-blue-600 border border-blue-200 px-4 py-2 rounded-lg text-sm">Modifier</button>
           </div>
           <div className="flex gap-1 border-b border-slate-200 mb-4">
-            {tabs.map(t=><button key={t.id} onClick={()=>setDetailTab(t.id)} className={"px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors "+(detailTab===t.id?"border-blue-600 text-blue-600":"border-transparent text-slate-500 hover:text-slate-700")}>{t.label}</button>)}
+            {tabs.map(t=><button key={t.id} onClick={()=>setActiveTab(t.id)} className={"px-4 py-2 text-sm font-medium border-b-2 -mb-px "+(activeTab===t.id?"border-blue-600 text-blue-600":"border-transparent text-slate-500")}>{t.label}</button>)}
           </div>
-          {detailTab==="profil"&&<div className="grid grid-cols-1 md:grid-cols-2 gap-2">{[["Tel. travail",d.telephone],["Tel. perso",d.telephonePerso],["Adresse",d.adresse],["Contact urgence",d.contactUrgence],["Tel urgence",d.contactUrgenceTel],["Contrat",d.typeContrat]].map(([l,val])=><div key={l} className="flex justify-between py-2 border-b border-slate-100"><span className="text-xs text-slate-500">{l}</span><span className="text-xs font-medium text-slate-700">{val||"—"}</span></div>)}</div>}
-          {detailTab==="kyc"&&<div className="grid grid-cols-1 md:grid-cols-2 gap-6"><div><h4 className="font-semibold text-sm mb-3">Permis</h4>{[["N°",d.permisNum],["Type",d.permisType],["Delivrance",d.permisDelivrance],["Expiration",d.permisExpiration]].map(([l,val])=><div key={l} className="flex justify-between py-1.5 border-b border-slate-100"><span className="text-xs text-slate-500">{l}</span><span className={"text-xs font-medium "+(l==="Expiration"&&val&&new Date(val)<new Date(Date.now()+30*86400000)?"text-red-600":"text-slate-700")}>{val||"—"}</span></div>)}</div><div><h4 className="font-semibold text-sm mb-3">Piece ID ({d.pieceType||"CNI"})</h4>{[["N°",d.pieceNum],["Delivrance",d.pieceDelivrance],["Expiration",d.pieceExpiration]].map(([l,val])=><div key={l} className="flex justify-between py-1.5 border-b border-slate-100"><span className="text-xs text-slate-500">{l}</span><span className={"text-xs font-medium "+(l==="Expiration"&&val&&new Date(val)<new Date(Date.now()+30*86400000)?"text-red-600":"text-slate-700")}>{val||"—"}</span></div>)}</div></div>}
-          {detailTab==="performance"&&<div className="grid grid-cols-2 md:grid-cols-4 gap-4">{[["Note Yango",(d.noteYango||"—")+"/5","text-amber-500"],["KPI",d.kpi+"%","text-blue-600"],["Courses",(d.courses||0).toLocaleString(),"text-slate-700"],["CA",fmt(d.ca||0),"text-emerald-600"],["Penalites",fmt(d.pen||0),"text-red-600"],["Avance",fmt(d.avance||0),"text-amber-600"]].map(([l,val,color])=><div key={l} className="p-4 bg-slate-50 rounded-xl"><div className="text-xs text-slate-500">{l}</div><div className={"font-bold text-lg "+color}>{val}</div></div>)}</div>}
-          {detailTab==="incidents"&&<div className="space-y-4"><div className="p-4 bg-red-50 rounded-xl border border-red-100"><div className="text-xs text-slate-500 mb-1">Solde dettes</div><div className="font-bold text-red-600 text-lg">{fmt(d.dettes||0)}</div>{d.detteCommentaire&&<div className="text-xs text-slate-500 mt-1">{d.detteCommentaire}</div>}</div>{d.commentaires&&<div className="p-4 bg-slate-50 rounded-xl"><div className="text-xs text-slate-500 mb-1">Commentaires</div><div className="text-sm">{d.commentaires}</div></div>}{!d.dettes&&!d.commentaires&&<div className="text-slate-400 text-sm text-center py-4">Aucun incident</div>}</div>}
+          {activeTab==="profil"&&<div className="grid grid-cols-1 md:grid-cols-2 gap-2">{[["Tel. travail",d.telephone],["Tel. perso",d.telephonePerso],["Adresse",d.adresse],["Contact urgence",d.contactUrgence],["Tel urgence",d.contactUrgenceTel],["Contrat",d.typeContrat]].map(([l,val])=><div key={l} className="flex justify-between py-2 border-b border-slate-100"><span className="text-xs text-slate-500">{l}</span><span className="text-xs font-medium text-slate-700">{val||"—"}</span></div>)}</div>}
+          {activeTab==="kyc"&&<div className="grid grid-cols-1 md:grid-cols-2 gap-6"><div><h4 className="font-semibold text-sm mb-3">Permis</h4>{[["N°",d.permisNum],["Type",d.permisType],["Delivrance",d.permisDelivrance],["Expiration",d.permisExpiration]].map(([l,val])=><div key={l} className="flex justify-between py-1.5 border-b border-slate-100"><span className="text-xs text-slate-500">{l}</span><span className={"text-xs font-medium "+(l==="Expiration"&&val&&new Date(val)<new Date(Date.now()+30*86400000)?"text-red-600":"text-slate-700")}>{val||"—"}</span></div>)}</div><div><h4 className="font-semibold text-sm mb-3">Piece ID ({d.pieceType||"CNI"})</h4>{[["N°",d.pieceNum],["Delivrance",d.pieceDelivrance],["Expiration",d.pieceExpiration]].map(([l,val])=><div key={l} className="flex justify-between py-1.5 border-b border-slate-100"><span className="text-xs text-slate-500">{l}</span><span className={"text-xs font-medium "+(l==="Expiration"&&val&&new Date(val)<new Date(Date.now()+30*86400000)?"text-red-600":"text-slate-700")}>{val||"—"}</span></div>)}</div></div>}
+          {activeTab==="performance"&&<div className="grid grid-cols-2 md:grid-cols-4 gap-4">{[["Note Yango",(d.noteYango||"—")+"/5","text-amber-500"],["KPI",d.kpi+"%","text-blue-600"],["Courses",(d.courses||0).toLocaleString(),"text-slate-700"],["CA",fmt(d.ca||0),"text-emerald-600"],["Penalites",fmt(d.pen||0),"text-red-600"],["Avance",fmt(d.avance||0),"text-amber-600"]].map(([l,val,color])=><div key={l} className="p-4 bg-slate-50 rounded-xl"><div className="text-xs text-slate-500">{l}</div><div className={"font-bold text-lg "+color}>{val}</div></div>)}</div>}
+          {activeTab==="incidents"&&<div className="space-y-4"><div className="p-4 bg-red-50 rounded-xl border border-red-100"><div className="text-xs text-slate-500 mb-1">Solde dettes</div><div className="font-bold text-red-600 text-lg">{fmt(d.dettes||0)}</div>{d.detteCommentaire&&<div className="text-xs text-slate-500 mt-1">{d.detteCommentaire}</div>}</div>{d.commentaires&&<div className="p-4 bg-slate-50 rounded-xl"><div className="text-xs text-slate-500 mb-1">Commentaires</div><div className="text-sm">{d.commentaires}</div></div>}{!d.dettes&&!d.commentaires&&<div className="text-slate-400 text-sm text-center py-4">Aucun incident</div>}</div>}
         </div>
       </div>
     );
@@ -1204,9 +921,9 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
         <Modal title={editItem?"Modifier chauffeur":"Ajouter chauffeur"} onClose={()=>setShowModal(false)}
           footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm">{editItem?"Enregistrer":"Ajouter"}</button></>}>
           <div className="flex gap-1 border-b border-slate-200 mb-4">
-            {tabs.map(t=><button key={t.id} onClick={()=>setModalTab(t.id)} className={"px-3 py-2 text-sm font-medium border-b-2 -mb-px "+(modalTab===t.id?"border-blue-600 text-blue-600":"border-transparent text-slate-500")}>{t.label}</button>)}
+            {tabs.map(t=><button key={t.id} onClick={()=>setActiveTab(t.id)} className={"px-3 py-2 text-sm font-medium border-b-2 -mb-px "+(activeTab===t.id?"border-blue-600 text-blue-600":"border-transparent text-slate-500")}>{t.label}</button>)}
           </div>
-          {modalTab==="profil"&&(
+          {activeTab==="profil"&&(
             <div className="grid grid-cols-2 gap-3">
               <Input label="Nom" value={form.nom} onChange={v=>setForm({...form,nom:v})} required/>
               <Input label="Prenom" value={form.prenom} onChange={v=>setForm({...form,prenom:v})} required/>
@@ -1223,7 +940,7 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
               <Input label="Tel urgence" value={form.contactUrgenceTel} onChange={v=>setForm({...form,contactUrgenceTel:v})}/>
             </div>
           )}
-          {modalTab==="kyc"&&(
+          {activeTab==="kyc"&&(
             <div className="space-y-4">
               <div><p className="text-xs font-semibold text-slate-500 uppercase mb-3">Permis de conduire</p>
                 <div className="grid grid-cols-2 gap-3">
@@ -1243,7 +960,7 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
               </div>
             </div>
           )}
-          {modalTab==="performance"&&(
+          {activeTab==="performance"&&(
             <div className="grid grid-cols-2 gap-3">
               <Input label="Note Yango (/5)" value={form.noteYango} onChange={v=>setForm({...form,noteYango:parseFloat(v)||0})} type="number"/>
               <Input label="KPI Interne (0-100)" value={form.kpi} onChange={v=>setForm({...form,kpi:parseInt(v)||80})} type="number"/>
@@ -1253,7 +970,7 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
               <Input label="Avance en cours" value={form.avance} onChange={v=>setForm({...form,avance:parseInt(v)||0})} type="number"/>
             </div>
           )}
-          {modalTab==="incidents"&&(
+          {activeTab==="incidents"&&(
             <div className="space-y-3">
               <Input label="Solde dettes (F CFA)" value={form.dettes||0} onChange={v=>setForm({...form,dettes:parseInt(v)||0})} type="number"/>
               <Input label="Detail dette" value={form.detteCommentaire||""} onChange={v=>setForm({...form,detteCommentaire:v})} placeholder="Ex: manquant du 01/04..."/>
@@ -2133,7 +1850,14 @@ const RechargePage = ({recharges, vehicles, drivers, onAdd, onUpdate, onDelete})
 
   const handleSave = async () => {
     if(!form.vh) return alert("Vehicule requis");
-    const payload = {...form, kwh:form.kWh, soc_av:form.socAv, soc_ap:form.socAp};
+    const payload = {
+      vh:form.vh, ch:form.ch||null,
+      partenaire:form.partenaire||form.typeCharge||"Domestique",
+      kwh:form.kWh||0, cout:form.cout||0,
+      lieu:form.lieu||null, duree:form.duree||0,
+      soc_av:form.socAv||0, soc_ap:form.socAp||0,
+      date:form.date||new Date().toISOString().split("T")[0],
+    };
     if(editItem){await onUpdate(editItem.id,payload);}
     else{await onAdd({...payload,id:"RC-"+Date.now()});}
     setShowModal(false);
@@ -2233,7 +1957,12 @@ const MaintenancePage = ({maintenances, vehicles, onAdd, onUpdate, onDelete}) =>
 
   const handleSave = async () => {
     if(!form.vh||!form.desc) return alert("Vehicule et description requis");
-    const payload = {...form, description:form.desc, date:form.dateDebut};
+    const payload = {
+      vh:form.vh, type:form.type||"Preventive",
+      description:form.desc||null, status:form.status||"Planifiee",
+      date:form.dateDebut||form.date||new Date().toISOString().split("T")[0],
+      cout:form.cout||0, garage:form.garage||null,
+    };
     if(editItem){await onUpdate(editItem.id,payload);}
     else{await onAdd({...payload,id:"MT-"+Date.now()});}
     setShowModal(false);
@@ -2703,27 +2432,16 @@ const App = () => {
     ca:item.ca||0, pen:item.pen||0, avance:item.avance||0,
     driver_code:item.matricule||null,
     contract_type:item.typeContrat||"Salarie",
-    telephone:item.telephone||null,
-    telephoneperso:item.telephonePerso||null,
-    adresse:item.adresse||null,
-    emergency_contact:item.contactUrgence||null,
-    contacturgencetel:item.contactUrgenceTel||null,
     yango_score:item.noteYango||4.0,
     internal_score:item.noteInterne||80,
     license_number:item.permisNum||null,
     license_expiry_date:item.permisExpiration||null,
-    permistype:item.permisType||null,
-    permisdelivrance:item.permisDelivrance||null,
     id_card_number:item.pieceNum||null,
     id_card_expiry_date:item.pieceExpiration||null,
-    piecetype:item.pieceType||"CNI",
-    piecedelivrance:item.pieceDelivrance||null,
-    commentaires:item.commentaires||null,
-    dettes:item.dettes||0,
-    dettecommentaire:item.detteCommentaire||null,
+    emergency_contact:(item.contactUrgence||"")+" - "+(item.contactUrgenceTel||""),
   });
   const addDriver = async (item) => await dr.add({...buildDriverPayload(item), id:"CH-"+Date.now()});
-  const updateDriver = async (id, item) => await dr.update(id, item.license_number !== undefined ? item : buildDriverPayload(item));
+  const updateDriver = async (id, item) => await dr.update(id, buildDriverPayload(item));
 
   const buildShiftPayload = (item) => ({
     vh:item.vh||null, ch:item.ch||null,
@@ -2779,23 +2497,32 @@ const App = () => {
   const addReversement = async (item) => await rv.add({...buildReversementPayload(item), id:"RV-"+Date.now()});
   const updateReversement = async (id, item) => await rv.update(id, buildReversementPayload(item));
 
-  const addRecharge = async (item) => {
-    const { kWh, socAv, socAp, ...rest } = item;
-    return await rc.add({ ...rest, kWh, kwh:kWh, soc_av:socAv, soc_ap:socAp });
-  };
-  const updateRecharge = async (id, item) => {
-    const { kWh, socAv, socAp, ...rest } = item;
-    return await rc.update(id, { ...rest, kWh, kwh:kWh, soc_av:socAv, soc_ap:socAp });
-  };
+  const buildRechargePayload = (item) => ({
+    vh: item.vh||null,
+    ch: item.ch||null,
+    partenaire: item.partenaire||"Domestique",
+    kwh: item.kWh||item.kwh||0,
+    cout: item.cout||0,
+    lieu: item.lieu||null,
+    duree: item.duree||0,
+    soc_av: item.socAv||item.soc_av||0,
+    soc_ap: item.socAp||item.soc_ap||0,
+    date: item.date||new Date().toISOString().split("T")[0],
+  });
+  const addRecharge = async (item) => await rc.add({...buildRechargePayload(item), id:"RC-"+Date.now()});
+  const updateRecharge = async (id, item) => await rc.update(id, buildRechargePayload(item));
 
-  const addMaintenance = async (item) => {
-    const { desc, dateDebut, ...rest } = item;
-    return await mt.add({ ...rest, description:desc, date:dateDebut||item.date||null });
-  };
-  const updateMaintenance = async (id, item) => {
-    const { desc, dateDebut, ...rest } = item;
-    return await mt.update(id, { ...rest, description:desc, date:dateDebut||item.date||null });
-  };
+  const buildMaintenancePayload = (item) => ({
+    vh: item.vh||null,
+    type: item.type||"Entretien",
+    description: item.desc||item.description||null,
+    status: item.status||"Planifiee",
+    date: item.dateDebut||item.date||new Date().toISOString().split("T")[0],
+    cout: item.cout||0,
+    garage: item.garage||null,
+  });
+  const addMaintenance = async (item) => await mt.add({...buildMaintenancePayload(item), id:"MT-"+Date.now()});
+  const updateMaintenance = async (id, item) => await mt.update(id, buildMaintenancePayload(item));
 
   const handleLogin = async (u) => {
     try {
@@ -2814,7 +2541,7 @@ const App = () => {
   if (!user) return <LoginPage onLogin={handleLogin}/>;
 
   const pages = {
-    dashboard: <DashboardPage vehicles={vh.data} drivers={dr.data} shifts={sh.data} reversements={rv.data} userRole={user?.role}/>,
+    dashboard: <DashboardPage vehicles={vh.data} drivers={dr.data} shifts={sh.data} reversements={rv.data}/>,
     vehicules: <VehiculesPage vehicles={vh.data} onAdd={addVehicle} onUpdate={updateVehicle} onDelete={vh.remove} sites={si.data}/>,
     chauffeurs: <ChauffeursPage drivers={dr.data} vehicles={vh.data} onAdd={addDriver} onUpdate={updateDriver} onDelete={dr.remove} sites={si.data}/>,
     planning: <PlanningPage shifts={sh.data} vehicles={vh.data} drivers={dr.data} onAdd={addShift} onUpdate={updateShift} onDelete={sh.remove} sites={si.data}/>,
