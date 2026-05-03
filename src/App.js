@@ -468,91 +468,248 @@ const SetPasswordPage = ({token, onDone}) => {
 // ============================================================
 // DASHBOARD PAGE
 // ============================================================
-const DashboardPage = ({vehicles, drivers, shifts, reversements}) => {
-  const [periode, setPeriode] = useState("jour");
+const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
+  const role = user?.role || "ops";
 
+  // Stats communes
   const activeVh = vehicles.filter(v=>v.status==="En exploitation").length;
   const enRechargeVh = vehicles.filter(v=>v.status==="En recharge").length;
   const immobiliseVh = vehicles.filter(v=>v.status==="Immobilise"||v.status==="Immobilisé"||v.status==="Maintenance").length;
   const avgSoc = vehicles.length > 0 ? Math.round(vehicles.reduce((a,v)=>a+(v.soc||0),0)/vehicles.length) : 0;
   const shiftEnCours = shifts.filter(s=>s.status==="En cours").length;
   const shiftPlanifie = shifts.filter(s=>s.status==="Planifie"||s.status==="Planifié").length;
+  const shiftTermine = shifts.filter(s=>s.status==="Terminé"||s.status==="Termine").length;
   const totalDrivers = drivers.filter(d=>d.status==="Actif").length;
-  const totalReverse = reversements.filter(r=>r.status==="Validé"||r.status==="Valide"||r.status==="Complété").reduce((a,r)=>a+(r.montant||0),0);
-  const totalRecette = shifts.reduce((a,s)=>a+(s.recette||0),0);
+  const totalReverse = reversements.filter(r=>r.status==="Validé"||r.status==="Valide").reduce((a,r)=>a+(r.montant||0),0);
+  const totalRecette = shifts.reduce((a,s)=>a+(s.recette||s.revenue_cash||0),0);
+  const ecarts = reversements.filter(r=>(r.ecart||0)>0).length;
   const topDrivers = [...drivers].sort((a,b)=>(b.ca||0)-(a.ca||0)).slice(0,5);
+  const ddManquants = shifts.filter(s=>(s.status==="Terminé"||s.status==="Termine")&&!(s.courses_count>0||s.nbCourses>0)).length;
+
+  // Alertes vehicules
+  const alertesVh = vehicles.filter(v=>{
+    const now = new Date();
+    const assOk = v.assuranceFin&&Math.floor((new Date(v.assuranceFin)-now)/86400000)<=7;
+    const vtOk = v.visiteDate&&Math.floor((new Date(v.visiteDate)-now)/86400000)<=15;
+    return assOk||vtOk;
+  });
+
+  // Alertes chauffeurs
+  const alertesCh = drivers.filter(d=>{
+    const now = new Date();
+    const permis = d.permisExpiration&&Math.floor((new Date(d.permisExpiration)-now)/86400000)<=30;
+    const piece = d.pieceExpiration&&Math.floor((new Date(d.pieceExpiration)-now)/86400000)<=30;
+    return permis||piece;
+  });
+
+  const today = new Date().toISOString().split("T")[0];
+  const shiftsAujourdhui = shifts.filter(s=>(s.date||s.planned_start_date||"").startsWith(today));
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Tableau de bord</h1>
-          <p className="text-slate-500 text-sm">{new Date().toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
-        </div>
-        <div className="flex gap-2">
-          {["jour","semaine","mois"].map(p=>(
-            <button key={p} onClick={()=>setPeriode(p)} className={"px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all "+(periode===p?"bg-blue-600 text-white":"bg-white border border-slate-200 text-slate-600 hover:bg-slate-50")}>{p}</button>
-          ))}
-        </div>
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">Tableau de bord</h1>
+        <p className="text-slate-500 text-sm">{new Date().toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Recettes cumulees" value={fmtK(totalRecette)+" F"} sub={shiftEnCours+" shifts en cours"} color="text-emerald-600"/>
-        <StatCard label="Reverses valides" value={fmtK(totalReverse)+" F"} sub="total valide" color="text-blue-600"/>
-        <StatCard label="Chauffeurs actifs" value={totalDrivers.toString()} sub={shiftPlanifie+" shifts planifies"} color="text-violet-600"/>
-        <StatCard label="Flotte active" value={activeVh+"/"+vehicles.length} sub={"SOC moy: "+avgSoc+"%"} color="text-emerald-600"/>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5">
-          <div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-emerald-700">En exploitation</span><span className="text-2xl font-bold text-emerald-700">{activeVh}</span></div>
-          <div className="w-full bg-emerald-200 rounded-full h-2"><div className="bg-emerald-500 h-2 rounded-full" style={{width:vehicles.length>0?(activeVh/vehicles.length)*100+"%":"0%"}}/></div>
-        </div>
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
-          <div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-amber-700">En recharge</span><span className="text-2xl font-bold text-amber-700">{enRechargeVh}</span></div>
-          <div className="w-full bg-amber-200 rounded-full h-2"><div className="bg-amber-500 h-2 rounded-full" style={{width:vehicles.length>0?(enRechargeVh/vehicles.length)*100+"%":"0%"}}/></div>
-        </div>
-        <div className="bg-red-50 border border-red-200 rounded-xl p-5">
-          <div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-red-700">Immobilises</span><span className="text-2xl font-bold text-red-700">{immobiliseVh}</span></div>
-          <div className="w-full bg-red-200 rounded-full h-2"><div className="bg-red-500 h-2 rounded-full" style={{width:vehicles.length>0?(immobiliseVh/vehicles.length)*100+"%":"0%"}}/></div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h2 className="font-semibold text-slate-900 mb-4">Top chauffeurs par CA</h2>
-          {topDrivers.length===0 ? <p className="text-slate-400 text-sm">Aucun chauffeur</p> : (
-            <div className="space-y-3">
-              {topDrivers.map((d,i)=>(
-                <div key={d.id} className="flex items-center gap-3">
-                  <div className={"w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white "+(i===0?"bg-yellow-500":i===1?"bg-slate-400":i===2?"bg-amber-600":"bg-slate-300")}>{i+1}</div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between"><span className="text-sm font-medium text-slate-700">{d.prenom} {d.nom}</span><span className="text-sm font-semibold text-emerald-600">{fmt(d.ca||0)}</span></div>
-                    <div className="w-full bg-slate-100 rounded-full h-1.5 mt-1"><div className="bg-emerald-500 h-1.5 rounded-full" style={{width:topDrivers[0]?.ca>0?((d.ca||0)/(topDrivers[0].ca||1))*100+"%":"0%"}}/></div>
-                  </div>
-                </div>
-              ))}
+      {/* ADMIN - Vue complete */}
+      {role==="admin"&&(
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <StatCard label="Recettes cumulees" value={fmtK(totalRecette)+" F"} sub={shiftEnCours+" shifts en cours"} color="text-emerald-600"/>
+            <StatCard label="Reverses valides" value={fmtK(totalReverse)+" F"} sub={ecarts+" ecart(s) detecte(s)"} color="text-blue-600"/>
+            <StatCard label="Chauffeurs actifs" value={totalDrivers.toString()} sub={shiftPlanifie+" shifts planifies"} color="text-violet-600"/>
+            <StatCard label="Flotte active" value={activeVh+"/"+vehicles.length} sub={"SOC moy: "+avgSoc+"%"} color="text-emerald-600"/>
+          </div>
+          {(alertesVh.length>0||alertesCh.length>0||ddManquants>0||ecarts>0)&&(
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+              <div className="font-semibold text-red-800 text-sm mb-2">Alertes actives</div>
+              <div className="space-y-1">
+                {alertesVh.length>0&&<div className="text-xs text-red-700">• {alertesVh.length} vehicule(s) avec documents expirant bientot</div>}
+                {alertesCh.length>0&&<div className="text-xs text-red-700">• {alertesCh.length} chauffeur(s) avec documents expirant bientot</div>}
+                {ddManquants>0&&<div className="text-xs text-amber-700">• {ddManquants} shift(s) sans DD Driving Datas</div>}
+                {ecarts>0&&<div className="text-xs text-red-700">• {ecarts} ecart(s) detecte(s) dans les reversements</div>}
+              </div>
             </div>
           )}
-        </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h2 className="font-semibold text-slate-900 mb-4">Etat de charge flotte</h2>
-          {vehicles.length===0 ? <p className="text-slate-400 text-sm">Aucun vehicule</p> : (
-            <div className="space-y-3">
-              {vehicles.slice(0,6).map(v=>(
-                <div key={v.id} className="flex items-center justify-between">
-                  <div><div className="text-sm font-medium text-slate-700">{v.immat}</div><div className="text-xs text-slate-400">{v.modele}</div></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5">
+              <div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-emerald-700">En exploitation</span><span className="text-2xl font-bold text-emerald-700">{activeVh}</span></div>
+              <div className="w-full bg-emerald-200 rounded-full h-2"><div className="bg-emerald-500 h-2 rounded-full" style={{width:vehicles.length>0?(activeVh/vehicles.length)*100+"%":"0%"}}/></div>
+            </div>
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
+              <div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-amber-700">En recharge</span><span className="text-2xl font-bold text-amber-700">{enRechargeVh}</span></div>
+              <div className="w-full bg-amber-200 rounded-full h-2"><div className="bg-amber-500 h-2 rounded-full" style={{width:vehicles.length>0?(enRechargeVh/vehicles.length)*100+"%":"0%"}}/></div>
+            </div>
+            <div className="bg-red-50 border border-red-200 rounded-xl p-5">
+              <div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-red-700">Immobilises</span><span className="text-2xl font-bold text-red-700">{immobiliseVh}</span></div>
+              <div className="w-full bg-red-200 rounded-full h-2"><div className="bg-red-500 h-2 rounded-full" style={{width:vehicles.length>0?(immobiliseVh/vehicles.length)*100+"%":"0%"}}/></div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl border border-slate-200 p-6">
+              <h2 className="font-semibold text-slate-900 mb-4">Top chauffeurs par CA</h2>
+              {topDrivers.length===0?<p className="text-slate-400 text-sm">Aucun chauffeur</p>:(
+                <div className="space-y-3">{topDrivers.map((d,i)=>(
+                  <div key={d.id} className="flex items-center gap-3">
+                    <div className={"w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white "+(i===0?"bg-yellow-500":i===1?"bg-slate-400":i===2?"bg-amber-600":"bg-slate-300")}>{i+1}</div>
+                    <div className="flex-1"><div className="flex items-center justify-between"><span className="text-sm font-medium text-slate-700">{d.prenom} {d.nom}</span><span className="text-sm font-semibold text-emerald-600">{fmt(d.ca||0)}</span></div><div className="w-full bg-slate-100 rounded-full h-1.5 mt-1"><div className="bg-emerald-500 h-1.5 rounded-full" style={{width:topDrivers[0]?.ca>0?((d.ca||0)/(topDrivers[0].ca||1))*100+"%":"0%"}}/></div></div>
+                  </div>
+                ))}</div>
+              )}
+            </div>
+            <div className="bg-white rounded-xl border border-slate-200 p-6">
+              <h2 className="font-semibold text-slate-900 mb-4">Etat de charge flotte</h2>
+              {vehicles.length===0?<p className="text-slate-400 text-sm">Aucun vehicule</p>:(
+                <div className="space-y-3">{vehicles.slice(0,6).map(v=>(
+                  <div key={v.id} className="flex items-center justify-between">
+                    <div><div className="text-sm font-medium text-slate-700">{v.immat}</div><div className="text-xs text-slate-400">{v.modele}</div></div>
+                    <div className="flex items-center gap-3"><SocBar soc={v.soc||0}/><Badge color={sc(v.status)}>{v.status}</Badge></div>
+                  </div>
+                ))}</div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* OPS MANAGER */}
+      {role==="ops"&&(
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <StatCard label="Flotte active" value={activeVh+"/"+vehicles.length} sub={"SOC moy: "+avgSoc+"%"} color="text-emerald-600"/>
+            <StatCard label="Shifts en cours" value={shiftEnCours.toString()} sub={shiftPlanifie+" planifies"} color="text-blue-600"/>
+            <StatCard label="Shifts termines" value={shiftTermine.toString()} sub={ddManquants+" DD manquants"} color="text-slate-600"/>
+            <StatCard label="Alertes vehicules" value={alertesVh.length.toString()} sub="documents expirant" color="text-red-600"/>
+          </div>
+          {ddManquants>0&&<div className="bg-amber-50 border border-amber-200 rounded-xl p-4"><div className="font-semibold text-amber-800 text-sm">⚠ {ddManquants} shift(s) sans DD Driving Datas — la paie ne peut pas etre calculee</div></div>}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5"><div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-emerald-700">En exploitation</span><span className="text-2xl font-bold text-emerald-700">{activeVh}</span></div><div className="w-full bg-emerald-200 rounded-full h-2"><div className="bg-emerald-500 h-2 rounded-full" style={{width:vehicles.length>0?(activeVh/vehicles.length)*100+"%":"0%"}}/></div></div>
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-5"><div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-amber-700">En recharge</span><span className="text-2xl font-bold text-amber-700">{enRechargeVh}</span></div><div className="w-full bg-amber-200 rounded-full h-2"><div className="bg-amber-500 h-2 rounded-full" style={{width:vehicles.length>0?(enRechargeVh/vehicles.length)*100+"%":"0%"}}/></div></div>
+            <div className="bg-red-50 border border-red-200 rounded-xl p-5"><div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-red-700">Immobilises</span><span className="text-2xl font-bold text-red-700">{immobiliseVh}</span></div><div className="w-full bg-red-200 rounded-full h-2"><div className="bg-red-500 h-2 rounded-full" style={{width:vehicles.length>0?(immobiliseVh/vehicles.length)*100+"%":"0%"}}/></div></div>
+          </div>
+          <div className="bg-white rounded-xl border border-slate-200 p-6">
+            <h2 className="font-semibold text-slate-900 mb-4">Etat de charge flotte</h2>
+            {vehicles.length===0?<p className="text-slate-400 text-sm">Aucun vehicule</p>:(
+              <div className="space-y-3">{vehicles.map(v=>(
+                <div key={v.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                  <div><div className="text-sm font-medium text-slate-700">{v.immat}</div><div className="text-xs text-slate-400">{v.marque} {v.modele}</div></div>
                   <div className="flex items-center gap-3"><SocBar soc={v.soc||0}/><Badge color={sc(v.status)}>{v.status}</Badge></div>
                 </div>
-              ))}
+              ))}</div>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* FINANCE */}
+      {role==="finance"&&(
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <StatCard label="Recettes cumulees" value={fmtK(totalRecette)+" F"} sub={shiftTermine+" shifts termines"} color="text-emerald-600"/>
+            <StatCard label="Reverses valides" value={fmtK(totalReverse)+" F"} sub="total valide" color="text-blue-600"/>
+            <StatCard label="Ecarts detectes" value={ecarts.toString()} sub="a verifier" color="text-red-600"/>
+            <StatCard label="En attente" value={reversements.filter(r=>r.status==="En attente").length.toString()} sub="reversements" color="text-amber-600"/>
+          </div>
+          {ecarts>0&&<div className="bg-red-50 border border-red-200 rounded-xl p-4"><div className="font-semibold text-red-800 text-sm">⚠ {ecarts} ecart(s) detecte(s) dans les reversements — verification requise</div></div>}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl border border-slate-200 p-6">
+              <h2 className="font-semibold text-slate-900 mb-4">Top chauffeurs par CA</h2>
+              {topDrivers.length===0?<p className="text-slate-400 text-sm">Aucun chauffeur</p>:(
+                <div className="space-y-3">{topDrivers.map((d,i)=>(
+                  <div key={d.id} className="flex items-center gap-3">
+                    <div className={"w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white "+(i===0?"bg-yellow-500":i===1?"bg-slate-400":i===2?"bg-amber-600":"bg-slate-300")}>{i+1}</div>
+                    <div className="flex-1"><div className="flex items-center justify-between"><span className="text-sm font-medium">{d.prenom} {d.nom}</span><span className="text-sm font-semibold text-emerald-600">{fmt(d.ca||0)}</span></div></div>
+                  </div>
+                ))}</div>
+              )}
+            </div>
+            <div className="bg-white rounded-xl border border-slate-200 p-6">
+              <h2 className="font-semibold text-slate-900 mb-4">Derniers reversements</h2>
+              {reversements.length===0?<p className="text-slate-400 text-sm">Aucun reversement</p>:(
+                <div className="space-y-2">{reversements.slice(0,6).map(r=>(
+                  <div key={r.id} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                    <div className="text-xs text-slate-600">{r.date||"—"} · {r.canal}</div>
+                    <div className="flex items-center gap-2"><span className="text-sm font-semibold text-emerald-600">{fmt(r.montant||0)}</span><Badge color={sc(r.status)}>{r.status}</Badge></div>
+                  </div>
+                ))}</div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* SUPERVISEUR */}
+      {role==="supervisor"&&(
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <StatCard label="Flotte active" value={activeVh+"/"+vehicles.length} color="text-emerald-600"/>
+            <StatCard label="SOC moyen" value={avgSoc+"%"} sub="batterie flotte" color={avgSoc>50?"text-emerald-600":"text-red-600"}/>
+            <StatCard label="En recharge" value={enRechargeVh.toString()} color="text-amber-600"/>
+            <StatCard label="Alertes docs" value={(alertesVh.length+alertesCh.length).toString()} sub="vehicules + chauffeurs" color="text-red-600"/>
+          </div>
+          {alertesVh.length>0&&(
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <div className="font-semibold text-amber-800 text-sm mb-2">Alertes documentaires vehicules</div>
+              {alertesVh.map(v=><div key={v.id} className="text-xs text-amber-700">• {v.immat} — {v.assuranceFin?"Assurance exp. "+v.assuranceFin:""} {v.visiteDate?"Visite tech. "+v.visiteDate:""}</div>)}
             </div>
           )}
-        </div>
-      </div>
+          <div className="bg-white rounded-xl border border-slate-200 p-6">
+            <h2 className="font-semibold text-slate-900 mb-4">SOC temps reel par vehicule</h2>
+            {vehicles.length===0?<p className="text-slate-400 text-sm">Aucun vehicule</p>:(
+              <div className="space-y-3">{vehicles.map(v=>(
+                <div key={v.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                  <div><div className="text-sm font-medium">{v.immat}</div><div className="text-xs text-slate-400">{v.marque} {v.modele}</div></div>
+                  <div className="flex items-center gap-3"><SocBar soc={v.soc||0}/><Badge color={sc(v.status)}>{v.status}</Badge></div>
+                </div>
+              ))}</div>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* DISPATCHER */}
+      {role==="dispatcher"&&(
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <StatCard label="Shifts aujourd hui" value={shiftsAujourdhui.length.toString()} color="text-blue-600"/>
+            <StatCard label="En cours" value={shiftEnCours.toString()} color="text-emerald-600"/>
+            <StatCard label="Planifies" value={shiftPlanifie.toString()} color="text-amber-600"/>
+            <StatCard label="Chauffeurs actifs" value={totalDrivers.toString()} color="text-violet-600"/>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl border border-slate-200 p-6">
+              <h2 className="font-semibold text-slate-900 mb-4">Shifts du jour</h2>
+              {shiftsAujourdhui.length===0?<p className="text-slate-400 text-sm">Aucun shift aujourd hui</p>:(
+                <div className="space-y-2">{shiftsAujourdhui.map(s=>(
+                  <div key={s.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                    <div className="text-sm font-medium">Shift {s.type}</div>
+                    <div className="flex items-center gap-2"><span className="text-xs text-slate-500">{s.date}</span><Badge color={sc(s.status)}>{s.status}</Badge></div>
+                  </div>
+                ))}</div>
+              )}
+            </div>
+            <div className="bg-white rounded-xl border border-slate-200 p-6">
+              <h2 className="font-semibold text-slate-900 mb-4">Chauffeurs disponibles</h2>
+              {drivers.filter(d=>d.status==="Actif").length===0?<p className="text-slate-400 text-sm">Aucun chauffeur</p>:(
+                <div className="space-y-2">{drivers.filter(d=>d.status==="Actif").slice(0,8).map(d=>(
+                  <div key={d.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-violet-400 flex items-center justify-center text-white text-xs font-bold">{(d.prenom||"?")[0]}</div>
+                      <span className="text-sm font-medium">{d.prenom} {d.nom}</span>
+                    </div>
+                    <span className="text-xs font-mono text-slate-500">{d.matricule}</span>
+                  </div>
+                ))}</div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
-
 // ============================================================
 // VEHICULES PAGE
 // ============================================================
@@ -2541,7 +2698,7 @@ const App = () => {
   if (!user) return <LoginPage onLogin={handleLogin}/>;
 
   const pages = {
-    dashboard: <DashboardPage vehicles={vh.data} drivers={dr.data} shifts={sh.data} reversements={rv.data}/>,
+    dashboard: <DashboardPage vehicles={vh.data} drivers={dr.data} shifts={sh.data} reversements={rv.data} user={user}/>,
     vehicules: <VehiculesPage vehicles={vh.data} onAdd={addVehicle} onUpdate={updateVehicle} onDelete={vh.remove} sites={si.data}/>,
     chauffeurs: <ChauffeursPage drivers={dr.data} vehicles={vh.data} onAdd={addDriver} onUpdate={updateDriver} onDelete={dr.remove} sites={si.data}/>,
     planning: <PlanningPage shifts={sh.data} vehicles={vh.data} drivers={dr.data} onAdd={addShift} onUpdate={updateShift} onDelete={sh.remove} sites={si.data}/>,
