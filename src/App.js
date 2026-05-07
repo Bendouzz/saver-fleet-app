@@ -136,9 +136,9 @@ const mapDriver = (r) => ({
   permisDelivrance: r.permisdelivrance || r.permisDelivrance || "",
   pieceType: r.piecetype || r.pieceType || "CNI",
   pieceDelivrance: r.piecedelivrance || r.pieceDelivrance || "",
-  // Contact urgence — split depuis la colonne emergency_contact
-  contactUrgence: r.emergency_contact ? r.emergency_contact.split(" - ")[0] : (r.contactUrgence || ""),
-  contactUrgenceTel: r.emergency_contact ? r.emergency_contact.split(" - ")[1] : (r.contactUrgenceTel || ""),
+  // Contact urgence
+  contactUrgence: r.emergency_contact || r.contactUrgence || "",
+  contactUrgenceTel: r.contacturgencetel || r.emergency_phone || r.contactUrgenceTel || "",
   // Scores
   noteYango: r.yango_score || r.noteYango || 4.0,
   noteInterne: r.internal_score || r.noteInterne || 80,
@@ -149,9 +149,13 @@ const mapDriver = (r) => ({
   // Permis
   permisNum: r.license_number || r.permisNum || "",
   permisExpiration: r.license_expiry_date || r.permisExpiration || "",
+  permisType: r.permistype || r.license_type || r.permisType || "",
+  permisDelivrance: r.permisdelivrance || r.license_issue_date || r.permisDelivrance || "",
   // Piece ID
   pieceNum: r.id_card_number || r.pieceNum || "",
   pieceExpiration: r.id_card_expiry_date || r.pieceExpiration || "",
+  pieceType: r.piecetype || r.pieceType || "CNI",
+  pieceDelivrance: r.piecedelivrance || r.id_card_issue_date || r.pieceDelivrance || "",
 });
 
 const mapShift = (r) => ({
