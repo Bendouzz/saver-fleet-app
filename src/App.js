@@ -2616,6 +2616,17 @@ const App = () => {
     id_card_number:item.pieceNum||null,
     id_card_expiry_date:item.pieceExpiration||null,
     emergency_contact:(item.contactUrgence||"")+" - "+(item.contactUrgenceTel||""),
+    telephone:item.telephone||null,
+    telephoneperso:item.telephonePerso||null,
+    adresse:item.adresse||null,
+    commentaires:item.commentaires||null,
+    dettes:item.dettes||0,
+    dettecommentaire:item.detteCommentaire||null,
+    permistype:item.permisType||null,
+    permisdelivrance:item.permisDelivrance||null,
+    piecetype:item.pieceType||"CNI",
+    piecedelivrance:item.pieceDelivrance||null,
+    contacturgencetel:item.contactUrgenceTel||null,
   });
   const addDriver = async (item) => await dr.add({...buildDriverPayload(item), id:"CH-"+Date.now()});
   const updateDriver = async (id, item) => await dr.update(id, buildDriverPayload(item));
