@@ -490,21 +490,40 @@ const SetPasswordPage = ({token, onDone}) => {
 // ============================================================
 const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
   const role = user?.role || "ops";
+  const [periode, setPeriode] = useState("tout");
+
+  // Filtre par periode
+  const now = new Date();
+  const filterShifts = (s) => {
+    const d = new Date(s.date||s.planned_start_date||"");
+    if(periode==="jour") return d.toDateString()===now.toDateString();
+    if(periode==="semaine") { const start=new Date(now); start.setDate(now.getDate()-7); return d>=start; }
+    if(periode==="mois") { const start=new Date(now); start.setDate(now.getDate()-30); return d>=start; }
+    return true;
+  };
+  const filteredShifts = shifts.filter(filterShifts);
+  const filteredReversements = reversements.filter(r => {
+    const d = new Date(r.date||"");
+    if(periode==="jour") return d.toDateString()===now.toDateString();
+    if(periode==="semaine") { const start=new Date(now); start.setDate(now.getDate()-7); return d>=start; }
+    if(periode==="mois") { const start=new Date(now); start.setDate(now.getDate()-30); return d>=start; }
+    return true;
+  });
 
   // Stats communes
   const activeVh = vehicles.filter(v=>v.status==="En exploitation").length;
   const enRechargeVh = vehicles.filter(v=>v.status==="En recharge").length;
   const immobiliseVh = vehicles.filter(v=>v.status==="Immobilise"||v.status==="Immobilisé"||v.status==="Maintenance").length;
   const avgSoc = vehicles.length > 0 ? Math.round(vehicles.reduce((a,v)=>a+(v.soc||0),0)/vehicles.length) : 0;
-  const shiftEnCours = shifts.filter(s=>s.status==="En cours").length;
-  const shiftPlanifie = shifts.filter(s=>s.status==="Planifie"||s.status==="Planifié").length;
-  const shiftTermine = shifts.filter(s=>s.status==="Terminé"||s.status==="Termine").length;
+  const shiftEnCours = filteredShifts.filter(s=>s.status==="En cours").length;
+  const shiftPlanifie = filteredShifts.filter(s=>s.status==="Planifie"||s.status==="Planifié").length;
+  const shiftTermine = filteredShifts.filter(s=>s.status==="Terminé"||s.status==="Termine").length;
   const totalDrivers = drivers.filter(d=>d.status==="Actif").length;
-  const totalReverse = reversements.filter(r=>r.status==="Validé"||r.status==="Valide").reduce((a,r)=>a+(r.montant||0),0);
-  const totalRecette = shifts.reduce((a,s)=>a+(s.recette||s.revenue_cash||0),0);
-  const ecarts = reversements.filter(r=>(r.ecart||0)>0).length;
+  const totalReverse = filteredReversements.filter(r=>r.status==="Validé"||r.status==="Valide").reduce((a,r)=>a+(r.montant||0),0);
+  const totalRecette = filteredShifts.reduce((a,s)=>a+(s.recette||s.revenue_cash||0),0);
+  const ecarts = filteredReversements.filter(r=>(r.ecart||0)>0).length;
   const topDrivers = [...drivers].sort((a,b)=>(b.ca||0)-(a.ca||0)).slice(0,5);
-  const ddManquants = shifts.filter(s=>(s.status==="Terminé"||s.status==="Termine")&&!(s.courses_count>0||s.nbCourses>0)).length;
+  const ddManquants = filteredShifts.filter(s=>(s.status==="Terminé"||s.status==="Termine")&&!(s.courses_count>0||s.nbCourses>0)).length;
 
   // Alertes vehicules
   const alertesVh = vehicles.filter(v=>{
@@ -523,14 +542,21 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
   });
 
   const today = new Date().toISOString().split("T")[0];
-  const shiftsAujourdhui = shifts.filter(s=>(s.date||s.planned_start_date||"").startsWith(today));
+  const shiftsAujourdhui = filteredShifts.filter(s=>(s.date||s.planned_start_date||"").startsWith(today));
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Tableau de bord</h1>
-        <p className="text-slate-500 text-sm">{new Date().toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Tableau de bord</h1>
+          <p className="text-slate-500 text-sm">{new Date().toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
+        </div>
+        <div className="flex gap-2">
+          {["tout","jour","semaine","mois"].map(p=>(
+            <button key={p} onClick={()=>setPeriode(p)} className={"px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all "+(periode===p?"bg-blue-600 text-white":"bg-white border border-slate-200 text-slate-600 hover:bg-slate-50")}>{p==="tout"?"Tout":p}</button>
+          ))}
+        </div>
       </div>
 
       {/* ADMIN - Vue complete */}
