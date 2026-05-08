@@ -974,7 +974,28 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
   const [form, setForm] = useState(emptyForm);
 
   const openAdd = () => { setForm(emptyForm); setEditItem(null); setShowModal(true); setActiveTab("profil"); };
-  const openEdit = (d) => { setForm({...emptyForm,...d}); setEditItem(d); setShowModal(true); setActiveTab("profil"); };
+  const openEdit = (d) => { 
+    setForm({
+      ...emptyForm, ...d,
+      permisNum: d.permisNum || d.license_number || "",
+      permisExpiration: d.permisExpiration || d.license_expiry_date || "",
+      permisType: d.permisType || d.permistype || "",
+      permisDelivrance: d.permisDelivrance || d.permisdelivrance || "",
+      pieceNum: d.pieceNum || d.id_card_number || "",
+      pieceExpiration: d.pieceExpiration || d.id_card_expiry_date || "",
+      pieceType: d.pieceType || d.piecetype || "CNI",
+      pieceDelivrance: d.pieceDelivrance || d.piecedelivrance || "",
+      typeContrat: d.typeContrat || d.contract_type || "Salarie",
+      noteYango: d.noteYango || d.yango_score || 4.0,
+      noteInterne: d.noteInterne || d.internal_score || 80,
+      matricule: d.matricule || d.driver_code || "",
+      telephone: d.telephone || "",
+      telephonePerso: d.telephonePerso || d.telephoneperso || "",
+      contactUrgence: d.contactUrgence || d.emergency_contact || "",
+      contactUrgenceTel: d.contactUrgenceTel || d.contacturgencetel || "",
+    }); 
+    setEditItem(d); setShowModal(true); setActiveTab("profil"); 
+  };
 
   const getDriverAlerts = (d) => {
     const alerts=[];
