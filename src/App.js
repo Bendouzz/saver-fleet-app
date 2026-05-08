@@ -1017,11 +1017,18 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
       adresse:form.adresse,
       emergency_contact:form.contactUrgence+" - "+form.contactUrgenceTel,
       contactUrgence:form.contactUrgence, contactUrgenceTel:form.contactUrgenceTel,
-      license_number:form.permisNum, license_expiry_date:form.permisExpiration||null,
-      id_card_number:form.pieceNum, id_card_expiry_date:form.pieceExpiration||null,
+      license_number:form.permisNum||null, license_expiry_date:form.permisExpiration||null,
+      id_card_number:form.pieceNum||null, id_card_expiry_date:form.pieceExpiration||null,
+      permistype:form.permisType||null, permisdelivrance:form.permisDelivrance||null,
+      piecetype:form.pieceType||"CNI", piecedelivrance:form.pieceDelivrance||null,
       yango_score:form.noteYango, noteYango:form.noteYango,
       internal_score:form.noteInterne,
-      commentaires:form.commentaires, dettes:form.dettes, detteCommentaire:form.detteCommentaire,
+      commentaires:form.commentaires||null, dettes:form.dettes||0,
+      dettecommentaire:form.detteCommentaire||null,
+      telephone:form.telephone||null,
+      telephoneperso:form.telephonePerso||null,
+      adresse:form.adresse||null,
+      contacturgencetel:form.contactUrgenceTel||null,
     };
     if(editItem){await onUpdate(editItem.id,payload);}
     else{await onAdd({...payload,id:"CH-"+Date.now()});}
