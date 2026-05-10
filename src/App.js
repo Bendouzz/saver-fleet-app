@@ -786,18 +786,27 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
   const handleSave = async () => {
     if (!form.immat) return;
     const payload = {
-      immat:form.immat, marque:form.marque, modele:form.modele, couleur:form.couleur,
-      annee:form.annee, site:form.site, autonomie:form.autonomie, km:form.km, soc:form.soc,
-      status:form.status, typeContrat:form.typeContrat,
-      vin_number:form.vin, battery_capacity_kwh:form.capaciteBatterie,
-      vehicle_year:form.annee, vehicle_color:form.couleur,
-      service_type:form.typeService, service_class:form.classesService,
+      immat:form.immat||null, marque:form.marque||null, modele:form.modele||null,
+      couleur:form.couleur||null, annee:form.annee||null,
+      site:form.site||1, autonomie:form.autonomie||0, km:form.km||0, soc:form.soc||0,
+      status:form.status||"En exploitation",
+      typecontrat:form.typeContrat||"Interne SAVER",
+      vin_number:form.vin||null,
+      battery_capacity_kwh:form.capaciteBatterie||null,
+      vehicle_year:form.annee||null,
+      vehicle_color:form.couleur||null,
+      service_type:form.typeService||"VTC",
+      service_class:form.classesService||[],
       technical_visit_expiry:form.visiteDate||null,
       insurance_expiry:form.assuranceFin||null,
-      carteGriseNum:form.carteGriseNum, carteGriseDate:form.carteGriseDate||null,
-      carteGriseProprietaire:form.carteGriseProprietaire,
-      assuranceNum:form.assuranceNum, assuranceDebut:form.assuranceDebut||null,
-      numeroChassis:form.numeroChassis, binome:form.binome,
+      cartegrisenum:form.carteGriseNum||null,
+      cartegrisedate:form.carteGriseDate||null,
+      cartegriseproprietaire:form.carteGriseProprietaire||null,
+      assurancenum:form.assuranceNum||null,
+      assurancedebut:form.assuranceDebut||null,
+      assurancefin:form.assuranceFin||null,
+      numerochassis:form.numeroChassis||null,
+      binome:form.binome||[],
     };
     if (editItem) { await onUpdate(editItem.id, payload); }
     else { await onAdd({...payload, id:"VH-"+Date.now()}); }
@@ -1061,7 +1070,7 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
     setShowModal(false);
   };
 
-  const tabs = [{id:"profil",label:"Profil"},{id:"kyc",label:"KYC"},{id:"performance",label:"Perf."},{id:"incidents",label:"Incidents"}];
+  const tabs = [{id:"profil",label:"Profil"},{id:"kyc",label:"KYC"},{id:"performance",label:"Perf."},{id:"creance",label:"Incidents"}];
 
   if(detail){
     const d=drivers.find(x=>x.id===detail);
@@ -1094,7 +1103,7 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
           {activeTab==="profil"&&<div className="grid grid-cols-1 md:grid-cols-2 gap-2">{[["Tel. travail",d.telephone],["Tel. perso",d.telephonePerso],["Adresse",d.adresse],["Contact urgence",d.contactUrgence],["Tel urgence",d.contactUrgenceTel],["Contrat",d.typeContrat]].map(([l,val])=><div key={l} className="flex justify-between py-2 border-b border-slate-100"><span className="text-xs text-slate-500">{l}</span><span className="text-xs font-medium text-slate-700">{val||"—"}</span></div>)}</div>}
           {activeTab==="kyc"&&<div className="grid grid-cols-1 md:grid-cols-2 gap-6"><div><h4 className="font-semibold text-sm mb-3">Permis</h4>{[["N°",d.permisNum||d.license_number],["Type",d.permisType||d.permistype],["Delivrance",d.permisDelivrance||d.permisdelivrance],["Expiration",d.permisExpiration||d.license_expiry_date]].map(([l,val])=><div key={l} className="flex justify-between py-1.5 border-b border-slate-100"><span className="text-xs text-slate-500">{l}</span><span className={"text-xs font-medium "+(l==="Expiration"&&val&&new Date(val)<new Date(Date.now()+30*86400000)?"text-red-600":"text-slate-700")}>{val||"—"}</span></div>)}</div><div><h4 className="font-semibold text-sm mb-3">Piece ID ({d.pieceType||d.piecetype||"CNI"})</h4>{[["N°",d.pieceNum||d.id_card_number],["Delivrance",d.pieceDelivrance||d.piecedelivrance],["Expiration",d.pieceExpiration||d.id_card_expiry_date]].map(([l,val])=><div key={l} className="flex justify-between py-1.5 border-b border-slate-100"><span className="text-xs text-slate-500">{l}</span><span className={"text-xs font-medium "+(l==="Expiration"&&val&&new Date(val)<new Date(Date.now()+30*86400000)?"text-red-600":"text-slate-700")}>{val||"—"}</span></div>)}</div></div>}
           {activeTab==="performance"&&<div className="grid grid-cols-2 md:grid-cols-4 gap-4">{[["Note Yango",(d.noteYango||"—")+"/5","text-amber-500"],["KPI",d.kpi+"%","text-blue-600"],["Courses",(d.courses||0).toLocaleString(),"text-slate-700"],["CA",fmt(d.ca||0),"text-emerald-600"],["Penalites",fmt(d.pen||0),"text-red-600"],["Avance",fmt(d.avance||0),"text-amber-600"]].map(([l,val,color])=><div key={l} className="p-4 bg-slate-50 rounded-xl"><div className="text-xs text-slate-500">{l}</div><div className={"font-bold text-lg "+color}>{val}</div></div>)}</div>}
-          {activeTab==="incidents"&&<div className="space-y-4"><div className="p-4 bg-red-50 rounded-xl border border-red-100"><div className="text-xs text-slate-500 mb-1">Solde dettes</div><div className="font-bold text-red-600 text-lg">{fmt(d.dettes||0)}</div>{d.detteCommentaire&&<div className="text-xs text-slate-500 mt-1">{d.detteCommentaire}</div>}</div>{d.commentaires&&<div className="p-4 bg-slate-50 rounded-xl"><div className="text-xs text-slate-500 mb-1">Commentaires</div><div className="text-sm">{d.commentaires}</div></div>}{!d.dettes&&!d.commentaires&&<div className="text-slate-400 text-sm text-center py-4">Aucun incident</div>}</div>}
+          {activeTab==="creance"&&<div className="space-y-4"><div className="p-4 bg-red-50 rounded-xl border border-red-100"><div className="text-xs text-slate-500 mb-1">Solde dettes</div><div className="font-bold text-red-600 text-lg">{fmt(d.dettes||0)}</div>{d.detteCommentaire&&<div className="text-xs text-slate-500 mt-1">{d.detteCommentaire}</div>}</div>{d.commentaires&&<div className="p-4 bg-slate-50 rounded-xl"><div className="text-xs text-slate-500 mb-1">Commentaires</div><div className="text-sm">{d.commentaires}</div></div>}{!d.dettes&&!d.commentaires&&<div className="text-slate-400 text-sm text-center py-4">Aucun incident</div>}</div>}
         </div>
       </div>
     );
@@ -1167,8 +1176,8 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
               <Input label="Tel. travail" value={form.telephone} onChange={v=>setForm({...form,telephone:v})} placeholder="+225..."/>
               <Input label="Tel. perso" value={form.telephonePerso} onChange={v=>setForm({...form,telephonePerso:v})}/>
               <div className="col-span-2"><Input label="Adresse" value={form.adresse} onChange={v=>setForm({...form,adresse:v})} placeholder="Commune, quartier"/></div>
-              <Input label="Contact urgence" value={form.contactUrgence} onChange={v=>setForm({...form,contactUrgence:v})}/>
-              <Input label="Tel urgence" value={form.contactUrgenceTel} onChange={v=>setForm({...form,contactUrgenceTel:v})}/>
+              <Input label="Numero urgence 1" value={form.contactUrgence} onChange={v=>setForm({...form,contactUrgence:v})} placeholder="+225..."/>
+              <Input label="Numero urgence 2" value={form.contactUrgenceTel} onChange={v=>setForm({...form,contactUrgenceTel:v})} placeholder="+225..."/>
             </div>
           )}
           {activeTab==="kyc"&&(
@@ -1201,7 +1210,7 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
               <Input label="Avance en cours" value={form.avance} onChange={v=>setForm({...form,avance:parseInt(v)||0})} type="number"/>
             </div>
           )}
-          {activeTab==="incidents"&&(
+          {activeTab==="creance"&&(
             <div className="space-y-3">
               <Input label="Solde dettes (F CFA)" value={form.dettes||0} onChange={v=>setForm({...form,dettes:parseInt(v)||0})} type="number"/>
               <Input label="Detail dette" value={form.detteCommentaire||""} onChange={v=>setForm({...form,detteCommentaire:v})} placeholder="Ex: manquant du 01/04..."/>
@@ -1637,8 +1646,10 @@ const ReversementsPage = ({reversements, drivers, onAdd, onUpdate, onDelete}) =>
     const ecartAuto = calcEcart(form.montant, form.montant, form.depensesAutorisees||0, form.canal);
     const statusAuto = ecartAuto > 0 ? "Ecart detecte" : form.status;
     const payload = {
-      ch:form.ch, montant:form.montant, canal:form.canal,
-      date:form.date, status:statusAuto, ecart:ecartAuto||form.ecart||0,
+      ch:form.ch, driver_id:form.ch,
+      montant:form.montant, amount_sent:form.montant, amount_requested:form.montant,
+      canal:form.canal, date:form.date,
+      status:statusAuto, ecart:ecartAuto||form.ecart||0,
       authorized_expenses:form.depensesAutorisees||0,
       transaction_proof_url:form.preuve||null,
       commentaire:form.commentaire||null,
