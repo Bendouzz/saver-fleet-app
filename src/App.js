@@ -1041,6 +1041,7 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
 
   const handleSave = async () => {
     if (!form.nom||!form.prenom) return;
+    console.log("KYC form data:", form.permisNum, form.permisType, form.permisExpiration, form.pieceNum);
     const mat = form.matricule||genMatricule(form.prenom,form.nom);
     const payload = {
       nom:form.nom, prenom:form.prenom, site:form.site, vehicule:form.vehicule,
