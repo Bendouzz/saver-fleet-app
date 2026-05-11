@@ -1259,9 +1259,11 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
   const ddSaisis = shifts.filter(s=>(s.status==="Terminé"||s.status==="Termine")&&(s.courses_count>0||s.nbCourses>0)).length;
 
   const handleSave = async () => {
+    console.log("handleSave shift:", form.vh, form.ch, form.type, form.date);
     if(!form.vh||!form.ch) return alert("Vehicule et chauffeur requis");
     setSaving(true);
-    await onAdd({...form, id:"SH-"+Date.now(), shift_type:"Shift "+form.type, planned_start_date:form.date, check_in:false, check_out:false});
+    const err = await onAdd({...form, id:"SH-"+Date.now(), shift_type:"Shift "+form.type, planned_start_date:form.date, check_in:false, check_out:false});
+    console.log("shift add error:", err);
     setSaving(false);
     setShowModal(false);
   };
