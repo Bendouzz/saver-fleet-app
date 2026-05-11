@@ -1041,7 +1041,6 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
 
   const handleSave = async () => {
     if (!form.nom||!form.prenom) return;
-    console.log("KYC form data:", form.permisNum, form.permisType, form.permisExpiration, form.pieceNum);
     const mat = form.matricule||genMatricule(form.prenom,form.nom);
     const payload = {
       nom:form.nom, prenom:form.prenom, site:form.site, vehicule:form.vehicule,
@@ -2696,9 +2695,27 @@ const App = () => {
   });
   const addDriver = async (item) => await dr.add({...buildDriverPayload(item), id:"CH-"+Date.now()});
   const updateDriver = async (id, item) => {
-    const payload = buildDriverPayload(item);
-    console.log("updateDriver payload license_number:", payload.license_number, "permistype:", payload.permistype);
-    return await dr.update(id, payload);
+    // Merge buildDriverPayload + champs directs deja mappes
+    const base = buildDriverPayload(item);
+    const merged = {
+      ...base,
+      license_number: item.license_number || item.permisNum || base.license_number || null,
+      license_expiry_date: item.license_expiry_date || item.permisExpiration || base.license_expiry_date || null,
+      permistype: item.permistype || item.permisType || base.permistype || null,
+      permisdelivrance: item.permisdelivrance || item.permisDelivrance || base.permisdelivrance || null,
+      id_card_number: item.id_card_number || item.pieceNum || base.id_card_number || null,
+      id_card_expiry_date: item.id_card_expiry_date || item.pieceExpiration || base.id_card_expiry_date || null,
+      piecetype: item.piecetype || item.pieceType || base.piecetype || "CNI",
+      piecedelivrance: item.piecedelivrance || item.pieceDelivrance || base.piecedelivrance || null,
+      telephone: item.telephone || base.telephone || null,
+      telephoneperso: item.telephoneperso || item.telephonePerso || base.telephoneperso || null,
+      adresse: item.adresse || base.adresse || null,
+      commentaires: item.commentaires || base.commentaires || null,
+      dettes: item.dettes || base.dettes || 0,
+      dettecommentaire: item.dettecommentaire || item.detteCommentaire || base.dettecommentaire || null,
+      contacturgencetel: item.contacturgencetel || item.contactUrgenceTel || base.contacturgencetel || null,
+    };
+    return await dr.update(id, merged);
   };
 
   const buildShiftPayload = (item) => ({
