@@ -2695,7 +2695,11 @@ const App = () => {
     contacturgencetel:item.contactUrgenceTel||null,
   });
   const addDriver = async (item) => await dr.add({...buildDriverPayload(item), id:"CH-"+Date.now()});
-  const updateDriver = async (id, item) => await dr.update(id, buildDriverPayload(item));
+  const updateDriver = async (id, item) => {
+    const payload = buildDriverPayload(item);
+    console.log("updateDriver payload license_number:", payload.license_number, "permistype:", payload.permistype);
+    return await dr.update(id, payload);
+  };
 
   const buildShiftPayload = (item) => ({
     vh:item.vh||null, ch:item.ch||null,
