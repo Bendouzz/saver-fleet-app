@@ -1262,7 +1262,15 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
     console.log("handleSave shift:", form.vh, form.ch, form.type, form.date);
     if(!form.vh||!form.ch) return alert("Vehicule et chauffeur requis");
     setSaving(true);
-    const err = await onAdd({...form, id:"SH-"+Date.now(), shift_type:"Shift "+form.type, planned_start_date:form.date, check_in:false, check_out:false});
+    const err = await onAdd({
+      id:"SH-"+Date.now(),
+      vh:form.vh, ch:form.ch,
+      type:form.type, shift_type:"Shift "+form.type,
+      planned_start_date:form.date, date:form.date,
+      debut:form.debut||"06:00", fin:form.fin||"14:00",
+      status:form.status||"Planifie",
+      recette:0, check_in:false, check_out:false,
+    });
     console.log("shift add error:", err);
     setSaving(false);
     setShowModal(false);
