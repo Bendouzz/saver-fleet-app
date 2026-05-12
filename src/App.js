@@ -1266,10 +1266,13 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
       id:"SH-"+Date.now(),
       vh:form.vh, ch:form.ch,
       type:form.type, shift_type:"Shift "+form.type,
-      planned_start_date:form.date, date:form.date,
+      planned_start_date:form.date,
       debut:form.debut||"06:00", fin:form.fin||"14:00",
       status:form.status||"Planifie",
       recette:0, check_in:false, check_out:false,
+      courses_count:0, revenue_cash:0, yango_commission:0,
+      authorized_expenses:0, yango_rating:0,
+      km_driven:0, battery_start:0, battery_end:0,
     });
     console.log("shift add error:", err);
     setSaving(false);
@@ -1291,8 +1294,9 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
   const handleSaveDD = async () => {
     if(!selectedShift) return;
     setSaving(true);
+    console.log("handleSaveDD selectedShift.id:", selectedShift.id, "courses:", ddForm.nbCourses, "revenus:", ddForm.revenusGeneres);
     const recetteNette = (ddForm.revenusGeneres||0) - (ddForm.commissionYango||0);
-    await onUpdate(selectedShift.id, {
+    const ddErr = await onUpdate(selectedShift.id, {
       real_start_time:ddForm.heureDebutReelle||null,
       real_end_time:ddForm.heureFinReelle||null,
       km_driven:ddForm.kmParcourus||0,
@@ -1305,6 +1309,7 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
       authorized_expenses:ddForm.depensesAutorisees||0,
       yango_rating:ddForm.noteYangoShift||0,
     });
+    console.log("DD save error:", ddErr);
     setSaving(false);
     setShowDDModal(false);
   };
