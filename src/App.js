@@ -2747,6 +2747,7 @@ const App = () => {
   });
   const addShift = async (item) => await sh.add({...buildShiftPayload(item), id:"SH-"+Date.now()});
   const updateShift = async (id, item) => {
+    console.log("updateShift id:", id, "courses_count:", item.courses_count, "revenue_cash:", item.revenue_cash);
     const payload = {};
     if(item.status!==undefined) payload.status = item.status;
     if(item.check_in!==undefined) payload.check_in = item.check_in;
@@ -2762,11 +2763,22 @@ const App = () => {
     if(item.autonomieDebut!==undefined) payload.battery_start = item.autonomieDebut;
     if(item.autonomieFin!==undefined) payload.battery_end = item.autonomieFin;
     if(item.nbCourses!==undefined) payload.courses_count = item.nbCourses;
+    if(item.courses_count!==undefined) payload.courses_count = item.courses_count;
     if(item.revenusGeneres!==undefined) { payload.revenue_cash = item.revenusGeneres; payload.recette = item.revenusGeneres; }
+    if(item.revenue_cash!==undefined) { payload.revenue_cash = item.revenue_cash; payload.recette = item.revenue_cash; }
     if(item.commissionYango!==undefined) payload.yango_commission = item.commissionYango;
+    if(item.yango_commission!==undefined) payload.yango_commission = item.yango_commission;
     if(item.depensesAutorisees!==undefined) payload.authorized_expenses = item.depensesAutorisees;
+    if(item.authorized_expenses!==undefined) payload.authorized_expenses = item.authorized_expenses;
     if(item.noteYangoShift!==undefined) payload.yango_rating = item.noteYangoShift;
+    if(item.yango_rating!==undefined) payload.yango_rating = item.yango_rating;
     if(item.commentaireShift!==undefined) payload.commentaireshift = item.commentaireShift;
+    if(item.km_driven!==undefined) payload.km_driven = item.km_driven;
+    if(item.battery_start!==undefined) payload.battery_start = item.battery_start;
+    if(item.battery_end!==undefined) payload.battery_end = item.battery_end;
+    if(item.real_start_time!==undefined) payload.real_start_time = item.real_start_time;
+    if(item.real_end_time!==undefined) payload.real_end_time = item.real_end_time;
+    console.log("updateShift payload:", JSON.stringify(payload));
     return await sh.update(id, payload);
   };
 
