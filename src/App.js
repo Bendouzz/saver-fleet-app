@@ -2687,7 +2687,27 @@ const App = () => {
     cartegriseproprietaire:item.carteGriseProprietaire||null, numerochassis:item.numeroChassis||null,
   });
   const addVehicle = async (item) => await vh.add({...buildVehiclePayload(item), id:"VH-"+Date.now()});
-  const updateVehicle = async (id, item) => await vh.update(id, buildVehiclePayload(item));
+  const updateVehicle = async (id, item) => {
+    // Merge buildVehiclePayload + champs directs deja en minuscules
+    const base = buildVehiclePayload(item);
+    const merged = {
+      ...base,
+      battery_capacity_kwh: item.battery_capacity_kwh || item.capaciteBatterie || base.battery_capacity_kwh || null,
+      service_type: item.service_type || item.typeService || base.service_type || "VTC",
+      service_class: item.service_class || item.classesService || base.service_class || [],
+      technical_visit_expiry: item.technical_visit_expiry || item.visiteDate || base.technical_visit_expiry || null,
+      insurance_expiry: item.insurance_expiry || item.assuranceFin || base.insurance_expiry || null,
+      cartegrisenum: item.cartegrisenum || item.carteGriseNum || base.cartegrisenum || null,
+      cartegrisedate: item.cartegrisedate || item.carteGriseDate || base.cartegrisedate || null,
+      cartegriseproprietaire: item.cartegriseproprietaire || item.carteGriseProprietaire || base.cartegriseproprietaire || null,
+      assurancenum: item.assurancenum || item.assuranceNum || base.assurancenum || null,
+      assurancedebut: item.assurancedebut || item.assuranceDebut || base.assurancedebut || null,
+      assurancefin: item.assurancefin || item.assuranceFin || base.assurancefin || null,
+      numerochassis: item.numerochassis || item.numeroChassis || item.vin || base.numerochassis || null,
+      typecontrat: item.typecontrat || item.typeContrat || base.typecontrat || "Interne SAVER",
+    };
+    return await vh.update(id, merged);
+  };
 
   const buildDriverPayload = (item) => ({
     nom:item.nom||null, prenom:item.prenom||null,
