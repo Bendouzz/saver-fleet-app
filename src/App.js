@@ -1779,7 +1779,15 @@ const ReversementsPage = ({reversements, drivers, onAdd, onUpdate, onDelete}) =>
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
                       <button onClick={()=>openEdit(r)} className="text-blue-600 text-xs border border-blue-200 px-2 py-1 rounded hover:bg-blue-50">Modifier</button>
-                      {r.status==="En attente"&&<button onClick={async()=>await onUpdate(r.id,{status:"Validé"})} className="text-emerald-600 text-xs border border-emerald-200 px-2 py-1 rounded hover:bg-emerald-50">Valider</button>}
+                      {r.status==="En attente"&&<button onClick={async()=>await onUpdate(r.id,{
+  status:"Validé",
+  ch:r.ch, driver_id:r.ch,
+  montant:r.montant, amount_sent:r.montant, amount_requested:r.montant,
+  canal:r.canal, date:r.date, ecart:r.ecart||0,
+  authorized_expenses:r.authorized_expenses||r.depensesAutorisees||0,
+  transaction_proof_url:r.transaction_proof_url||r.preuve||null,
+  commentaire:r.commentaire||null,
+})} className="text-emerald-600 text-xs border border-emerald-200 px-2 py-1 rounded hover:bg-emerald-50">Valider</button>}
                       <button onClick={()=>setConfirmDelete(r)} className="text-red-600 text-xs border border-red-200 px-2 py-1 rounded hover:bg-red-50">Suppr.</button>
                     </div>
                   </td>
