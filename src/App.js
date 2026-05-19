@@ -2820,8 +2820,8 @@ const App = () => {
     date: item.date||new Date().toISOString().split("T")[0],
     status: item.status||"En attente",
     ecart: item.ecart||0,
-    authorized_expenses: item.depensesAutorisees||0,
-    transaction_proof_url: item.preuve||null,
+    authorized_expenses: item.authorized_expenses||item.depensesAutorisees||0,
+    transaction_proof_url: item.transaction_proof_url||item.preuve||null,
     commentaire: item.commentaire||null,
   });
   const addReversement = async (item) => await rv.add({...buildReversementPayload(item), id:"RV-"+Date.now()});
