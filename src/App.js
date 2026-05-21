@@ -1283,7 +1283,8 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
 
   const handleCheckout = async (s) => {
     await onUpdate(s.id, {status:"Terminé", check_out:true});
-    // Ouvrir DD directement apres checkout
+    // Attendre que le statut soit bien mis a jour avant d ouvrir DD
+    await new Promise(resolve => setTimeout(resolve, 800));
     setDDForm({heureDebutReelle:"",heureFinReelle:"",kmParcourus:0,nbCourses:0,revenusGeneres:0,commissionYango:0,autonomieDebut:100,autonomieFin:0,depensesAutorisees:0,noteYangoShift:0,commentaireShift:""});
     setSelectedShift({...s, status:"Terminé"});
     setShowDDModal(true);
