@@ -1070,7 +1070,7 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
     setShowModal(false);
   };
 
-  const tabs = [{id:"profil",label:"Profil"},{id:"kyc",label:"KYC"},{id:"performance",label:"Perf."},{id:"creance",label:"Incidents"}];
+  const tabs = [{id:"profil",label:"Profil"},{id:"kyc",label:"KYC"},{id:"performance",label:"Perf."},{id:"creance",label:"Creance Chauffeur"}];
 
   if(detail){
     const d=drivers.find(x=>x.id===detail);
@@ -1177,7 +1177,7 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
               <Input label="Tel. perso" value={form.telephonePerso} onChange={v=>setForm({...form,telephonePerso:v})}/>
               <div className="col-span-2"><Input label="Adresse" value={form.adresse} onChange={v=>setForm({...form,adresse:v})} placeholder="Commune, quartier"/></div>
               <Input label="Numero urgence 1" value={form.contactUrgence} onChange={v=>setForm({...form,contactUrgence:v})} placeholder="+225..."/>
-              <Input label="Numero urgence 2" value={form.contactUrgenceTel} onChange={v=>setForm({...form,contactUrgenceTel:v})} placeholder="+225..."/>
+              <Input label="Numero urgence 2" value={form.contactUrgenceTel||""} onChange={v=>setForm({...form,contactUrgenceTel:v})} placeholder="+225..."/>
             </div>
           )}
           {activeTab==="kyc"&&(
@@ -1259,7 +1259,6 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
   const ddSaisis = shifts.filter(s=>(s.status==="Terminé"||s.status==="Termine")&&(s.courses_count>0||s.nbCourses>0)).length;
 
   const handleSave = async () => {
-    console.log("handleSave shift:", form.vh, form.ch, form.type, form.date);
     if(!form.vh||!form.ch) return alert("Vehicule et chauffeur requis");
     setSaving(true);
     const err = await onAdd({
@@ -1274,7 +1273,6 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
       authorized_expenses:0, yango_rating:0,
       km_driven:0, battery_start:0, battery_end:0,
     });
-    console.log("shift add error:", err);
     setSaving(false);
     setShowModal(false);
   };
@@ -1294,7 +1292,6 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
   const handleSaveDD = async () => {
     if(!selectedShift) return;
     setSaving(true);
-    console.log("handleSaveDD selectedShift.id:", selectedShift.id, "courses:", ddForm.nbCourses, "revenus:", ddForm.revenusGeneres);
     const recetteNette = (ddForm.revenusGeneres||0) - (ddForm.commissionYango||0);
     const ddErr = await onUpdate(selectedShift.id, {
       real_start_time:ddForm.heureDebutReelle||null,
@@ -1309,7 +1306,6 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
       authorized_expenses:ddForm.depensesAutorisees||0,
       yango_rating:ddForm.noteYangoShift||0,
     });
-    console.log("DD save error:", ddErr);
     setSaving(false);
     setShowDDModal(false);
   };
@@ -2775,7 +2771,6 @@ const App = () => {
   });
   const addShift = async (item) => await sh.add({...buildShiftPayload(item), id:"SH-"+Date.now()});
   const updateShift = async (id, item) => {
-    console.log("updateShift id:", id, "courses_count:", item.courses_count, "revenue_cash:", item.revenue_cash);
     const payload = {};
     if(item.status!==undefined) payload.status = item.status;
     if(item.check_in!==undefined) payload.check_in = item.check_in;
