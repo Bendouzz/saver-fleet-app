@@ -98,12 +98,17 @@ const mapVehicle = (r) => ({
   assuranceDebut: r.assurancedebut || r.assuranceDebut || "",
   carteGriseNum: r.cartegrisenum || r.carteGriseNum || "",
   carteGriseDate: r.cartegrisedate || r.carteGriseDate || "",
+  photoCarteGrise: r.photo_carte_grise || "",
+  photoVisite: r.photo_visite || "",
+  photoAssurance: r.photo_assurance || "",
+  photosExt: r.photos_ext || [],
+  photosInt: r.photos_int || [],
   carteGriseProprietaire: r.cartegriseproprietaire || r.carteGriseProprietaire || "",
   numeroChassis: r.numerochassis || r.numeroChassis || r.vin_number || "",
   binome: r.binome || [],
 });
 
-const mapDriver = (r) => ({
+const mapDriver = (r) => ({ // eslint-disable-line no-unused-vars
   ...r,
   nom: r.nom || "",
   prenom: r.prenom || "",
@@ -156,6 +161,12 @@ const mapDriver = (r) => ({
   pieceExpiration: r.id_card_expiry_date || r.pieceExpiration || "",
   pieceType: r.piecetype || r.pieceType || "CNI",
   pieceDelivrance: r.piecedelivrance || r.id_card_issue_date || r.pieceDelivrance || "",
+  // Photos
+  photoFace: r.photo_face || "",
+  photosProfil: r.photos_profil || [],
+  photoPleinPied: r.photo_plein_pied || "",
+  photoPermis: r.photo_permis || "",
+  photoPiece: r.photo_piece || "",
 });
 
 const mapShift = (r) => ({
@@ -318,6 +329,99 @@ const Select = ({label, value, onChange, options}) => (
 );
 
 const NavIcon = ({d, className}) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={d}/></svg>;
+
+// ============================================================
+// PHOTO UPLOAD COMPONENT
+// ============================================================
+const uploadToSupabase = async (file, bucket, folder) => {
+  const ext = file.name.split(".").pop();
+  const path = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2,8)}.${ext}`;
+  const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
+  if (error) throw error;
+  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+  return data.publicUrl;
+};
+
+const PhotoUpload = ({ label, bucket, folder, value, onChange, multiple = false, hint = "" }) => {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+  const urls = value ? (Array.isArray(value) ? value : [value]).filter(Boolean) : [];
+
+  const handleFiles = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    setUploading(true);
+    setError("");
+    try {
+      const uploaded = await Promise.all(files.map(f => uploadToSupabase(f, bucket, folder)));
+      if (multiple) {
+        onChange([...urls, ...uploaded]);
+      } else {
+        onChange(uploaded[0]);
+      }
+    } catch (err) {
+      setError("Erreur upload : " + (err.message || "Vérifiez le bucket Supabase Storage"));
+    }
+    setUploading(false);
+    e.target.value = "";
+  };
+
+  const removeUrl = (idx) => {
+    if (multiple) {
+      onChange(urls.filter((_, i) => i !== idx));
+    } else {
+      onChange("");
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      {label && <label className="block text-sm font-medium text-slate-700">{label}</label>}
+      {hint && <p className="text-xs text-slate-400">{hint}</p>}
+
+      {/* Previews */}
+      {urls.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {urls.map((url, idx) => (
+            <div key={idx} className="relative group">
+              <img
+                src={url} alt=""
+                className="w-20 h-20 object-cover rounded-lg border border-slate-200 cursor-pointer"
+                onClick={() => window.open(url, "_blank")}
+              />
+              <button
+                type="button"
+                onClick={() => removeUrl(idx)}
+                className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              >×</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Upload zone */}
+      <label className={`flex items-center gap-3 px-4 py-3 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploading ? "border-blue-300 bg-blue-50" : "border-slate-200 hover:border-blue-400 hover:bg-blue-50"}`}>
+        <input
+          type="file"
+          accept="image/*"
+          multiple={multiple}
+          onChange={handleFiles}
+          className="hidden"
+          disabled={uploading}
+        />
+        {uploading ? (
+          <><div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"/><span className="text-sm text-blue-600">Upload en cours...</span></>
+        ) : (
+          <><svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          <span className="text-sm text-slate-500">{multiple ? "Cliquer pour ajouter des photos" : "Cliquer pour ajouter une photo"}</span>
+          {urls.length > 0 && <span className="ml-auto text-xs text-emerald-600 font-medium">{urls.length} photo{urls.length > 1 ? "s" : ""}</span>}</>
+        )}
+      </label>
+
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
+  );
+};
 
 // ============================================================
 // LOGIN PAGE
@@ -807,6 +911,11 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
       assurancefin:form.assuranceFin||null,
       numerochassis:form.numeroChassis||null,
       binome:form.binome||[],
+      photo_carte_grise:form.photoCarteGrise||null,
+      photo_visite:form.photoVisite||null,
+      photo_assurance:form.photoAssurance||null,
+      photos_ext:form.photosExt||[],
+      photos_int:form.photosInt||[],
     };
     if (editItem) { await onUpdate(editItem.id, payload); }
     else { await onAdd({...payload, id:"VH-"+Date.now()}); }
@@ -966,15 +1075,32 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
                 <Input label="N° Carte grise" value={form.carteGriseNum} onChange={v=>setForm({...form,carteGriseNum:v})}/>
                 <Input label="Date immatriculation" value={form.carteGriseDate} onChange={v=>setForm({...form,carteGriseDate:v})} type="date"/>
                 <div className="col-span-2"><Input label="Proprietaire" value={form.carteGriseProprietaire} onChange={v=>setForm({...form,carteGriseProprietaire:v})}/></div>
+                <div className="col-span-2">
+                  <PhotoUpload label="Photo carte grise" bucket="vehicle-photos" folder={`cg/${form.immat||"new"}`} value={form.photoCarteGrise||""} onChange={v=>setForm({...form,photoCarteGrise:v})} hint="Recto de la carte grise"/>
+                </div>
               </div>
             </div>
             <div className="border-t border-slate-100 pt-4">
               <p className="text-xs font-semibold text-slate-500 uppercase mb-3">Visite technique et Assurance</p>
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2"><Input label="Expiration visite technique" value={form.visiteDate} onChange={v=>setForm({...form,visiteDate:v})} type="date" hint="(alerte 15j avant)"/></div>
+                <div className="col-span-2">
+                  <PhotoUpload label="Photo carte visite technique" bucket="vehicle-photos" folder={`visite/${form.immat||"new"}`} value={form.photoVisite||""} onChange={v=>setForm({...form,photoVisite:v})}/>
+                </div>
                 <Input label="N° Assurance" value={form.assuranceNum} onChange={v=>setForm({...form,assuranceNum:v})}/>
                 <Input label="Debut assurance" value={form.assuranceDebut} onChange={v=>setForm({...form,assuranceDebut:v})} type="date"/>
                 <div className="col-span-2"><Input label="Fin assurance" value={form.assuranceFin} onChange={v=>setForm({...form,assuranceFin:v})} type="date" hint="(alerte 7j avant)"/></div>
+                <div className="col-span-2">
+                  <PhotoUpload label="Photo contrat assurance" bucket="vehicle-photos" folder={`assurance/${form.immat||"new"}`} value={form.photoAssurance||""} onChange={v=>setForm({...form,photoAssurance:v})}/>
+                </div>
+              </div>
+            </div>
+            <div className="border-t border-slate-100 pt-4">
+              <p className="text-xs font-semibold text-slate-500 uppercase mb-3">Photos du véhicule <span className="text-red-500">*</span></p>
+              <p className="text-xs text-slate-400 mb-3">7 photos obligatoires : 4 extérieurs, intérieur, tableau de bord, sièges</p>
+              <div className="space-y-3">
+                <PhotoUpload label="Photos extérieures (4 angles)" bucket="vehicle-photos" folder={`ext/${form.immat||"new"}`} value={form.photosExt||[]} onChange={v=>setForm({...form,photosExt:v})} multiple hint="Avant, arrière, côté gauche, côté droit"/>
+                <PhotoUpload label="Photos intérieur" bucket="vehicle-photos" folder={`int/${form.immat||"new"}`} value={form.photosInt||[]} onChange={v=>setForm({...form,photosInt:v})} multiple hint="Habitacle, tableau de bord, écran, sièges"/>
               </div>
             </div>
           </div>
@@ -1064,13 +1190,18 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
       telephoneperso:form.telephonePerso||null,
       adresse:form.adresse||null,
       contacturgencetel:form.contactUrgenceTel||null,
+      photo_face:form.photoFace||null,
+      photos_profil:form.photosProfil||[],
+      photo_plein_pied:form.photoPleinPied||null,
+      photo_permis:form.photoPermis||null,
+      photo_piece:form.photoPiece||null,
     };
     if(editItem){await onUpdate(editItem.id,payload);}
     else{await onAdd({...payload,id:"CH-"+Date.now()});}
     setShowModal(false);
   };
 
-  const tabs = [{id:"profil",label:"Profil"},{id:"kyc",label:"KYC"},{id:"performance",label:"Perf."},{id:"creance",label:"Creance Chauffeur"}];
+  const tabs = [{id:"profil",label:"Profil"},{id:"kyc",label:"KYC"},{id:"photos",label:"Photos"},{id:"performance",label:"Perf."},{id:"creance",label:"Creance Chauffeur"}];
 
   if(detail){
     const d=drivers.find(x=>x.id===detail);
@@ -1188,6 +1319,9 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
                   <Input label="Type" value={form.permisType} onChange={v=>setForm({...form,permisType:v})} placeholder="B, D..."/>
                   <Input label="Date delivrance" value={form.permisDelivrance} onChange={v=>setForm({...form,permisDelivrance:v})} type="date"/>
                   <Input label="Expiration" value={form.permisExpiration} onChange={v=>setForm({...form,permisExpiration:v})} type="date" hint="(alerte 30j)"/>
+                  <div className="col-span-2">
+                    <PhotoUpload label="Photo permis de conduire" bucket="driver-photos" folder={`permis/${form.nom||"new"}`} value={form.photoPermis||""} onChange={v=>setForm({...form,photoPermis:v})} hint="Recto du permis"/>
+                  </div>
                 </div>
               </div>
               <div><p className="text-xs font-semibold text-slate-500 uppercase mb-3">Piece d identite</p>
@@ -1196,8 +1330,19 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
                   <Input label="N° Piece" value={form.pieceNum} onChange={v=>setForm({...form,pieceNum:v})}/>
                   <Input label="Date delivrance" value={form.pieceDelivrance} onChange={v=>setForm({...form,pieceDelivrance:v})} type="date"/>
                   <Input label="Expiration" value={form.pieceExpiration} onChange={v=>setForm({...form,pieceExpiration:v})} type="date" hint="(alerte 30j)"/>
+                  <div className="col-span-2">
+                    <PhotoUpload label="Photo pièce d'identité" bucket="driver-photos" folder={`piece/${form.nom||"new"}`} value={form.photoPiece||""} onChange={v=>setForm({...form,photoPiece:v})} hint="Recto de la CNI / Passeport"/>
+                  </div>
                 </div>
               </div>
+            </div>
+          )}
+          {activeTab==="photos"&&(
+            <div className="space-y-4">
+              <p className="text-xs text-slate-500">Photos officielles du chauffeur pour son dossier.</p>
+              <PhotoUpload label="Photo face (portrait)" bucket="driver-photos" folder={`portrait/${form.nom||"new"}`} value={form.photoFace||""} onChange={v=>setForm({...form,photoFace:v})} hint="Photo de face, fond neutre"/>
+              <PhotoUpload label="Photos profil (gauche & droite)" bucket="driver-photos" folder={`profil/${form.nom||"new"}`} value={form.photosProfil||[]} onChange={v=>setForm({...form,photosProfil:v})} multiple hint="Photo profil gauche + profil droit"/>
+              <PhotoUpload label="Photo plein pied" bucket="driver-photos" folder={`fullbody/${form.nom||"new"}`} value={form.photoPleinPied||""} onChange={v=>setForm({...form,photoPleinPied:v})} hint="Chauffeur en tenue complète"/>
             </div>
           )}
           {activeTab==="performance"&&(
@@ -1284,7 +1429,7 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
   const handleCheckout = async (s) => {
     await onUpdate(s.id, {status:"Terminé", check_out:true});
     // Ouvrir DD directement apres checkout
-    setDDForm({heureDebutReelle:"",heureFinReelle:"",kmParcourus:0,nbCourses:0,revenusGeneres:0,commissionYango:0,autonomieDebut:100,autonomieFin:0,depensesAutorisees:0,noteYangoShift:0,commentaireShift:""});
+    setDDForm({heureDebutReelle:"",heureFinReelle:"",kmParcourus:0,nbCourses:0,revenusGeneres:0,commissionYango:0,autonomieDebut:100,autonomieFin:0,depensesAutorisees:0,noteYangoShift:0,commentaireShift:"",photoSelfie:"",photosFinShift:[],capturesYango:[],capturesBord:[]});
     setSelectedShift({...s, status:"Terminé"});
     setShowDDModal(true);
   };
@@ -1305,6 +1450,11 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
       yango_commission:ddForm.commissionYango||0,
       authorized_expenses:ddForm.depensesAutorisees||0,
       yango_rating:ddForm.noteYangoShift||0,
+      comment:ddForm.commentaireShift||null,
+      photo_selfie:ddForm.photoSelfie||null,
+      photos_fin_shift:ddForm.photosFinShift||[],
+      captures_yango:ddForm.capturesYango||[],
+      captures_bord:ddForm.capturesBord||[],
     });
     setSaving(false);
     setShowDDModal(false);
@@ -1567,6 +1717,48 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
                   </div>
                 </div>
 
+                {/* Section Photos DD */}
+                <div>
+                  <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Photos et captures justificatives</div>
+                  <div className="space-y-3">
+                    <PhotoUpload
+                      label="Selfie prise de poste (obligatoire)"
+                      bucket="shift-photos"
+                      folder={`selfie/${selectedShift.id}`}
+                      value={ddForm.photoSelfie||""}
+                      onChange={v=>setDDForm({...ddForm,photoSelfie:v})}
+                      hint="Photo du chauffeur devant le véhicule au démarrage du shift"
+                    />
+                    <PhotoUpload
+                      label="Photos fin de shift — état du véhicule (4 côtés)"
+                      bucket="shift-photos"
+                      folder={`fin-shift/${selectedShift.id}`}
+                      value={ddForm.photosFinShift||[]}
+                      onChange={v=>setDDForm({...ddForm,photosFinShift:v})}
+                      multiple
+                      hint="Avant, arrière, côté gauche, côté droit"
+                    />
+                    <PhotoUpload
+                      label="Captures Yango PRO (portefeuille Commandes + Espèces)"
+                      bucket="shift-photos"
+                      folder={`yango-dd/${selectedShift.id}`}
+                      value={ddForm.capturesYango||[]}
+                      onChange={v=>setDDForm({...ddForm,capturesYango:v})}
+                      multiple
+                      hint="Screenshots du portefeuille Yango PRO et du profil chauffeur"
+                    />
+                    <PhotoUpload
+                      label="Captures écran de bord (autonomie début/fin)"
+                      bucket="shift-photos"
+                      folder={`bord/${selectedShift.id}`}
+                      value={ddForm.capturesBord||[]}
+                      onChange={v=>setDDForm({...ddForm,capturesBord:v})}
+                      multiple
+                      hint="Photos de l'écran central du véhicule début et fin de shift"
+                    />
+                  </div>
+                </div>
+
                 {/* Analyse automatique */}
                 {ddForm.revenusGeneres>0&&(
                   <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
@@ -1810,7 +2002,7 @@ const ReversementsPage = ({reversements, drivers, onAdd, onUpdate, onDelete}) =>
             <Input label="Date" value={form.date} onChange={v=>setForm({...form,date:v})} type="date"/>
             <Input label="Depenses autorisees (F CFA)" value={form.depensesAutorisees||0} onChange={v=>setForm({...form,depensesAutorisees:parseInt(v)||0})} type="number"/>
             <div className="col-span-2">
-              <Input label="URL preuve de paiement (screenshot Wave / Orange Money)" value={form.preuve||""} onChange={v=>setForm({...form,preuve:v})} placeholder="https://..."/>
+              <PhotoUpload label="Preuve de paiement (screenshot Wave / Orange Money)" bucket="reversement-proofs" folder={`preuves/${form.date||"new"}`} value={form.preuve||""} onChange={v=>setForm({...form,preuve:v})} hint="Screenshot du transfert Wave ou Orange Money"/>
             </div>
             <div className="col-span-2">
               <label className="block text-sm font-medium text-slate-700 mb-1">Commentaire</label>
@@ -2768,6 +2960,10 @@ const App = () => {
     courses_count:item.nbCourses||0, revenue_cash:item.revenusGeneres||0,
     yango_commission:item.commissionYango||0, authorized_expenses:item.depensesAutorisees||0,
     yango_rating:item.noteYangoShift||0,
+    photo_selfie:item.photoSelfie||null,
+    photos_fin_shift:item.photosFinShift||[],
+    captures_yango:item.capturesYango||[],
+    captures_bord:item.capturesBord||[],
   });
   const addShift = async (item) => await sh.add({...buildShiftPayload(item), id:"SH-"+Date.now()});
   const updateShift = async (id, item) => {
@@ -2796,12 +2992,14 @@ const App = () => {
     if(item.noteYangoShift!==undefined) payload.yango_rating = item.noteYangoShift;
     if(item.yango_rating!==undefined) payload.yango_rating = item.yango_rating;
     if(item.commentaireShift!==undefined) payload.commentaireshift = item.commentaireShift;
+    if(item.comment!==undefined) payload.commentaireshift = item.comment;
     if(item.km_driven!==undefined) payload.km_driven = item.km_driven;
     if(item.battery_start!==undefined) payload.battery_start = item.battery_start;
     if(item.battery_end!==undefined) payload.battery_end = item.battery_end;
-    if(item.real_start_time!==undefined) payload.real_start_time = item.real_start_time;
-    if(item.real_end_time!==undefined) payload.real_end_time = item.real_end_time;
-    console.log("updateShift payload:", JSON.stringify(payload));
+    if(item.photo_selfie!==undefined) payload.photo_selfie = item.photo_selfie;
+    if(item.photos_fin_shift!==undefined) payload.photos_fin_shift = item.photos_fin_shift;
+    if(item.captures_yango!==undefined) payload.captures_yango = item.captures_yango;
+    if(item.captures_bord!==undefined) payload.captures_bord = item.captures_bord;
     return await sh.update(id, payload);
   };
 
@@ -2858,7 +3056,6 @@ const App = () => {
     }
   };
 
-  // Verifier si c est un lien d invitation
   const urlParams = new URLSearchParams(window.location.search);
   const inviteToken = urlParams.get("token");
   if (inviteToken) return <SetPasswordPage token={inviteToken} onDone={()=>window.location.href=window.location.pathname}/>;
@@ -2919,6 +3116,7 @@ const App = () => {
               <div className="h-8 w-px bg-slate-200"/>
               <div className="text-sm text-slate-500">{user.name}</div>
               <Badge color={{"admin":"bg-red-100 text-red-700","ops":"bg-blue-100 text-blue-700","finance":"bg-emerald-100 text-emerald-700","supervisor":"bg-violet-100 text-violet-700","dispatcher":"bg-amber-100 text-amber-700"}[user.role]||"bg-slate-100 text-slate-600"}>{ROLE_LABELS[user.role]||user.role}</Badge>
+
             </div>
           </div>
         </header>
