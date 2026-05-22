@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase, getUsers } from "./supabase.js";
-import { useSupabase } from "./hooks/useSupabase.js";
+import { useApi, apiFetch } from "./hooks/useApi.js";
 import { mapVehicle, mapDriver, mapShift, mapReversement, mapRecharge, mapMaintenance, mapSite } from "./utils/mappers.js";
 import { ALL_NAV, getNav, ROLE_LABELS } from "./utils/navigation.js";
 import { NavIcon } from "./components/ui/NavIcon.jsx";
@@ -54,13 +53,17 @@ const App = () => {
     if(!pwdForm.current) return setPwdError("Mot de passe actuel requis");
     if(pwdForm.next.length < 6) return setPwdError("Nouveau mot de passe minimum 6 caracteres");
     if(pwdForm.next !== pwdForm.confirm) return setPwdError("Les mots de passe ne correspondent pas");
-    const users = await getUsers();
-    const me = users.find(u => u.id === user?.id);
-    if(!me || me.password !== pwdForm.current) return setPwdError("Mot de passe actuel incorrect");
-    await supabase.from("users").update({password: pwdForm.next}).eq("id", user.id);
-    setPwdSuccess("Mot de passe modifie avec succes !");
-    setPwdForm({current:"", next:"", confirm:""});
-    setTimeout(() => { setShowPwdModal(false); setPwdSuccess(""); }, 2000);
+    try {
+      // Vérifier ancien mot de passe via login
+      await apiFetch("/auth/login", { method: "POST", body: { email: user.email, password: pwdForm.current } });
+      // Mettre à jour
+      await apiFetch("/utilisateurs/" + user.id, { method: "PUT", body: { name: user.name, email: user.email, role: user.role, password: pwdForm.next } });
+      setPwdSuccess("Mot de passe modifie avec succes !");
+      setPwdForm({current:"", next:"", confirm:""});
+      setTimeout(() => { setShowPwdModal(false); setPwdSuccess(""); }, 2000);
+    } catch {
+      setPwdError("Mot de passe actuel incorrect");
+    }
   };
   const [search, setSearch] = useState("");
   const [showSearch, setShowSearch] = useState(false);
@@ -112,14 +115,14 @@ const App = () => {
     localStorage.setItem("darkMode", darkMode);
   }, [darkMode]);
 
-  // Supabase hooks
-  const vh = useSupabase("vehicles", mapVehicle);
-  const dr = useSupabase("drivers", mapDriver);
-  const sh = useSupabase("shifts", mapShift);
-  const rv = useSupabase("reversements", mapReversement);
-  const rc = useSupabase("recharges", mapRecharge);
-  const mt = useSupabase("maintenances", mapMaintenance);
-  const si = useSupabase("sites", mapSite);
+  // API Express hooks (→ localhost:3001)
+  const vh = useApi("vehicules",    mapVehicle);
+  const dr = useApi("chauffeurs",   mapDriver);
+  const sh = useApi("planning",     mapShift);
+  const rv = useApi("reversements", mapReversement);
+  const rc = useApi("recharges",    mapRecharge);
+  const mt = useApi("maintenance",  mapMaintenance);
+  const si = useApi("sites",        mapSite);
 
   const buildVehiclePayload = (item) => ({
     immat:item.immat||null, marque:item.marque||null, modele:item.modele||null,
@@ -378,9 +381,9 @@ const App = () => {
       ...(item.captures_yango !== undefined && { captures_yango: item.captures_yango }),
       ...(item.captures_bord !== undefined && { captures_bord: item.captures_bord }),
     };
-    const { error } = await supabase.from("shifts").update(payload).eq("id", id);
-    if (!error) sh.reload();
-    return error;
+    const error = await apiFetch("/planning/" + id, { method: "PUT", body: payload }).catch(e => e);
+    if (!(error instanceof Error)) sh.reload();
+    return error instanceof Error ? error : null;
   };
 
   const buildReversementPayload = (item) => ({
@@ -388,7 +391,7 @@ const App = () => {
     driver_id: item.ch||null,
     montant: item.montant||0,
     amount_sent: item.montant||0,
-    amount_requested: item.montant||0,
+    amount_requested: item.amount_requested||item.montant||0,
     canal: item.canal||"Wave Business",
     date: item.date||new Date().toISOString().split("T")[0],
     status: item.status||"En attente",
@@ -396,6 +399,7 @@ const App = () => {
     authorized_expenses: item.authorized_expenses||item.depensesAutorisees||0,
     transaction_proof_url: item.transaction_proof_url||item.preuve||null,
     commentaire: item.commentaire||null,
+    site: item.site||null,
   });
   const addReversement = async (item) => await rv.add({...buildReversementPayload(item), id:"RV-"+Date.now()});
   const updateReversement = async (id, item) => {
@@ -403,7 +407,9 @@ const App = () => {
     const partial = {};
     if(item.status !== undefined) partial.status = item.status;
     if(item.ch !== undefined) { partial.ch = item.ch; partial.driver_id = item.ch; }
-    if(item.montant !== undefined) { partial.montant = item.montant; partial.amount_sent = item.montant; partial.amount_requested = item.montant; }
+    if(item.montant !== undefined) { partial.montant = item.montant; partial.amount_sent = item.montant; }
+    if(item.amount_requested !== undefined) partial.amount_requested = item.amount_requested;
+    if(item.site !== undefined) partial.site = item.site;
     if(item.canal !== undefined) partial.canal = item.canal;
     if(item.date !== undefined) partial.date = item.date;
     if(item.ecart !== undefined) partial.ecart = item.ecart;
@@ -418,17 +424,38 @@ const App = () => {
   const buildRechargePayload = (item) => ({
     vh: item.vh||null,
     ch: item.ch||null,
-    partenaire: item.partenaire||"Domestique",
+    partenaire: item.partenaire||item.operateur||"Domestique",
+    typeCharge: item.typeCharge||"Borne partenaire",
     kwh: item.kWh||item.kwh||0,
+    kWh: item.kWh||item.kwh||0,
     cout: item.cout||0,
     lieu: item.lieu||null,
     duree: item.duree||0,
     soc_av: item.socAv||item.soc_av||0,
     soc_ap: item.socAp||item.soc_ap||0,
+    note: item.note||null,
     date: item.date||new Date().toISOString().split("T")[0],
   });
   const addRecharge = async (item) => await rc.add({...buildRechargePayload(item), id:"RC-"+Date.now()});
-  const updateRecharge = async (id, item) => await rc.update(id, buildRechargePayload(item));
+  const updateRecharge = async (id, item) => {
+    const partial = {};
+    if (item.vh !== undefined) partial.vh = item.vh;
+    if (item.ch !== undefined) partial.ch = item.ch;
+    if (item.typeCharge !== undefined) partial.typeCharge = item.typeCharge;
+    if (item.partenaire !== undefined) partial.partenaire = item.partenaire;
+    if (item.lieu !== undefined) partial.lieu = item.lieu;
+    if (item.kWh !== undefined) { partial.kWh = item.kWh; partial.kwh = item.kWh; }
+    if (item.kwh !== undefined) { partial.kwh = item.kwh; partial.kWh = item.kwh; }
+    if (item.cout !== undefined) partial.cout = item.cout;
+    if (item.duree !== undefined) partial.duree = item.duree;
+    if (item.soc_av !== undefined) partial.soc_av = item.soc_av;
+    if (item.socAv !== undefined) partial.soc_av = item.socAv;
+    if (item.soc_ap !== undefined) partial.soc_ap = item.soc_ap;
+    if (item.socAp !== undefined) partial.soc_ap = item.socAp;
+    if (item.note !== undefined) partial.note = item.note;
+    if (item.date !== undefined) partial.date = item.date;
+    return await rc.update(id, partial);
+  };
 
   const buildMaintenancePayload = (item) => ({
     vh: item.vh||null,
@@ -442,13 +469,8 @@ const App = () => {
   const addMaintenance = async (item) => await mt.add({...buildMaintenancePayload(item), id:"MT-"+Date.now()});
   const updateMaintenance = async (id, item) => await mt.update(id, buildMaintenancePayload(item));
 
-  const handleLogin = async (u) => {
-    try {
-      const {data} = await supabase.from("users").select("*").eq("id",u.id).single();
-      setUser(data||u);
-    } catch {
-      setUser(u);
-    }
+  const handleLogin = (u) => {
+    setUser(u);
   };
 
   // Verifier si c est un lien d invitation
@@ -465,7 +487,7 @@ const App = () => {
     planning: <PlanningPage shifts={sh.data} vehicles={vh.data} drivers={dr.data} onAdd={addShift} onUpdate={updateShift} onDelete={sh.remove} sites={si.data}/>,
     reversements: <ReversementsPage reversements={rv.data} drivers={dr.data} shifts={sh.data} onAdd={addReversement} onUpdate={updateReversement} onDelete={rv.remove} user={user}/>,
     kpi: <KpiPaiePage drivers={dr.data} shifts={sh.data} reversements={rv.data}/>,
-    recharge: <RechargePage recharges={rc.data} vehicles={vh.data} drivers={dr.data} onAdd={addRecharge} onUpdate={updateRecharge} onDelete={rc.remove}/>,
+    recharge: <RechargePage recharges={rc.data} vehicles={vh.data} drivers={dr.data} shifts={sh.data} onAdd={addRecharge} onUpdate={updateRecharge} onDelete={rc.remove}/>,
     maintenance: <MaintenancePage maintenances={mt.data} vehicles={vh.data} onAdd={addMaintenance} onUpdate={updateMaintenance} onDelete={mt.remove}/>,
     gps: <GpsPage vehicles={vh.data}/>,
     reporting: <ReportingPage vehicles={vh.data} drivers={dr.data} recharges={rc.data} maintenances={mt.data} shifts={sh.data} reversements={rv.data}/>,
@@ -499,7 +521,7 @@ const App = () => {
             <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
             {sideOpen&&"Changer mot de passe"}
           </button>
-          <button onClick={()=>{setUser(null);setPage("dashboard");}} className="w-full flex items-center gap-2 text-sm text-slate-400 hover:text-red-400 transition-colors">
+          <button onClick={()=>{localStorage.removeItem("saver_token");setUser(null);setPage("dashboard");}} className="w-full flex items-center gap-2 text-sm text-slate-400 hover:text-red-400 transition-colors">
             <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
             {sideOpen&&"Deconnexion"}
           </button>

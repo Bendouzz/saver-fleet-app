@@ -1,299 +1,462 @@
+// ReversementsPage.jsx — Easy by Saver · Dark theme Tailwind · Onglets Saisie/Historique
 import { useState } from "react";
-import { Badge } from "../components/ui/Badge.jsx";
-import { Modal } from "../components/ui/Modal.jsx";
 import { Confirm } from "../components/ui/Confirm.jsx";
-import { Input } from "../components/ui/Input.jsx";
-import { Select } from "../components/ui/Select.jsx";
 import { PhotoUpload } from "../components/ui/PhotoUpload.jsx";
-import { sc } from "../utils/statusColors.js";
 import { fmt } from "../utils/formatters.js";
-import { StatCard } from "../components/ui/StatCard.jsx";
-const fmtK = (n) => n >= 1000000 ? (n/1000000).toFixed(1)+"M" : n >= 1000 ? Math.round(n/1000)+"k" : (n||0).toString();
 
-export const ReversementsPage = ({reversements, drivers, shifts, onAdd, onUpdate, onDelete, user}) => {
-  const [showModal, setShowModal] = useState(false);
-  const [editItem, setEditItem] = useState(null);
+const SITES = ["Depot Principal SAVER - Cocody", "Depot Secondaire SAVER - Yopougon", "Borne SAVER - Adjame", "Borne SAVER - Treichville", "Borne SAVER - Plateau", "Autre"];
+const OPERATEURS_MM = ["Wave", "Orange Money", "MTN MoMo", "Moov Money"];
+const CANAUX = ["Especes", "Wave Business", "Orange Money Business", "MTN Mobile Money", "Moov Money", "Cash"];
+
+function getPeriodeDefaut() {
+  const fin = new Date();
+  const debut = new Date();
+  debut.setDate(debut.getDate() - 13);
+  return { debut: debut.toISOString().slice(0, 10), fin: fin.toISOString().slice(0, 10) };
+}
+
+function analyserEcart(montant, montantAttendu, depenseMontant, canal, operateur) {
+  const m   = parseFloat(montant);
+  const ma  = parseFloat(montantAttendu);
+  const dep = parseFloat(depenseMontant) || 0;
+  if (!ma || isNaN(m) || isNaN(ma)) return null;
+  const ecartBrut = ma - m;
+  const ecartPct  = (ecartBrut / ma) * 100;
+  const fraisWave = (canal === "Wave Business" || (canal === "Mobile Money" && operateur === "Wave")) ? ma * 0.01 : 0;
+  const ecartNonExplique = ecartBrut - fraisWave - dep;
+  if (ecartNonExplique <= 0.5) {
+    if (fraisWave > 0 && dep > 0) return { label: "OK · Frais Wave + Depense", color: "text-green-400", ok: true };
+    if (fraisWave > 0) return { label: "OK · Frais Wave 1%", color: "text-green-400", ok: true };
+    if (dep > 0) return { label: "OK · Depense autorisee", color: "text-amber-400", ok: true };
+    return { label: "OK", color: "text-green-400", ok: true };
+  }
+  if (dep > 0) return { label: `Ecart ${ecartPct.toFixed(1)}% · Depense partielle`, color: "text-amber-400", ok: false, detail: `Non explique: ${Math.round(ecartNonExplique).toLocaleString("fr-FR")} F` };
+  return { label: `ECART ${ecartPct.toFixed(1)}%`, color: "text-red-400", ok: false, detail: `${Math.round(ecartBrut).toLocaleString("fr-FR")} F manquant` };
+}
+
+const emptyForm = {
+  ch: "", montant: "", montantAttendu: "", date: new Date().toISOString().slice(0, 10),
+  commentaire: "", site: "", modePaiement: "Especes",
+  operateur: "", numeroMM: "", referenceTransaction: "",
+  preuve: "", depenseAutorisee: false, depenseMontant: "", depensePreuve: ""
+};
+
+const INP = "w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500";
+const LBL = "block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5";
+
+export const ReversementsPage = ({ reversements = [], drivers = [], shifts = [], onAdd, onUpdate, onDelete, user }) => {
+  const [onglet, setOnglet]               = useState("saisie");
+  const [form, setForm]                   = useState(emptyForm);
   const [confirmDelete, setConfirmDelete] = useState(null);
-  const [filterDriver, setFilterDriver] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [filterPeriode, setFilterPeriode] = useState("tout");
-  const [filterDateDebut, setFilterDateDebut] = useState("");
-  const [filterDateFin, setFilterDateFin] = useState("");
+  const [editId, setEditId]               = useState(null);
 
-  // Calcul periode 14 jours
-  const getPeriodeDates = () => {
-    const now = new Date();
-    const debut = new Date(now);
-    debut.setDate(now.getDate() - 14);
-    return { debut: debut.toISOString().split("T")[0], fin: now.toISOString().split("T")[0] };
-  };
-
-  const emptyForm = {ch:"",montant:0,montantDeclare:0,canal:"Wave Business",date:new Date().toISOString().split("T")[0],status:"En attente",ecart:0,depensesAutorisees:0,preuve:"",commentaire:""};
-  const [form, setForm] = useState(emptyForm);
-  const [shiftInfo, setShiftInfo] = useState(null);
+  const periode = getPeriodeDefaut();
+  const [filtreDebut, setFiltreDebut]       = useState(periode.debut);
+  const [filtreFin, setFiltreFin]           = useState(periode.fin);
+  const [filtreChauffeur, setFiltreChauffeur] = useState("");
+  const [filtreSite, setFiltreSite]         = useState("");
+  const [filtreStatut, setFiltreStatut]     = useState("");
 
   // Recherche automatique du shift quand chauffeur + date changent
   const findShift = (chId, date) => {
-    if(!chId || !date) { setShiftInfo(null); return; }
-    const found = shifts.filter(s => 
-      s.ch === chId && 
+    if (!chId || !date) return null;
+    return shifts.find(s =>
+      s.ch === chId &&
       (s.status === "Terminé" || s.status === "Termine") &&
       (s.planned_start_date || s.date || "").startsWith(date)
-    );
-    if(found.length > 0) {
-      const s = found[0];
-      setShiftInfo(s);
-    } else {
-      setShiftInfo(null);
-    }
+    ) || null;
+  };
+  const shiftAuto = findShift(form.ch, form.date);
+
+  const hi = (k) => (e) => {
+    const val = e.target.type === "checkbox" ? e.target.checked : e.target.value;
+    setForm(f => ({ ...f, [k]: val }));
   };
 
-  const openAdd = () => { setForm(emptyForm); setEditItem(null); setShowModal(true); };
   const openEdit = (r) => {
-    setForm({...emptyForm,
-      ch:r.ch||"", montant:r.montant||0, montantDeclare:r.montant_declare||r.montantDeclare||r.montant||0, canal:r.canal||"Wave Business",
-      date:r.date||"", status:r.status||"En attente", ecart:r.ecart||0,
-      depensesAutorisees:r.authorized_expenses||r.depensesAutorisees||0,
-      preuve:r.transaction_proof_url||r.preuve||"",
-      commentaire:r.commentaire||""
+    setForm({
+      ...emptyForm,
+      ch: r.ch || "",
+      montant: r.montant || "",
+      montantAttendu: r.amount_requested || r.montant || "",
+      date: r.date || "",
+      commentaire: r.commentaire || "",
+      site: r.site || "",
+      modePaiement: r.canal?.includes("Mobile") || OPERATEURS_MM.some(o => r.canal?.includes(o)) ? "Mobile Money" : "Especes",
+      operateur: r.operateur || "",
+      preuve: r.transaction_proof_url || r.preuve || "",
+      depenseMontant: r.authorized_expenses || 0,
     });
-    setEditItem(r);
-    setShowModal(true);
+    setEditId(r.id);
+    setOnglet("saisie");
   };
 
-  // Calcul ecart : recette déclarée - dépenses - montant versé
-  const calcEcart = (montantVerse, montantDeclare, depenses, canal) => {
-    if(!montantDeclare || montantDeclare <= 0) return 0;
-    const tolerance = (canal==="Wave Business" || canal==="Wave") ? montantDeclare * 0.01 : 0;
-    const montantAttendu = montantDeclare - (depenses || 0);
-    const ecart = montantAttendu - montantVerse - tolerance;
-    return Math.max(0, Math.round(ecart));
-  };
-
-  const handleSave = async () => {
-    if(!form.ch||!form.montant) return alert("Chauffeur et montant requis");
-    const ecartAuto = calcEcart(form.montant, form.montant, form.depensesAutorisees||0, form.canal);
-    const statusAuto = ecartAuto > 0 ? "Ecart detecte" : form.status;
+  const handleAjouter = async () => {
+    if (!form.ch) return alert("Chauffeur obligatoire");
+    if (!form.montant) return alert("Montant obligatoire");
+    if (!form.date) return alert("Date obligatoire");
+    if (form.modePaiement === "Mobile Money" && !form.operateur) return alert("Operateur mobile money obligatoire");
+    const canalFinal = form.modePaiement === "Mobile Money" ? (form.operateur || "Mobile Money") + " Business" : "Especes";
     const payload = {
-      ch:form.ch, driver_id:form.ch,
-      montant:form.montant, amount_sent:form.montant, amount_requested:form.montant,
-      canal:form.canal, date:form.date,
-      status:statusAuto, ecart:ecartAuto||form.ecart||0,
-      authorized_expenses:form.depensesAutorisees||0,
-      transaction_proof_url:form.preuve||null,
-      commentaire:form.commentaire||null,
+      ch: form.ch, driver_id: form.ch,
+      montant: parseFloat(form.montant) || 0,
+      amount_sent: parseFloat(form.montant) || 0,
+      amount_requested: parseFloat(form.montantAttendu) || parseFloat(form.montant) || 0,
+      canal: canalFinal,
+      date: form.date,
+      status: "En attente",
+      ecart: 0,
+      authorized_expenses: form.depenseAutorisee ? (parseFloat(form.depenseMontant) || 0) : 0,
+      transaction_proof_url: form.preuve || null,
+      commentaire: form.commentaire || null,
+      site: form.site || null,
     };
-    if(editItem){await onUpdate(editItem.id, payload);}
-    else{await onAdd({...payload, id:"RV-"+Date.now()});}
-    setShowModal(false);
+    if (editId) {
+      await onUpdate(editId, payload);
+      setEditId(null);
+    } else {
+      await onAdd({ ...payload, id: "RV-" + Date.now() });
+    }
+    setForm(emptyForm);
   };
 
-  const filtered = reversements
-    .filter(r=>filterDriver==="all"||r.ch===filterDriver)
-    .filter(r=>filterStatus==="all"||r.status===filterStatus)
-    .filter(r=>{
-      if(filterPeriode==="14j") {
-        const {debut, fin} = getPeriodeDates();
-        return (r.date||"") >= debut && (r.date||"") <= fin;
-      }
-      if(filterPeriode==="custom" && filterDateDebut && filterDateFin) {
-        return (r.date||"") >= filterDateDebut && (r.date||"") <= filterDateFin;
-      }
-      return true;
-    });
+  const listeFiltree = reversements.filter(r => {
+    if (filtreChauffeur && r.ch !== filtreChauffeur) return false;
+    if (filtreSite && r.site !== filtreSite) return false;
+    if (filtreStatut && r.status !== filtreStatut) return false;
+    if (filtreDebut && (r.date || "") < filtreDebut) return false;
+    if (filtreFin && (r.date || "") > filtreFin) return false;
+    return true;
+  });
 
-  const total = filtered.reduce((a,r)=>a+(r.montant||0),0);
-  const totalEcart = filtered.reduce((a,r)=>a+(r.ecart||0),0);
-  const nbEcarts = filtered.filter(r=>(r.ecart||0)>0).length;
-  const nbEnAttente = filtered.filter(r=>r.status==="En attente").length;
+  const totalRecu    = listeFiltree.reduce((s, r) => s + parseFloat(r.montant || 0), 0);
+  const totalAttendu = listeFiltree.reduce((s, r) => s + parseFloat(r.amount_requested || r.montant || 0), 0);
+  const ecartTotal   = totalAttendu - totalRecu;
+  const nbAlertes    = listeFiltree.filter(r => {
+    const info = analyserEcart(r.montant, r.amount_requested || r.montant, r.authorized_expenses, r.canal, r.operateur);
+    return info && !info.ok;
+  }).length;
+
+  const ecartInfo = analyserEcart(form.montant, form.montantAttendu, form.depenseAutorisee ? form.depenseMontant : 0, form.modePaiement === "Mobile Money" ? "Wave Business" : "Especes", form.operateur);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Recettes et Reversements</h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Suivi quotidien des versements Wave / Orange Money</p>
-        </div>
-        <button onClick={openAdd} className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 flex items-center gap-2">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
-          Ajouter reversement
-        </button>
+    <div className="flex flex-col min-h-screen bg-slate-900 text-slate-100" style={{ minHeight: "calc(100vh - 56px)" }}>
+
+      {/* ── HEADER ── */}
+      <div className="px-6 py-5 border-b border-slate-700">
+        <h1 className="text-xl font-bold text-white">Reversements</h1>
+        <p className="text-xs text-slate-500 mt-0.5">Suivi des versements chauffeurs</p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label="Total reverse" value={fmtK(total)+" F"} color="text-emerald-600"/>
-        <StatCard label="En attente" value={nbEnAttente.toString()} color="text-amber-600"/>
-        <StatCard label="Ecarts detectes" value={nbEcarts.toString()} color="text-red-600"/>
-        <StatCard label="Total ecarts" value={fmtK(totalEcart)+" F"} color="text-red-600"/>
-      </div>
-
-      {/* Alerte ecarts */}
-      {nbEcarts > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
-          <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
-          <div>
-            <div className="font-semibold text-red-800 text-sm">{nbEcarts} ecart(s) detecte(s)</div>
-            <div className="text-xs text-red-700 mt-0.5">Total des ecarts : {fmt(totalEcart)} — Verifier les reversements en rouge</div>
-          </div>
+      {/* ── ALERTE ECARTS ── */}
+      {nbAlertes > 0 && (
+        <div className="mx-6 mt-4 bg-red-900/40 border border-red-800 rounded-xl px-5 py-3 text-red-300 font-bold text-sm">
+          {nbAlertes} reversement(s) avec ecart inexplique
         </div>
       )}
 
-      {/* Filtres */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex flex-wrap gap-3">
-        <select value={filterDriver} onChange={e=>setFilterDriver(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 dark:text-white">
-          <option value="all">Tous les chauffeurs</option>
-          {drivers.map(d=><option key={d.id} value={d.id}>{d.prenom} {d.nom}</option>)}
-        </select>
-        <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 dark:text-white">
-          <option value="all">Tous les statuts</option>
-          <option value="En attente">En attente</option>
-          <option value="Validé">Valides</option>
-          <option value="Ecart detecte">Ecarts detectes</option>
-        </select>
-        <select value={filterPeriode} onChange={e=>setFilterPeriode(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 dark:text-white">
-          <option value="tout">Toute la periode</option>
-          <option value="14j">14 derniers jours</option>
-          <option value="custom">Periode personnalisee</option>
-        </select>
-        {filterPeriode==="custom"&&(
-          <>
-            <input type="date" value={filterDateDebut} onChange={e=>setFilterDateDebut(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 dark:text-white"/>
-            <input type="date" value={filterDateFin} onChange={e=>setFilterDateFin(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 dark:text-white"/>
-          </>
-        )}
-        {(filterDriver!=="all"||filterStatus!=="all"||filterPeriode!=="tout")&&(
-          <button onClick={()=>{setFilterDriver("all");setFilterStatus("all");setFilterPeriode("tout");setFilterDateDebut("");setFilterDateFin("");}}
-            className="text-xs text-red-500 hover:text-red-700 border border-red-200 px-3 py-2 rounded-lg">
-            Effacer filtres
+      {/* ── ONGLETS ── */}
+      <div className="px-6 pt-4 flex gap-2">
+        {[["saisie", "Saisie reversement"], ["historique", "Historique filtrable"]].map(([id, label]) => (
+          <button key={id} onClick={() => setOnglet(id)}
+            className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${onglet === id ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700"}`}>
+            {label}
           </button>
-        )}
-        <div className="ml-auto text-xs text-slate-400 dark:text-slate-500 self-center">
-          {filtered.length} reversement(s)
-        </div>
+        ))}
       </div>
 
-      {/* Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 overflow-x-auto">
-        <table className="w-full">
-          <thead><tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 dark:border-slate-700">
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Chauffeur</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Montant verse</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Canal</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Depenses aut.</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Preuve</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Date</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Ecart</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Statut</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Actions</th>
-          </tr></thead>
-          <tbody>
-            {filtered.length===0&&<tr><td colSpan={9} className="text-center py-8 text-slate-400 text-sm">Aucun reversement</td></tr>}
-            {filtered.map(r=>{
-              const driver=drivers.find(d=>d.id===r.ch);
-              const hasEcart = (r.ecart||0)>0;
-              const depenses = r.authorized_expenses||r.depensesAutorisees||0;
-              return (
-                <tr key={r.id} className={"border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50"+(hasEcart?" bg-red-50/30":"")}>
-                  <td className="px-4 py-3">
-                    <div className="font-medium text-sm text-slate-800 dark:text-slate-100">{driver?driver.prenom+" "+driver.nom:"—"}</div>
-                    <div className="text-xs text-slate-400">{driver?.matricule||""}</div>
-                  </td>
-                  <td className="px-4 py-3 text-sm font-semibold text-emerald-600">{fmt(r.montant||0)}</td>
-                  <td className="px-4 py-3"><Badge color="bg-emerald-100 text-emerald-700">{r.canal||"—"}</Badge></td>
-                  <td className="px-4 py-3 text-sm text-amber-600">{depenses>0?fmt(depenses):"—"}</td>
-                  <td className="px-4 py-3">
-                    {(r.transaction_proof_url||r.preuve)?
-                      <a href={r.transaction_proof_url||r.preuve} target="_blank" rel="noreferrer" className="text-xs text-blue-600 underline flex items-center gap-1">
-                        Voir preuve
-                      </a>:
-                      <span className="text-xs text-slate-400">Pas de preuve</span>
-                    }
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{r.date||"—"}</td>
-                  <td className="px-4 py-3">
-                    {hasEcart?
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-100 px-2 py-1 rounded-full">
-                        -{fmt(r.ecart||0)}
-                      </span>:
-                      <span className="text-xs text-emerald-500 font-medium">OK</span>
-                    }
-                  </td>
-                  <td className="px-4 py-3"><Badge color={sc(r.status)}>{r.status}</Badge></td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-1">
-                      <button onClick={()=>openEdit(r)} className="text-blue-600 text-xs border border-blue-200 px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20">Modifier</button>
-                      {r.status==="En attente"&&(user?.role==="finance"||user?.role==="admin")&&<button onClick={async()=>await onUpdate(r.id,{
-  status:"Validé",
-  ch:r.ch, driver_id:r.ch,
-  montant:r.montant, amount_sent:r.montant, amount_requested:r.montant,
-  canal:r.canal, date:r.date, ecart:r.ecart||0,
-  authorized_expenses:r.authorized_expenses||r.depensesAutorisees||0,
-  transaction_proof_url:r.transaction_proof_url||r.preuve||null,
-  commentaire:r.commentaire||null,
-})} className="text-emerald-600 text-xs border border-emerald-200 px-2 py-1 rounded hover:bg-emerald-50">Valider</button>}
-                      {r.status==="En attente"&&!(user?.role==="finance"||user?.role==="admin")&&<span className="text-xs text-slate-400 italic px-2 py-1">En attente Finance</span>}
-                      <button onClick={()=>setConfirmDelete(r)} className="text-red-600 text-xs border border-red-200 px-2 py-1 rounded hover:bg-red-50">Suppr.</button>
+      <div className="flex-1 px-6 pb-6 pt-5">
+
+        {/* ─────────── SAISIE ─────────── */}
+        {onglet === "saisie" && (
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-3xl">
+            <h3 className="text-base font-bold text-white mb-5">
+              {editId ? "Modifier le reversement" : "Nouveau reversement"}
+            </h3>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={LBL}>Date *</label>
+                <input className={INP} type="date" value={form.date} onChange={hi("date")} />
+              </div>
+              <div>
+                <label className={LBL}>Chauffeur *</label>
+                <select className={INP} value={form.ch} onChange={hi("ch")}>
+                  <option value="">-- Choisir --</option>
+                  {drivers.map(d => <option key={d.id} value={d.id}>{d.driver_code || d.matricule} · {d.prenom} {d.nom}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={LBL}>Site / Depot</label>
+                <select className={INP} value={form.site} onChange={hi("site")}>
+                  <option value="">-- Aucun --</option>
+                  {SITES.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+
+              {/* Shift auto */}
+              {shiftAuto && (
+                <div className="col-span-2 bg-green-900/30 border border-green-800 rounded-xl px-4 py-3">
+                  <div className="text-xs font-bold text-green-400 mb-2">Shift trouve automatiquement</div>
+                  <div className="grid grid-cols-2 gap-2 text-xs text-green-300">
+                    <span>Recettes DD : <strong>{shiftAuto.revenue_cash || shiftAuto.recette || 0} F</strong></span>
+                    <span>Shift : <strong>{shiftAuto.shift_type || "Shift " + shiftAuto.type}</strong></span>
+                    <span>Courses : <strong>{shiftAuto.courses_count || 0}</strong></span>
+                    <span>Commission : <strong>{shiftAuto.yango_commission || 0} F</strong></span>
+                  </div>
+                </div>
+              )}
+              {form.ch && !shiftAuto && form.date && (
+                <div className="col-span-2 bg-amber-900/30 border border-amber-800 rounded-xl px-4 py-3 text-xs text-amber-300">
+                  Aucun shift termine trouve pour ce chauffeur a cette date
+                </div>
+              )}
+
+              <div>
+                <label className={LBL}>Montant attendu (FCFA)</label>
+                <input className={INP} type="number" value={form.montantAttendu} onChange={hi("montantAttendu")} />
+              </div>
+              <div>
+                <label className={LBL}>Montant recu (FCFA) *</label>
+                <input className={INP} type="number" value={form.montant} onChange={hi("montant")} />
+              </div>
+
+              {/* Analyse ecart */}
+              {ecartInfo && (
+                <div className={`col-span-2 rounded-xl px-4 py-3 border ${ecartInfo.ok ? "bg-green-900/30 border-green-800" : "bg-red-900/30 border-red-800"}`}>
+                  <span className={`font-bold ${ecartInfo.color}`}>{ecartInfo.label}</span>
+                  {ecartInfo.detail && <span className="ml-3 text-slate-400 text-xs">{ecartInfo.detail}</span>}
+                </div>
+              )}
+
+              <div>
+                <label className={LBL}>Mode de paiement</label>
+                <select className={INP} value={form.modePaiement} onChange={hi("modePaiement")}>
+                  <option value="Especes">Especes</option>
+                  <option value="Mobile Money">Mobile Money</option>
+                </select>
+              </div>
+
+              {form.modePaiement === "Mobile Money" && (
+                <>
+                  <div>
+                    <label className={LBL}>Operateur *</label>
+                    <select className={INP} value={form.operateur} onChange={hi("operateur")}>
+                      <option value="">-- Choisir --</option>
+                      {OPERATEURS_MM.map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={LBL}>Numero mobile money</label>
+                    <input className={INP} value={form.numeroMM} onChange={hi("numeroMM")} placeholder="07 XX XX XX XX" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className={LBL}>Reference transaction</label>
+                    <input className={INP} value={form.referenceTransaction} onChange={hi("referenceTransaction")} />
+                  </div>
+                  {form.operateur === "Wave" && (
+                    <div className="col-span-2 bg-amber-900/30 border border-amber-800 rounded-xl px-4 py-2 text-xs text-amber-300">
+                      Frais Wave 1% appliques automatiquement dans le calcul d'ecart
                     </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                  )}
+                </>
+              )}
 
-      {/* MODAL */}
-      {showModal&&(
-        <Modal title={editItem?"Modifier reversement":"Ajouter reversement"} onClose={()=>setShowModal(false)}
-          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium">{editItem?"Enregistrer":"Ajouter"}</button></>}>
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-700 mb-2">
-            L ecart est calcule automatiquement. Tolerance de 1% pour les frais Wave Business.
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2">
-              <Select label="Chauffeur" value={form.ch} onChange={v=>{setForm({...form,ch:v});findShift(v,form.date);}} options={[{value:"",label:"-- Choisir --"},...drivers.map(d=>({value:d.id,label:d.prenom+" "+d.nom+" ("+(d.matricule||d.id)+")"}))]}/> 
+              <div className="col-span-2">
+                <label className={LBL}>Preuve de reversement (screenshot Wave / recu)</label>
+                <PhotoUpload label="" bucket="reversement-proofs" folder={"reversements/" + (form.date || "new")} value={form.preuve} onChange={url => setForm(f => ({ ...f, preuve: url }))} hint="Capture d'ecran de la transaction" />
+              </div>
+
+              <div className="col-span-2">
+                <label className={LBL}>Commentaire</label>
+                <input className={INP} value={form.commentaire} onChange={hi("commentaire")} />
+              </div>
             </div>
-            {shiftInfo && (
-              <div className="col-span-2 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 rounded-lg p-3">
-                <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 mb-1">Shift trouvé automatiquement</div>
-                <div className="grid grid-cols-2 gap-2 text-xs text-emerald-600 dark:text-emerald-400">
-                  <span>Recettes DD : <strong>{shiftInfo.revenue_cash||shiftInfo.recette||0} F</strong></span>
-                  <span>Shift : <strong>{shiftInfo.shift_type||"Shift "+shiftInfo.type}</strong></span>
-                  <span>Courses : <strong>{shiftInfo.courses_count||0}</strong></span>
-                  <span>Commission : <strong>{shiftInfo.yango_commission||0} F</strong></span>
+
+            {/* Depense autorisee */}
+            <div className="mt-5 bg-slate-900/50 border border-slate-700 rounded-xl p-4">
+              <label className="flex items-center gap-3 font-semibold text-slate-200 cursor-pointer text-sm">
+                <input type="checkbox" checked={form.depenseAutorisee} onChange={hi("depenseAutorisee")} className="w-4 h-4 rounded" />
+                Depense autorisee a deduire
+              </label>
+              {form.depenseAutorisee && (
+                <div className="mt-4 grid grid-cols-2 gap-4">
+                  <div>
+                    <label className={LBL}>Montant depense (FCFA)</label>
+                    <input className={INP} type="number" value={form.depenseMontant} onChange={hi("depenseMontant")} />
+                  </div>
+                  <div>
+                    <label className={LBL}>Justificatif depense (photo)</label>
+                    <input type="file" accept="image/*" onChange={e => {
+                      const file = e.target.files[0];
+                      if (!file) return;
+                      const r = new FileReader();
+                      r.onload = () => setForm(f => ({ ...f, depensePreuve: r.result }));
+                      r.readAsDataURL(file);
+                    }} className="text-slate-400 text-sm" />
+                    {form.depensePreuve && (
+                      <img src={form.depensePreuve} alt="" className="mt-2 h-14 w-20 object-cover rounded-lg border border-slate-600" />
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-5 flex gap-3">
+              {editId && (
+                <button onClick={() => { setForm(emptyForm); setEditId(null); }}
+                  className="border border-slate-600 text-slate-300 px-5 py-2.5 rounded-xl text-sm hover:bg-slate-700">
+                  Annuler
+                </button>
+              )}
+              <button onClick={handleAjouter}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold">
+                {editId ? "Enregistrer" : "Ajouter le reversement"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ─────────── HISTORIQUE ─────────── */}
+        {onglet === "historique" && (
+          <>
+            {/* Filtres */}
+            <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5 mb-5">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <label className={LBL}>Chauffeur</label>
+                  <select className={INP} value={filtreChauffeur} onChange={e => setFiltreChauffeur(e.target.value)}>
+                    <option value="">Tous</option>
+                    {drivers.map(d => <option key={d.id} value={d.id}>{d.driver_code || d.matricule} · {d.prenom} {d.nom}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={LBL}>Site</label>
+                  <select className={INP} value={filtreSite} onChange={e => setFiltreSite(e.target.value)}>
+                    <option value="">Tous</option>
+                    {SITES.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={LBL}>Du</label>
+                  <input className={INP} type="date" value={filtreDebut} onChange={e => setFiltreDebut(e.target.value)} />
+                </div>
+                <div>
+                  <label className={LBL}>Au</label>
+                  <input className={INP} type="date" value={filtreFin} onChange={e => setFiltreFin(e.target.value)} />
                 </div>
               </div>
-            )}
-            {form.ch && !shiftInfo && form.date && (
-              <div className="col-span-2 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                <div className="text-xs text-amber-700">⚠ Aucun shift terminé trouvé pour ce chauffeur à cette date</div>
+              <div className="flex gap-3 mt-4 items-center">
+                <select className={`${INP} max-w-xs`} value={filtreStatut} onChange={e => setFiltreStatut(e.target.value)}>
+                  <option value="">Tous les statuts</option>
+                  <option value="En attente">En attente</option>
+                  <option value="Validé">Valides</option>
+                  <option value="Rejete">Rejetes</option>
+                </select>
+                <button onClick={() => { setFiltreChauffeur(""); setFiltreSite(""); setFiltreStatut(""); setFiltreDebut(periode.debut); setFiltreFin(periode.fin); }}
+                  className="border border-slate-600 text-slate-400 px-4 py-2 rounded-lg text-sm hover:bg-slate-700">
+                  Reset
+                </button>
+                <span className="text-xs text-slate-500 ml-auto">{listeFiltree.length} reversement(s)</span>
               </div>
-            )}
-            <Input label="Recette declaree par le chauffeur (F CFA)" value={form.montantDeclare||""} onChange={v=>{const val=parseInt(v)||0;setForm({...form,montantDeclare:val});}} type="number" placeholder="Ex: 18000"/>
-            <Input label="Montant verse par le chauffeur (F CFA)" value={form.montant} onChange={v=>setForm({...form,montant:parseInt(v)||0})} type="number" required/>
-            <Select label="Canal" value={form.canal} onChange={v=>setForm({...form,canal:v})} options={["Wave Business","Orange Money Business","MTN Mobile Money","Moov Money","Cash"]}/>
-            <Input label="Date" value={form.date} onChange={v=>{setForm({...form,date:v});findShift(form.ch,v);}} type="date"/>
-            <Input label="Depenses autorisees (F CFA)" value={form.depensesAutorisees||0} onChange={v=>setForm({...form,depensesAutorisees:parseInt(v)||0})} type="number"/>
-            <div className="col-span-2">
-              <PhotoUpload label="Preuve de paiement (capture Wave/OM/Mobile Money)" bucket="reversement-proofs" folder={"reversements/"+(form.date||"new")} value={form.preuve||""} onChange={url=>setForm(f=>({...f,preuve:url}))} hint="Capture d'ecran de la transaction"/>
             </div>
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Commentaire</label>
-              <textarea value={form.commentaire||""} onChange={e=>setForm({...form,commentaire:e.target.value})} rows={2} className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Remarques eventuelles..."/>
+
+            {/* KPI cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+              {[
+                { label: "Total recu", val: fmt(totalRecu) + " F", color: "text-green-400" },
+                { label: "Total attendu", val: fmt(totalAttendu) + " F", color: "text-blue-400" },
+                { label: "Ecart global", val: fmt(ecartTotal) + " F", color: ecartTotal > totalAttendu * 0.01 ? "text-red-400" : "text-green-400" },
+                { label: "Nb reversements", val: listeFiltree.length, color: "text-violet-400" },
+              ].map(k => (
+                <div key={k.label} className="bg-slate-800 border border-slate-700 rounded-xl p-5 text-center">
+                  <div className={`text-2xl font-bold ${k.color}`}>{k.val}</div>
+                  <div className="text-xs text-slate-500 mt-2">{k.label}</div>
+                </div>
+              ))}
             </div>
-          </div>
-          {form.montantDeclare>0&&form.montant>0&&(
-            <div className={`rounded-lg p-3 mt-2 text-xs ${calcEcart(form.montant,form.montantDeclare,form.depensesAutorisees||0,form.canal)>0?"bg-red-50 dark:bg-red-900/20 text-red-600":"bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600"}`}>
-              {calcEcart(form.montant,form.montantDeclare,form.depensesAutorisees||0,form.canal)>0
-                ? <>⚠ Ecart detecte : <strong>{fmt(calcEcart(form.montant,form.montantDeclare,form.depensesAutorisees||0,form.canal))}</strong> manquant{form.canal==="Wave Business"&&<span className="text-xs opacity-70"> (tolerance 1% frais Wave deduite)</span>}</>
-                : <>✓ Reversement conforme — aucun ecart</>
-              }
+
+            {/* Table */}
+            <div className="bg-slate-800 border border-slate-700 rounded-2xl overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-700 bg-slate-900/40">
+                    {["Date", "Chauffeur", "Site", "Mode", "Attendu", "Recu", "Depense", "Ecart", "Preuve", "Statut", "Actions"].map(h => (
+                      <th key={h} className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {listeFiltree.length === 0 && (
+                    <tr><td colSpan={11} className="text-center py-12 text-slate-500 text-sm">Aucun reversement sur cette periode</td></tr>
+                  )}
+                  {listeFiltree.map(r => {
+                    const driver = drivers.find(d => d.id === r.ch);
+                    const info = analyserEcart(r.montant, r.amount_requested || r.montant, r.authorized_expenses, r.canal, r.operateur);
+                    const isValide = r.status === "Validé" || r.status === "Valide";
+                    return (
+                      <tr key={r.id} className="border-b border-slate-700/50 hover:bg-slate-700/20 transition-colors">
+                        <td className="px-4 py-3 text-slate-400 whitespace-nowrap">{r.date ? new Date(r.date).toLocaleDateString("fr-FR") : "-"}</td>
+                        <td className="px-4 py-3">
+                          <div className="font-semibold text-white">{driver ? `${driver.driver_code || driver.matricule} · ${driver.prenom} ${driver.nom}` : "-"}</div>
+                        </td>
+                        <td className="px-4 py-3 text-slate-400 text-xs">{r.site || "-"}</td>
+                        <td className="px-4 py-3 text-xs text-slate-300">{r.canal || "-"}</td>
+                        <td className="px-4 py-3 text-slate-300">{r.amount_requested ? fmt(r.amount_requested) + " F" : "-"}</td>
+                        <td className="px-4 py-3 font-bold text-green-400">{fmt(r.montant || 0)} F</td>
+                        <td className="px-4 py-3 text-amber-400">{r.authorized_expenses ? fmt(r.authorized_expenses) + " F" : "-"}</td>
+                        <td className="px-4 py-3">
+                          {info ? (
+                            <div>
+                              <span className={`font-bold text-xs ${info.color}`}>{info.label}</span>
+                              {info.detail && <div className="text-slate-500 text-[10px]">{info.detail}</div>}
+                            </div>
+                          ) : "-"}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {(r.transaction_proof_url || r.preuve) ? (
+                            <img src={r.transaction_proof_url || r.preuve} alt="" className="h-8 w-10 object-cover rounded cursor-pointer"
+                              onClick={() => window.open(r.transaction_proof_url || r.preuve)} />
+                          ) : <span className="text-slate-600 text-xs">-</span>}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${isValide ? "bg-green-900/60 text-green-400 border-green-800" : r.status === "En attente" ? "bg-amber-900/60 text-amber-400 border-amber-800" : "bg-red-900/60 text-red-400 border-red-800"}`}>
+                            {r.status || "En attente"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-1.5 flex-wrap">
+                            {r.status === "En attente" && (user?.role === "finance" || user?.role === "admin") && (
+                              <button onClick={() => onUpdate(r.id, { status: "Validé", ch: r.ch, driver_id: r.ch, montant: r.montant, amount_sent: r.montant, amount_requested: r.amount_requested || r.montant, canal: r.canal, date: r.date, ecart: r.ecart || 0, authorized_expenses: r.authorized_expenses || 0, transaction_proof_url: r.transaction_proof_url || null, commentaire: r.commentaire || null })}
+                                className="text-[11px] text-green-400 border border-green-800 px-2 py-1 rounded-lg hover:bg-green-900/30">
+                                Valider
+                              </button>
+                            )}
+                            <button onClick={() => openEdit(r)}
+                              className="text-[11px] text-blue-400 border border-blue-800 px-2 py-1 rounded-lg hover:bg-blue-900/30">
+                              Modifier
+                            </button>
+                            <button onClick={() => setConfirmDelete(r)}
+                              className="text-[11px] text-red-400 border border-red-800 px-2 py-1 rounded-lg hover:bg-red-900/30">
+                              Suppr.
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-          )}
-        </Modal>
+          </>
+        )}
+      </div>
+
+      {confirmDelete && (
+        <Confirm msg={`Supprimer le reversement de ${drivers.find(d => d.id === confirmDelete.ch)?.prenom || "ce chauffeur"} ?`}
+          onConfirm={async () => { await onDelete(confirmDelete.id); setConfirmDelete(null); }}
+          onCancel={() => setConfirmDelete(null)} />
       )}
-      {confirmDelete&&<Confirm msg={"Supprimer le reversement de "+(drivers.find(d=>d.id===confirmDelete.ch)?.prenom||"ce chauffeur")+" ?"} onConfirm={async()=>{await onDelete(confirmDelete.id);setConfirmDelete(null);}} onCancel={()=>setConfirmDelete(null)}/>}
     </div>
   );
 };
