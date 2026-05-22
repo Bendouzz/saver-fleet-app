@@ -319,6 +319,80 @@ const Select = ({label, value, onChange, options}) => (
 
 const NavIcon = ({d, className}) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={d}/></svg>;
 
+
+// ============================================================
+// PHOTO UPLOAD COMPONENT
+// ============================================================
+const uploadToSupabase = async (file, bucket, folder) => {
+  const ext = file.name.split(".").pop();
+  const path = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2,8)}.${ext}`;
+  const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
+  if (error) throw error;
+  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+  return data.publicUrl;
+};
+
+const PhotoUpload = ({ label, bucket, folder, value, onChange, multiple = false, hint = "" }) => {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+  const urls = value ? (Array.isArray(value) ? value : [value]).filter(Boolean) : [];
+
+  const handleFiles = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    setUploading(true);
+    setError("");
+    try {
+      const uploaded = await Promise.all(files.map(f => uploadToSupabase(f, bucket, folder)));
+      if (multiple) {
+        onChange([...urls, ...uploaded]);
+      } else {
+        onChange(uploaded[0]);
+      }
+    } catch (err) {
+      setError("Erreur upload : " + (err.message || "Verifiez le bucket Supabase Storage"));
+    }
+    setUploading(false);
+    e.target.value = "";
+  };
+
+  const removeUrl = (idx) => {
+    if (multiple) {
+      onChange(urls.filter((_, i) => i !== idx));
+    } else {
+      onChange("");
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      {label && <label className="block text-sm font-medium text-slate-700">{label}</label>}
+      {hint && <p className="text-xs text-slate-400">{hint}</p>}
+      {urls.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {urls.map((url, idx) => (
+            <div key={idx} className="relative group">
+              <img src={url} alt="" className="w-20 h-20 object-cover rounded-lg border border-slate-200 cursor-pointer" onClick={() => window.open(url, "_blank")}/>
+              <button type="button" onClick={() => removeUrl(idx)} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">x</button>
+            </div>
+          ))}
+        </div>
+      )}
+      <label className={`flex items-center gap-3 px-4 py-3 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploading ? "border-blue-300 bg-blue-50" : "border-slate-200 hover:border-blue-400 hover:bg-blue-50"}`}>
+        <input type="file" accept="image/*" multiple={multiple} onChange={handleFiles} className="hidden" disabled={uploading}/>
+        {uploading ? (
+          <><div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"/><span className="text-sm text-blue-600">Upload en cours...</span></>
+        ) : (
+          <><svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          <span className="text-sm text-slate-500">{multiple ? "Cliquer pour ajouter des photos" : "Cliquer pour ajouter une photo"}</span>
+          {urls.length > 0 && <span className="ml-auto text-xs text-emerald-600 font-medium">{urls.length} photo{urls.length > 1 ? "s" : ""}</span>}</>
+        )}
+      </label>
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
+  );
+};
+
 // ============================================================
 // LOGIN PAGE
 // ============================================================
@@ -969,6 +1043,12 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
               </div>
             </div>
             <div className="border-t border-slate-100 pt-4">
+              <p className="text-xs font-semibold text-slate-500 uppercase mb-3">Photos du vehicule</p>
+              <PhotoUpload bucket="vehicle-photos" folder={"vehicles/"+(form.immat||"new")} label="Photos exterieures (4 angles)" value={form.photosExt||[]} onChange={v=>setForm({...form,photosExt:v})} multiple={true}/>
+              <PhotoUpload bucket="vehicle-photos" folder={"vehicles/"+(form.immat||"new")+"/docs"} label="Photo carte grise" value={form.photoCarteGrise} onChange={v=>setForm({...form,photoCarteGrise:v})}/>
+              <PhotoUpload bucket="vehicle-photos" folder={"vehicles/"+(form.immat||"new")+"/docs"} label="Photo assurance" value={form.photoAssurance} onChange={v=>setForm({...form,photoAssurance:v})}/>
+            </div>
+            <div className="border-t border-slate-100 pt-4">
               <p className="text-xs font-semibold text-slate-500 uppercase mb-3">Visite technique et Assurance</p>
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2"><Input label="Expiration visite technique" value={form.visiteDate} onChange={v=>setForm({...form,visiteDate:v})} type="date" hint="(alerte 15j avant)"/></div>
@@ -1182,6 +1262,14 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
           )}
           {activeTab==="kyc"&&(
             <div className="space-y-4">
+              <div>
+                <p className="text-xs font-semibold text-slate-500 uppercase mb-3">Photos du chauffeur</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <PhotoUpload bucket="driver-photos" folder={"drivers/"+(form.nom||"new")+"/face"} label="Photo face" value={form.photoFace} onChange={v=>setForm({...form,photoFace:v})}/>
+                  <PhotoUpload bucket="driver-photos" folder={"drivers/"+(form.nom||"new")+"/profil"} label="Photo profil" value={form.photoProfil} onChange={v=>setForm({...form,photoProfil:v})}/>
+                  <PhotoUpload bucket="driver-photos" folder={"drivers/"+(form.nom||"new")+"/full"} label="Plein pied" value={form.photoFull} onChange={v=>setForm({...form,photoFull:v})}/>
+                </div>
+              </div>
               <div><p className="text-xs font-semibold text-slate-500 uppercase mb-3">Permis de conduire</p>
                 <div className="grid grid-cols-2 gap-3">
                   <Input label="N° Permis" value={form.permisNum} onChange={v=>setForm({...form,permisNum:v})}/>
@@ -1811,7 +1899,7 @@ const ReversementsPage = ({reversements, drivers, onAdd, onUpdate, onDelete}) =>
             <Input label="Date" value={form.date} onChange={v=>setForm({...form,date:v})} type="date"/>
             <Input label="Depenses autorisees (F CFA)" value={form.depensesAutorisees||0} onChange={v=>setForm({...form,depensesAutorisees:parseInt(v)||0})} type="number"/>
             <div className="col-span-2">
-              <Input label="URL preuve de paiement (screenshot Wave / Orange Money)" value={form.preuve||""} onChange={v=>setForm({...form,preuve:v})} placeholder="https://..."/>
+              <PhotoUpload bucket="reversement-proofs" folder={"reversements/"+(form.date||"new")} label="Preuve de paiement (screenshot Wave / Orange Money)" value={form.preuve} onChange={v=>setForm({...form,preuve:v})}/>
             </div>
             <div className="col-span-2">
               <label className="block text-sm font-medium text-slate-700 mb-1">Commentaire</label>
