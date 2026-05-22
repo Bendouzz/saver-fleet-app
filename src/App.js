@@ -1381,20 +1381,25 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
   const handleSaveDD = async () => {
     if(!selectedShift) return;
     setSaving(true);
-    const recetteNette = (ddForm.revenusGeneres||0) - (ddForm.commissionYango||0);
-    const ddErr = await onUpdate(selectedShift.id, {
-      real_start_time:ddForm.heureDebutReelle||null,
-      real_end_time:ddForm.heureFinReelle||null,
-      km_driven:ddForm.kmParcourus||0,
-      battery_start:ddForm.autonomieDebut||0,
-      battery_end:ddForm.autonomieFin||0,
-      courses_count:ddForm.nbCourses||0,
-      revenue_cash:ddForm.revenusGeneres||0,
-      recette:ddForm.revenusGeneres||0,
-      yango_commission:ddForm.commissionYango||0,
-      authorized_expenses:ddForm.depensesAutorisees||0,
-      yango_rating:ddForm.noteYangoShift||0,
+    await onUpdate(selectedShift.id, {
+      courses_count: ddForm.nbCourses||0,
+      revenue_cash: ddForm.revenusGeneres||0,
+      recette: ddForm.revenusGeneres||0,
+      yango_commission: ddForm.commissionYango||0,
+      authorized_expenses: ddForm.depensesAutorisees||0,
+      yango_rating: ddForm.noteYangoShift||0,
+      km_driven: ddForm.kmParcourus||0,
+      battery_start: ddForm.autonomieDebut||0,
+      battery_end: ddForm.autonomieFin||0,
+      real_start_time: ddForm.heureDebutReelle||null,
+      real_end_time: ddForm.heureFinReelle||null,
+      photo_selfie: ddForm.photoSelfie||null,
+      photos_fin_shift: ddForm.photosFinShift||[],
+      captures_yango: ddForm.capturesYango||[],
+      captures_bord: ddForm.capturesBord||[],
     });
+    // Attendre que Supabase confirme avant de fermer
+    await new Promise(resolve => setTimeout(resolve, 500));
     setSaving(false);
     setShowDDModal(false);
   };
