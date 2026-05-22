@@ -1347,7 +1347,7 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
   const ddSaisis = shifts.filter(s=>(s.status==="Terminé"||s.status==="Termine")&&(s.courses_count>0||s.nbCourses>0)).length;
 
   const handleSave = async () => {
-    if(!form.vh||!form.ch) return alert("Vehicule et chauffeur requis");
+    if(!form.vh||!form.ch) return setSaving(false)||alert("Vehicule et chauffeur requis");
     setSaving(true);
     const err = await onAdd({
       id:"SH-"+Date.now(),
@@ -2775,6 +2775,11 @@ const App = () => {
     assurancefin:item.assuranceFin||null,
     cartegrisenum:item.carteGriseNum||null, cartegrisedate:item.carteGriseDate||null,
     cartegriseproprietaire:item.carteGriseProprietaire||null, numerochassis:item.numeroChassis||null,
+    photo_carte_grise:item.photoCarteGrise||null,
+    photo_visite:item.photoVisite||null,
+    photo_assurance:item.photoAssurance||null,
+    photos_ext:item.photosExt||[],
+    photos_int:item.photosInt||[],
   });
   const addVehicle = async (item) => await vh.add({...buildVehiclePayload(item), id:"VH-"+Date.now()});
   const updateVehicle = async (id, item) => {
@@ -2825,6 +2830,11 @@ const App = () => {
     piecetype:item.pieceType||"CNI",
     piecedelivrance:item.pieceDelivrance||null,
     contacturgencetel:item.contactUrgenceTel||null,
+    photo_face:item.photoFace||null,
+    photos_profil:item.photosProfil||[],
+    photo_plein_pied:item.photoPleinPied||null,
+    photo_permis:item.photoPermis||null,
+    photo_piece:item.photoPiece||null,
   });
   const addDriver = async (item) => await dr.add({...buildDriverPayload(item), id:"CH-"+Date.now()});
   const updateDriver = async (id, item) => {
@@ -2914,7 +2924,25 @@ const App = () => {
     commentaire: item.commentaire||null,
   });
   const addReversement = async (item) => await rv.add({...buildReversementPayload(item), id:"RV-"+Date.now()});
-  const updateReversement = async (id, item) => await rv.update(id, buildReversementPayload(item));
+  const updateReversement = async (id, item) => {
+    // Si c est juste un changement de statut, faire un update partiel
+    if(Object.keys(item).length <= 3 && item.status) {
+      const partial = { status: item.status };
+      if(item.ch) partial.ch = item.ch;
+      if(item.driver_id) partial.driver_id = item.driver_id;
+      if(item.montant) partial.montant = item.montant;
+      if(item.amount_sent) partial.amount_sent = item.amount_sent;
+      if(item.amount_requested) partial.amount_requested = item.amount_requested;
+      if(item.canal) partial.canal = item.canal;
+      if(item.date) partial.date = item.date;
+      if(item.ecart !== undefined) partial.ecart = item.ecart;
+      if(item.authorized_expenses !== undefined) partial.authorized_expenses = item.authorized_expenses;
+      if(item.transaction_proof_url !== undefined) partial.transaction_proof_url = item.transaction_proof_url;
+      if(item.commentaire !== undefined) partial.commentaire = item.commentaire;
+      return await rv.update(id, partial);
+    }
+    return await rv.update(id, buildReversementPayload(item));
+  };
 
   const buildRechargePayload = (item) => ({
     vh: item.vh||null,
