@@ -2875,38 +2875,42 @@ const App = () => {
   });
   const addShift = async (item) => await sh.add({...buildShiftPayload(item), id:"SH-"+Date.now()});
   const updateShift = async (id, item) => {
-    const payload = {};
-    if(item.status!==undefined) payload.status = item.status;
-    if(item.check_in!==undefined) payload.check_in = item.check_in;
-    if(item.check_out!==undefined) payload.check_out = item.check_out;
-    if(item.checkIn!==undefined) payload.check_in = item.checkIn;
-    if(item.checkOut!==undefined) payload.check_out = item.checkOut;
-    if(item.recette!==undefined) payload.recette = item.recette;
-    if(item.real_start_time!==undefined) payload.real_start_time = item.real_start_time;
-    if(item.real_end_time!==undefined) payload.real_end_time = item.real_end_time;
-    if(item.heureDebutReelle!==undefined) payload.real_start_time = item.heureDebutReelle||null;
-    if(item.heureFinReelle!==undefined) payload.real_end_time = item.heureFinReelle||null;
-    if(item.kmParcourus!==undefined) payload.km_driven = item.kmParcourus;
-    if(item.autonomieDebut!==undefined) payload.battery_start = item.autonomieDebut;
-    if(item.autonomieFin!==undefined) payload.battery_end = item.autonomieFin;
-    if(item.nbCourses!==undefined) payload.courses_count = item.nbCourses;
-    if(item.courses_count!==undefined) payload.courses_count = item.courses_count;
-    if(item.revenusGeneres!==undefined) { payload.revenue_cash = item.revenusGeneres; payload.recette = item.revenusGeneres; }
-    if(item.revenue_cash!==undefined) { payload.revenue_cash = item.revenue_cash; payload.recette = item.revenue_cash; }
-    if(item.commissionYango!==undefined) payload.yango_commission = item.commissionYango;
-    if(item.yango_commission!==undefined) payload.yango_commission = item.yango_commission;
-    if(item.depensesAutorisees!==undefined) payload.authorized_expenses = item.depensesAutorisees;
-    if(item.authorized_expenses!==undefined) payload.authorized_expenses = item.authorized_expenses;
-    if(item.noteYangoShift!==undefined) payload.yango_rating = item.noteYangoShift;
-    if(item.yango_rating!==undefined) payload.yango_rating = item.yango_rating;
-    if(item.commentaireShift!==undefined) payload.commentaireshift = item.commentaireShift;
-    if(item.km_driven!==undefined) payload.km_driven = item.km_driven;
-    if(item.battery_start!==undefined) payload.battery_start = item.battery_start;
-    if(item.battery_end!==undefined) payload.battery_end = item.battery_end;
-    if(item.real_start_time!==undefined) payload.real_start_time = item.real_start_time;
-    if(item.real_end_time!==undefined) payload.real_end_time = item.real_end_time;
-    console.log("updateShift payload:", JSON.stringify(payload));
-    return await sh.update(id, payload);
+    // Construire le payload directement sans filtre complexe
+    const payload = {
+      ...(item.status !== undefined && { status: item.status }),
+      ...(item.check_in !== undefined && { check_in: item.check_in }),
+      ...(item.check_out !== undefined && { check_out: item.check_out }),
+      ...(item.checkIn !== undefined && { check_in: item.checkIn }),
+      ...(item.checkOut !== undefined && { check_out: item.checkOut }),
+      ...(item.courses_count !== undefined && { courses_count: item.courses_count }),
+      ...(item.nbCourses !== undefined && { courses_count: item.nbCourses }),
+      ...(item.revenue_cash !== undefined && { revenue_cash: item.revenue_cash, recette: item.revenue_cash }),
+      ...(item.revenusGeneres !== undefined && { revenue_cash: item.revenusGeneres, recette: item.revenusGeneres }),
+      ...(item.recette !== undefined && { recette: item.recette }),
+      ...(item.yango_commission !== undefined && { yango_commission: item.yango_commission }),
+      ...(item.commissionYango !== undefined && { yango_commission: item.commissionYango }),
+      ...(item.authorized_expenses !== undefined && { authorized_expenses: item.authorized_expenses }),
+      ...(item.depensesAutorisees !== undefined && { authorized_expenses: item.depensesAutorisees }),
+      ...(item.yango_rating !== undefined && { yango_rating: item.yango_rating }),
+      ...(item.noteYangoShift !== undefined && { yango_rating: item.noteYangoShift }),
+      ...(item.km_driven !== undefined && { km_driven: item.km_driven }),
+      ...(item.kmParcourus !== undefined && { km_driven: item.kmParcourus }),
+      ...(item.battery_start !== undefined && { battery_start: item.battery_start }),
+      ...(item.autonomieDebut !== undefined && { battery_start: item.autonomieDebut }),
+      ...(item.battery_end !== undefined && { battery_end: item.battery_end }),
+      ...(item.autonomieFin !== undefined && { battery_end: item.autonomieFin }),
+      ...(item.real_start_time !== undefined && { real_start_time: item.real_start_time }),
+      ...(item.heureDebutReelle !== undefined && { real_start_time: item.heureDebutReelle||null }),
+      ...(item.real_end_time !== undefined && { real_end_time: item.real_end_time }),
+      ...(item.heureFinReelle !== undefined && { real_end_time: item.heureFinReelle||null }),
+      ...(item.photo_selfie !== undefined && { photo_selfie: item.photo_selfie }),
+      ...(item.photos_fin_shift !== undefined && { photos_fin_shift: item.photos_fin_shift }),
+      ...(item.captures_yango !== undefined && { captures_yango: item.captures_yango }),
+      ...(item.captures_bord !== undefined && { captures_bord: item.captures_bord }),
+    };
+    const { error } = await supabase.from("shifts").update(payload).eq("id", id);
+    if (!error) sh.reload();
+    return error;
   };
 
   const buildReversementPayload = (item) => ({
