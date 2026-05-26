@@ -2796,7 +2796,15 @@ const App = () => {
     photos_ext:item.photosExt||[],
     photos_int:item.photosInt||[],
   });
-  const addVehicle = async (item) => await vh.add({...buildVehiclePayload(item), id:"VH-"+Date.now()});
+  const addVehicle = async (item) => await vh.add({
+    ...buildVehiclePayload(item),
+    id:"VH-"+Date.now(),
+    photo_carte_grise:item.photoCarteGrise||null,
+    photo_visite:item.photoVisite||null,
+    photo_assurance:item.photoAssurance||null,
+    photos_ext:item.photosExt||[],
+    photos_int:item.photosInt||[],
+  });
   const updateVehicle = async (id, item) => {
     // Merge buildVehiclePayload + champs directs deja en minuscules
     const base = buildVehiclePayload(item);
@@ -2857,7 +2865,15 @@ const App = () => {
     photo_permis:item.photoPermis||null,
     photo_piece:item.photoPiece||null,
   });
-  const addDriver = async (item) => await dr.add({...buildDriverPayload(item), id:"CH-"+Date.now()});
+  const addDriver = async (item) => await dr.add({
+    ...buildDriverPayload(item),
+    id:"CH-"+Date.now(),
+    photo_face:item.photoFace||null,
+    photos_profil:item.photosProfil||[],
+    photo_plein_pied:item.photoPleinPied||null,
+    photo_permis:item.photoPermis||null,
+    photo_piece:item.photoPiece||null,
+  });
   const updateDriver = async (id, item) => {
     // Merge buildDriverPayload + champs directs deja mappes
     const base = buildDriverPayload(item);
@@ -2950,23 +2966,20 @@ const App = () => {
   });
   const addReversement = async (item) => await rv.add({...buildReversementPayload(item), id:"RV-"+Date.now()});
   const updateReversement = async (id, item) => {
-    // Si c est juste un changement de statut, faire un update partiel
-    if(Object.keys(item).length <= 3 && item.status) {
-      const partial = { status: item.status };
-      if(item.ch) partial.ch = item.ch;
-      if(item.driver_id) partial.driver_id = item.driver_id;
-      if(item.montant) partial.montant = item.montant;
-      if(item.amount_sent) partial.amount_sent = item.amount_sent;
-      if(item.amount_requested) partial.amount_requested = item.amount_requested;
-      if(item.canal) partial.canal = item.canal;
-      if(item.date) partial.date = item.date;
-      if(item.ecart !== undefined) partial.ecart = item.ecart;
-      if(item.authorized_expenses !== undefined) partial.authorized_expenses = item.authorized_expenses;
-      if(item.transaction_proof_url !== undefined) partial.transaction_proof_url = item.transaction_proof_url;
-      if(item.commentaire !== undefined) partial.commentaire = item.commentaire;
-      return await rv.update(id, partial);
-    }
-    return await rv.update(id, buildReversementPayload(item));
+    // Update partiel — on envoie seulement les champs fournis
+    const partial = {};
+    if(item.status !== undefined) partial.status = item.status;
+    if(item.ch !== undefined) { partial.ch = item.ch; partial.driver_id = item.ch; }
+    if(item.montant !== undefined) { partial.montant = item.montant; partial.amount_sent = item.montant; partial.amount_requested = item.montant; }
+    if(item.canal !== undefined) partial.canal = item.canal;
+    if(item.date !== undefined) partial.date = item.date;
+    if(item.ecart !== undefined) partial.ecart = item.ecart;
+    if(item.authorized_expenses !== undefined) partial.authorized_expenses = item.authorized_expenses;
+    if(item.depensesAutorisees !== undefined) partial.authorized_expenses = item.depensesAutorisees;
+    if(item.transaction_proof_url !== undefined) partial.transaction_proof_url = item.transaction_proof_url;
+    if(item.preuve !== undefined) partial.transaction_proof_url = item.preuve;
+    if(item.commentaire !== undefined) partial.commentaire = item.commentaire;
+    return await rv.update(id, partial);
   };
 
   const buildRechargePayload = (item) => ({
