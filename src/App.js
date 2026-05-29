@@ -1101,8 +1101,8 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
       pieceType: d.pieceType || d.piecetype || "CNI",
       pieceDelivrance: d.pieceDelivrance || d.piecedelivrance || "",
       typeContrat: d.typeContrat || d.contract_type || "Salarie",
-      noteYango: d.noteYango || d.yango_score || 4.0,
-      noteInterne: d.noteInterne || d.internal_score || 80,
+      noteYango: parseFloat(d.yango_score || d.noteYango || 4.0),
+      noteInterne: parseInt(d.internal_score || d.noteInterne || 80),
       matricule: d.matricule || d.driver_code || "",
       telephone: d.telephone || "",
       telephonePerso: d.telephonePerso || d.telephoneperso || "",
@@ -2796,15 +2796,38 @@ const App = () => {
     photos_ext:item.photosExt||[],
     photos_int:item.photosInt||[],
   });
-  const addVehicle = async (item) => await vh.add({
-    ...buildVehiclePayload(item),
-    id:"VH-"+Date.now(),
-    photo_carte_grise:item.photoCarteGrise||null,
-    photo_visite:item.photoVisite||null,
-    photo_assurance:item.photoAssurance||null,
-    photos_ext:item.photosExt||[],
-    photos_int:item.photosInt||[],
-  });
+  const addVehicle = async (item) => {
+    const payload = {
+      id:"VH-"+Date.now(),
+      immat:item.immat||null, marque:item.marque||null, modele:item.modele||null,
+      couleur:item.couleur||null, annee:item.annee||null,
+      site:item.site||1, autonomie:item.autonomie||0, km:item.km||0, soc:item.soc||0,
+      status:item.status||"En exploitation",
+      typecontrat:item.typecontrat||item.typeContrat||"Interne SAVER",
+      vin_number:item.vin_number||item.vin||null,
+      battery_capacity_kwh:item.battery_capacity_kwh||item.capaciteBatterie||null,
+      vehicle_year:item.vehicle_year||item.annee||null,
+      vehicle_color:item.vehicle_color||item.couleur||null,
+      service_type:item.service_type||item.typeService||"VTC",
+      service_class:item.service_class||item.classesService||[],
+      technical_visit_expiry:item.technical_visit_expiry||item.visiteDate||null,
+      insurance_expiry:item.insurance_expiry||item.assuranceFin||null,
+      cartegrisenum:item.cartegrisenum||item.carteGriseNum||null,
+      cartegrisedate:item.cartegrisedate||item.carteGriseDate||null,
+      cartegriseproprietaire:item.cartegriseproprietaire||item.carteGriseProprietaire||null,
+      assurancenum:item.assurancenum||item.assuranceNum||null,
+      assurancedebut:item.assurancedebut||item.assuranceDebut||null,
+      assurancefin:item.assurancefin||item.assuranceFin||null,
+      numerochassis:item.numerochassis||item.numeroChassis||item.vin||null,
+      binome:item.binome||[],
+      photo_carte_grise:item.photo_carte_grise||item.photoCarteGrise||null,
+      photo_visite:item.photo_visite||item.photoVisite||null,
+      photo_assurance:item.photo_assurance||item.photoAssurance||null,
+      photos_ext:item.photos_ext||item.photosExt||[],
+      photos_int:item.photos_int||item.photosInt||[],
+    };
+    return await vh.add(payload);
+  };
   const updateVehicle = async (id, item) => {
     // Merge buildVehiclePayload + champs directs deja en minuscules
     const base = buildVehiclePayload(item);
