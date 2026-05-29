@@ -2865,15 +2865,44 @@ const App = () => {
     photo_permis:item.photoPermis||null,
     photo_piece:item.photoPiece||null,
   });
-  const addDriver = async (item) => await dr.add({
-    ...buildDriverPayload(item),
-    id:"CH-"+Date.now(),
-    photo_face:item.photoFace||null,
-    photos_profil:item.photosProfil||[],
-    photo_plein_pied:item.photoPleinPied||null,
-    photo_permis:item.photoPermis||null,
-    photo_piece:item.photoPiece||null,
-  });
+  const addDriver = async (item) => {
+    // item vient directement du handleSave avec les bons noms de colonnes
+    // On n utilise PAS buildDriverPayload pour eviter l ecrasement
+    const payload = {
+      id:"CH-"+Date.now(),
+      nom:item.nom||null, prenom:item.prenom||null,
+      site:item.site||1, vehicule:item.vehicule||null,
+      shift:item.shift||"A", status:item.status||"Actif",
+      kpi:item.kpi||80, courses:item.courses||0,
+      ca:item.ca||0, pen:item.pen||0, avance:item.avance||0,
+      driver_code:item.driver_code||item.matricule||null,
+      contract_type:item.contract_type||item.typeContrat||"Salarie",
+      telephone:item.telephone||null,
+      telephoneperso:item.telephoneperso||item.telephonePerso||null,
+      adresse:item.adresse||null,
+      emergency_contact:item.emergency_contact||null,
+      contacturgencetel:item.contacturgencetel||item.contactUrgenceTel||null,
+      license_number:item.license_number||item.permisNum||null,
+      license_expiry_date:item.license_expiry_date||item.permisExpiration||null,
+      id_card_number:item.id_card_number||item.pieceNum||null,
+      id_card_expiry_date:item.id_card_expiry_date||item.pieceExpiration||null,
+      permistype:item.permistype||item.permisType||null,
+      permisdelivrance:item.permisdelivrance||item.permisDelivrance||null,
+      piecetype:item.piecetype||item.pieceType||"CNI",
+      piecedelivrance:item.piecedelivrance||item.pieceDelivrance||null,
+      yango_score:item.yango_score||item.noteYango||4.0,
+      internal_score:item.internal_score||item.noteInterne||80,
+      commentaires:item.commentaires||null,
+      dettes:item.dettes||0,
+      dettecommentaire:item.dettecommentaire||item.detteCommentaire||null,
+      photo_face:item.photo_face||item.photoFace||null,
+      photos_profil:item.photos_profil||item.photosProfil||[],
+      photo_plein_pied:item.photo_plein_pied||item.photoPleinPied||null,
+      photo_permis:item.photo_permis||item.photoPermis||null,
+      photo_piece:item.photo_piece||item.photoPiece||null,
+    };
+    return await dr.add(payload);
+  };
   const updateDriver = async (id, item) => {
     // Merge buildDriverPayload + champs directs deja mappes
     const base = buildDriverPayload(item);
