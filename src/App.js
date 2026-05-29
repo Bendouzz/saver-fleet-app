@@ -2810,9 +2810,13 @@ const App = () => {
   const addVehicle = async (item) => {
     const payload = {
       id:"VH-"+Date.now(),
-      immat:item.immat||null, marque:item.marque||null, modele:item.modele||null,
-      couleur:item.couleur||null, annee:item.annee||null,
-      site:item.site||1, autonomie:item.autonomie||0, km:item.km||0, soc:item.soc||0,
+      immat:item.immat||null,
+      marque:item.marque||null,
+      modele:item.modele||null,
+      site:item.site||1,
+      autonomie:item.autonomie||0,
+      km:item.km||0,
+      soc:item.soc||0,
       status:item.status||"En exploitation",
       typecontrat:item.typecontrat||item.typeContrat||"Interne SAVER",
       vin_number:item.vin_number||item.vin||null,
