@@ -136,9 +136,14 @@ const mapDriver = (r) => ({
   permisDelivrance: r.permisdelivrance || r.permisDelivrance || "",
   pieceType: r.piecetype || r.pieceType || "CNI",
   pieceDelivrance: r.piecedelivrance || r.pieceDelivrance || "",
-  // Contact urgence
-  contactUrgence: r.emergency_contact || r.contactUrgence || "",
-  contactUrgenceTel: r.contacturgencetel || r.emergency_phone || r.contactUrgenceTel || "",
+  // Contact urgence - split depuis emergency_contact "num1 - num2"
+  contactUrgence: (r.emergency_contact && r.emergency_contact.includes(" - "))
+    ? r.emergency_contact.split(" - ")[0].trim()
+    : (r.emergency_contact || r.contactUrgence || ""),
+  contactUrgenceTel: r.contacturgencetel || r.emergency_phone
+    || ((r.emergency_contact && r.emergency_contact.includes(" - "))
+      ? r.emergency_contact.split(" - ")[1].trim()
+      : "") || "",
   // Scores
   noteYango: r.yango_score || r.noteYango || 4.0,
   noteInterne: r.internal_score || r.noteInterne || 80,
@@ -1106,8 +1111,14 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
       matricule: d.matricule || d.driver_code || "",
       telephone: d.telephone || "",
       telephonePerso: d.telephonePerso || d.telephoneperso || "",
-      contactUrgence: d.contactUrgence || d.emergency_contact || "",
-      contactUrgenceTel: d.contactUrgenceTel || d.contacturgencetel || "",
+      contactUrgence: d.contactUrgence || 
+        ((d.emergency_contact && d.emergency_contact.includes(" - "))
+          ? d.emergency_contact.split(" - ")[0].trim()
+          : d.emergency_contact || ""),
+      contactUrgenceTel: d.contactUrgenceTel || d.contacturgencetel ||
+        ((d.emergency_contact && d.emergency_contact.includes(" - "))
+          ? d.emergency_contact.split(" - ")[1].trim()
+          : "") || "",
     }); 
     setEditItem(d); setShowModal(true); setActiveTab("profil"); 
   };
