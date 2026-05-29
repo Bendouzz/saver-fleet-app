@@ -2931,21 +2931,38 @@ const App = () => {
     const base = buildDriverPayload(item);
     const merged = {
       ...base,
+      // Contrat
+      contract_type: item.contract_type || item.typeContrat || base.contract_type || "Salarie",
+      // Contact urgence
+      emergency_contact: item.emergency_contact || base.emergency_contact || null,
+      contacturgencetel: item.contacturgencetel || item.contactUrgenceTel || base.contacturgencetel || null,
+      // KYC permis
       license_number: item.license_number || item.permisNum || base.license_number || null,
       license_expiry_date: item.license_expiry_date || item.permisExpiration || base.license_expiry_date || null,
       permistype: item.permistype || item.permisType || base.permistype || null,
       permisdelivrance: item.permisdelivrance || item.permisDelivrance || base.permisdelivrance || null,
+      // KYC piece
       id_card_number: item.id_card_number || item.pieceNum || base.id_card_number || null,
       id_card_expiry_date: item.id_card_expiry_date || item.pieceExpiration || base.id_card_expiry_date || null,
       piecetype: item.piecetype || item.pieceType || base.piecetype || "CNI",
       piecedelivrance: item.piecedelivrance || item.pieceDelivrance || base.piecedelivrance || null,
+      // Coordonnees
       telephone: item.telephone || base.telephone || null,
       telephoneperso: item.telephoneperso || item.telephonePerso || base.telephoneperso || null,
       adresse: item.adresse || base.adresse || null,
+      // Performance
+      yango_score: item.yango_score || item.noteYango || base.yango_score || 4.0,
+      internal_score: item.internal_score || item.noteInterne || base.internal_score || 80,
+      // Creance
       commentaires: item.commentaires || base.commentaires || null,
-      dettes: item.dettes || base.dettes || 0,
+      dettes: item.dettes !== undefined ? item.dettes : (base.dettes || 0),
       dettecommentaire: item.dettecommentaire || item.detteCommentaire || base.dettecommentaire || null,
-      contacturgencetel: item.contacturgencetel || item.contactUrgenceTel || base.contacturgencetel || null,
+      // Photos
+      photo_face: item.photo_face || item.photoFace || base.photo_face || null,
+      photos_profil: item.photos_profil || item.photosProfil || base.photos_profil || [],
+      photo_plein_pied: item.photo_plein_pied || item.photoPleinPied || base.photo_plein_pied || null,
+      photo_permis: item.photo_permis || item.photoPermis || base.photo_permis || null,
+      photo_piece: item.photo_piece || item.photoPiece || base.photo_piece || null,
     };
     return await dr.update(id, merged);
   };
