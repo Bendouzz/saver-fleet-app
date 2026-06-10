@@ -1783,7 +1783,7 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
 // ============================================================
 // REVERSEMENTS PAGE
 // ============================================================
-const ReversementsPage = ({reversements, drivers, onAdd, onUpdate, onDelete}) => {
+const ReversementsPage = ({reversements, drivers, shifts, onAdd, onUpdate, onDelete}) => {
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -1792,6 +1792,23 @@ const ReversementsPage = ({reversements, drivers, onAdd, onUpdate, onDelete}) =>
 
   const emptyForm = {ch:"",montant:0,canal:"Wave Business",date:new Date().toISOString().split("T")[0],status:"En attente",ecart:0,depensesAutorisees:0,preuve:"",commentaire:""};
   const [form, setForm] = useState(emptyForm);
+  const [shiftInfo, setShiftInfo] = useState(null);
+
+  // Recherche automatique du shift quand chauffeur + date changent
+  const findShift = (chId, date) => {
+    if(!chId || !date) { setShiftInfo(null); return; }
+    const found = shifts.filter(s => 
+      s.ch === chId && 
+      (s.status === "Terminé" || s.status === "Termine") &&
+      (s.planned_start_date || s.date || "").startsWith(date)
+    );
+    if(found.length > 0) {
+      const s = found[0];
+      setShiftInfo(s);
+    } else {
+      setShiftInfo(null);
+    }
+  };
 
   const openAdd = () => { setForm(emptyForm); setEditItem(null); setShowModal(true); };
   const openEdit = (r) => {
@@ -1806,10 +1823,11 @@ const ReversementsPage = ({reversements, drivers, onAdd, onUpdate, onDelete}) =>
     setShowModal(true);
   };
 
-  // Calcul ecart automatique - tolerance 1% frais Wave
+  // Calcul ecart automatique base sur les recettes DD du shift
   const calcEcart = (montantVerse, montantDeclare, depenses, canal) => {
-    const tolerance = canal==="Wave Business" ? montantDeclare * 0.01 : 0;
-    const montantAttendu = montantDeclare - depenses;
+    const revenuBase = shiftInfo ? (shiftInfo.revenue_cash || shiftInfo.recette || montantDeclare) : montantDeclare;
+    const tolerance = (canal==="Wave Business" || canal==="Wave") ? revenuBase * 0.01 : 0;
+    const montantAttendu = revenuBase - (depenses || 0);
     const ecart = montantAttendu - montantVerse - tolerance;
     return Math.max(0, Math.round(ecart));
   };
@@ -1965,11 +1983,27 @@ const ReversementsPage = ({reversements, drivers, onAdd, onUpdate, onDelete}) =>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
-              <Select label="Chauffeur" value={form.ch} onChange={v=>setForm({...form,ch:v})} options={[{value:"",label:"-- Choisir --"},...drivers.map(d=>({value:d.id,label:d.prenom+" "+d.nom+" ("+(d.matricule||d.id)+")"}))]}/> 
+              <Select label="Chauffeur" value={form.ch} onChange={v=>{setForm({...form,ch:v});findShift(v,form.date);}} options={[{value:"",label:"-- Choisir --"},...drivers.map(d=>({value:d.id,label:d.prenom+" "+d.nom+" ("+(d.matricule||d.id)+")"}))]}/> 
             </div>
+            {shiftInfo && (
+              <div className="col-span-2 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 rounded-lg p-3">
+                <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 mb-1">Shift trouvé automatiquement</div>
+                <div className="grid grid-cols-2 gap-2 text-xs text-emerald-600 dark:text-emerald-400">
+                  <span>Recettes DD : <strong>{shiftInfo.revenue_cash||shiftInfo.recette||0} F</strong></span>
+                  <span>Shift : <strong>{shiftInfo.shift_type||"Shift "+shiftInfo.type}</strong></span>
+                  <span>Courses : <strong>{shiftInfo.courses_count||0}</strong></span>
+                  <span>Commission : <strong>{shiftInfo.yango_commission||0} F</strong></span>
+                </div>
+              </div>
+            )}
+            {form.ch && !shiftInfo && form.date && (
+              <div className="col-span-2 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <div className="text-xs text-amber-700">⚠ Aucun shift terminé trouvé pour ce chauffeur à cette date</div>
+              </div>
+            )}
             <Input label="Montant verse (F CFA)" value={form.montant} onChange={v=>setForm({...form,montant:parseInt(v)||0})} type="number" required/>
             <Select label="Canal" value={form.canal} onChange={v=>setForm({...form,canal:v})} options={["Wave Business","Orange Money Business","MTN Mobile Money","Moov Money","Cash"]}/>
-            <Input label="Date" value={form.date} onChange={v=>setForm({...form,date:v})} type="date"/>
+            <Input label="Date" value={form.date} onChange={v=>{setForm({...form,date:v});findShift(form.ch,v);}} type="date"/>
             <Input label="Depenses autorisees (F CFA)" value={form.depensesAutorisees||0} onChange={v=>setForm({...form,depensesAutorisees:parseInt(v)||0})} type="number"/>
             <div className="col-span-2">
               <PhotoUpload bucket="reversement-proofs" folder={"reversements/"+(form.date||"new")} label="Preuve de paiement (screenshot Wave / Orange Money)" value={form.preuve} onChange={v=>setForm({...form,preuve:v})}/>
@@ -3198,7 +3232,7 @@ const App = () => {
     vehicules: <VehiculesPage vehicles={vh.data} onAdd={addVehicle} onUpdate={updateVehicle} onDelete={vh.remove} sites={si.data}/>,
     chauffeurs: <ChauffeursPage drivers={dr.data} vehicles={vh.data} onAdd={addDriver} onUpdate={updateDriver} onDelete={dr.remove} sites={si.data}/>,
     planning: <PlanningPage shifts={sh.data} vehicles={vh.data} drivers={dr.data} onAdd={addShift} onUpdate={updateShift} onDelete={sh.remove} sites={si.data}/>,
-    reversements: <ReversementsPage reversements={rv.data} drivers={dr.data} onAdd={addReversement} onUpdate={updateReversement} onDelete={rv.remove}/>,
+    reversements: <ReversementsPage reversements={rv.data} drivers={dr.data} shifts={sh.data} onAdd={addReversement} onUpdate={updateReversement} onDelete={rv.remove}/>,
     kpi: <KpiPaiePage drivers={dr.data} shifts={sh.data}/>,
     recharge: <RechargePage recharges={rc.data} vehicles={vh.data} drivers={dr.data} onAdd={addRecharge} onUpdate={updateRecharge} onDelete={rc.remove}/>,
     maintenance: <MaintenancePage maintenances={mt.data} vehicles={vh.data} onAdd={addMaintenance} onUpdate={updateMaintenance} onDelete={mt.remove}/>,
