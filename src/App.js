@@ -2779,6 +2779,30 @@ const App = () => {
   const [user, setUser] = useState(null);
   const [page, setPage] = useState("dashboard");
   const [sideOpen, setSideOpen] = useState(true);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("darkMode") === "true");
+  const [search, setSearch] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
+
+  // Global search results
+  const searchResults = search.length >= 2 ? [
+    ...vh.data.filter(v => 
+      v.immat?.toLowerCase().includes(search.toLowerCase()) ||
+      v.marque?.toLowerCase().includes(search.toLowerCase()) ||
+      v.modele?.toLowerCase().includes(search.toLowerCase())
+    ).map(v => ({type:"vehicule", label:v.immat+" — "+v.marque+" "+v.modele, id:v.id, page:"vehicules"})),
+    ...dr.data.filter(d =>
+      d.nom?.toLowerCase().includes(search.toLowerCase()) ||
+      d.prenom?.toLowerCase().includes(search.toLowerCase()) ||
+      d.matricule?.toLowerCase().includes(search.toLowerCase())
+    ).map(d => ({type:"chauffeur", label:d.prenom+" "+d.nom+" ("+d.matricule+")", id:d.id, page:"chauffeurs"})),
+  ] : [];
+
+  // Apply dark mode to body
+  useEffect(() => {
+    if(darkMode) document.documentElement.classList.add("dark");
+    else document.documentElement.classList.remove("dark");
+    localStorage.setItem("darkMode", darkMode);
+  }, [darkMode]);
 
   // Supabase hooks
   const vh = useSupabase("vehicles", mapVehicle);
@@ -3153,12 +3177,56 @@ const App = () => {
         </div>
       </aside>
       <div className="flex-1 flex flex-col min-h-screen">
-        <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
-          <button onClick={()=>setSideOpen(!sideOpen)} className="text-slate-400 hover:text-slate-600">
+        <header className={`border-b px-4 py-3 flex items-center justify-between sticky top-0 z-10 ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
+          <button onClick={()=>setSideOpen(!sideOpen)} className="text-slate-400 hover:text-slate-600 dark:text-slate-300">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
           <div className="text-sm font-semibold text-slate-700 lg:hidden">{ALL_NAV.find(n=>n.id===page)?.label}</div>
+          {/* Recherche globale */}
+          <div className="relative hidden md:block">
+            <div className="flex items-center">
+              <div className="relative">
+                <svg className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input
+                  value={search}
+                  onChange={e=>{setSearch(e.target.value);setShowSearch(true);}}
+                  onFocus={()=>setShowSearch(true)}
+                  onBlur={()=>setTimeout(()=>setShowSearch(false),200)}
+                  placeholder="Rechercher vehicule, chauffeur..."
+                  className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                />
+              </div>
+            </div>
+            {showSearch && searchResults.length > 0 && (
+              <div className="absolute top-10 left-0 w-80 bg-white rounded-xl shadow-xl border border-slate-200 z-50 max-h-64 overflow-y-auto">
+                {searchResults.map((r,i) => (
+                  <button key={i} onClick={()=>{setPage(r.page);setSearch("");setShowSearch(false);}}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 text-left border-b border-slate-100 last:border-0">
+                    <div className={"w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 "+(r.type==="vehicule"?"bg-blue-500":"bg-violet-500")}>
+                      {r.type==="vehicule"?"V":"C"}
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-slate-800">{r.label}</div>
+                      <div className="text-xs text-slate-400 capitalize">{r.type}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+            {showSearch && search.length >= 2 && searchResults.length === 0 && (
+              <div className="absolute top-10 left-0 w-80 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-4 text-center text-slate-400 text-sm">
+                Aucun résultat pour "{search}"
+              </div>
+            )}
+          </div>
           <div className="flex items-center gap-3">
+            <button onClick={()=>setDarkMode(!darkMode)} className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all" title={darkMode?"Mode clair":"Mode sombre"}>
+              {darkMode ? (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+              )}
+            </button>
             <div className="hidden sm:flex items-center gap-2">
               <div className="h-8 w-px bg-slate-200"/>
               <div className="text-sm text-slate-500">{user.name}</div>
@@ -3166,7 +3234,7 @@ const App = () => {
             </div>
           </div>
         </header>
-        <main className="flex-1 p-4 lg:p-6 overflow-y-auto">{pages[page]}</main>
+        <main className={`flex-1 p-4 lg:p-6 overflow-y-auto ${darkMode ? "bg-slate-900" : "bg-slate-100"}`}>{pages[page]}</main>
       </div>
     </div>
   );
