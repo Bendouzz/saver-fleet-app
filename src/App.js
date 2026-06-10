@@ -1789,6 +1789,17 @@ const ReversementsPage = ({reversements, drivers, shifts, onAdd, onUpdate, onDel
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [filterDriver, setFilterDriver] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterPeriode, setFilterPeriode] = useState("tout");
+  const [filterDateDebut, setFilterDateDebut] = useState("");
+  const [filterDateFin, setFilterDateFin] = useState("");
+
+  // Calcul periode 14 jours
+  const getPeriodeDates = () => {
+    const now = new Date();
+    const debut = new Date(now);
+    debut.setDate(now.getDate() - 14);
+    return { debut: debut.toISOString().split("T")[0], fin: now.toISOString().split("T")[0] };
+  };
 
   const emptyForm = {ch:"",montant:0,canal:"Wave Business",date:new Date().toISOString().split("T")[0],status:"En attente",ecart:0,depensesAutorisees:0,preuve:"",commentaire:""};
   const [form, setForm] = useState(emptyForm);
@@ -1852,7 +1863,17 @@ const ReversementsPage = ({reversements, drivers, shifts, onAdd, onUpdate, onDel
 
   const filtered = reversements
     .filter(r=>filterDriver==="all"||r.ch===filterDriver)
-    .filter(r=>filterStatus==="all"||r.status===filterStatus);
+    .filter(r=>filterStatus==="all"||r.status===filterStatus)
+    .filter(r=>{
+      if(filterPeriode==="14j") {
+        const {debut, fin} = getPeriodeDates();
+        return (r.date||"") >= debut && (r.date||"") <= fin;
+      }
+      if(filterPeriode==="custom" && filterDateDebut && filterDateFin) {
+        return (r.date||"") >= filterDateDebut && (r.date||"") <= filterDateFin;
+      }
+      return true;
+    });
 
   const total = filtered.reduce((a,r)=>a+(r.montant||0),0);
   const totalEcart = filtered.reduce((a,r)=>a+(r.ecart||0),0);
@@ -1892,17 +1913,37 @@ const ReversementsPage = ({reversements, drivers, shifts, onAdd, onUpdate, onDel
       )}
 
       {/* Filtres */}
-      <div className="flex gap-3 flex-wrap">
-        <select value={filterDriver} onChange={e=>setFilterDriver(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white">
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex flex-wrap gap-3">
+        <select value={filterDriver} onChange={e=>setFilterDriver(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 dark:text-white">
           <option value="all">Tous les chauffeurs</option>
           {drivers.map(d=><option key={d.id} value={d.id}>{d.prenom} {d.nom}</option>)}
         </select>
-        <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white">
+        <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 dark:text-white">
           <option value="all">Tous les statuts</option>
           <option value="En attente">En attente</option>
           <option value="Validé">Valides</option>
           <option value="Ecart detecte">Ecarts detectes</option>
         </select>
+        <select value={filterPeriode} onChange={e=>setFilterPeriode(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 dark:text-white">
+          <option value="tout">Toute la periode</option>
+          <option value="14j">14 derniers jours</option>
+          <option value="custom">Periode personnalisee</option>
+        </select>
+        {filterPeriode==="custom"&&(
+          <>
+            <input type="date" value={filterDateDebut} onChange={e=>setFilterDateDebut(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 dark:text-white"/>
+            <input type="date" value={filterDateFin} onChange={e=>setFilterDateFin(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-700 dark:text-white"/>
+          </>
+        )}
+        {(filterDriver!=="all"||filterStatus!=="all"||filterPeriode!=="tout")&&(
+          <button onClick={()=>{setFilterDriver("all");setFilterStatus("all");setFilterPeriode("tout");setFilterDateDebut("");setFilterDateFin("");}}
+            className="text-xs text-red-500 hover:text-red-700 border border-red-200 px-3 py-2 rounded-lg">
+            Effacer filtres
+          </button>
+        )}
+        <div className="ml-auto text-xs text-slate-400 dark:text-slate-500 self-center">
+          {filtered.length} reversement(s)
+        </div>
       </div>
 
       {/* Table */}
