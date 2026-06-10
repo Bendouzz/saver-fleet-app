@@ -247,33 +247,33 @@ const Badge = ({color, children}) => <span className={"inline-flex items-center 
 const sc = (s) => {
   const map = {
     "Actif":"bg-emerald-100 text-emerald-700","En exploitation":"bg-emerald-100 text-emerald-700",
-    "En cours":"bg-blue-100 text-blue-700","Planifie":"bg-slate-100 text-slate-600",
-    "Planifié":"bg-slate-100 text-slate-600","Terminé":"bg-slate-100 text-slate-500",
-    "Termine":"bg-slate-100 text-slate-500","Suspendu":"bg-red-100 text-red-700",
+    "En cours":"bg-blue-100 text-blue-700","Planifie":"bg-slate-100 text-slate-600 dark:text-slate-400",
+    "Planifié":"bg-slate-100 text-slate-600 dark:text-slate-400","Terminé":"bg-slate-100 text-slate-500 dark:text-slate-400",
+    "Termine":"bg-slate-100 text-slate-500 dark:text-slate-400","Suspendu":"bg-red-100 text-red-700",
     "Inactif":"bg-slate-100 text-slate-400","En recharge":"bg-amber-100 text-amber-700",
     "Maintenance":"bg-orange-100 text-orange-700","Immobilisé":"bg-red-100 text-red-700",
     "Immobilise":"bg-red-100 text-red-700","Validé":"bg-emerald-100 text-emerald-700",
     "En attente":"bg-amber-100 text-amber-700","Écart détecté":"bg-red-100 text-red-700",
     "Ecart detecte":"bg-red-100 text-red-700","Planifiée":"bg-blue-100 text-blue-700",
-    "Terminée":"bg-slate-100 text-slate-500",
+    "Terminée":"bg-slate-100 text-slate-500 dark:text-slate-400",
   };
-  return map[s] || "bg-slate-100 text-slate-600";
+  return map[s] || "bg-slate-100 text-slate-600 dark:text-slate-400";
 };
 
 const SocBar = ({soc}) => {
   const col = soc > 70 ? "bg-emerald-500" : soc > 40 ? "bg-amber-500" : "bg-red-500";
-  return <div className="flex items-center gap-2"><div className="w-20 h-2 bg-slate-200 rounded-full overflow-hidden"><div className={"h-full "+col+" rounded-full"} style={{width:soc+"%"}}/></div><span className="text-xs font-medium text-slate-600">{soc}%</span></div>;
+  return <div className="flex items-center gap-2"><div className="w-20 h-2 bg-slate-200 rounded-full overflow-hidden"><div className={"h-full "+col+" rounded-full"} style={{width:soc+"%"}}/></div><span className="text-xs font-medium text-slate-600 dark:text-slate-400">{soc}%</span></div>;
 };
 
 const KpiBar = ({value}) => {
   const col = value>=80?"bg-emerald-500":value>=60?"bg-amber-500":"bg-red-500";
-  return <div className="flex items-center gap-2"><div className="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden"><div className={"h-full "+col+" rounded-full"} style={{width:value+"%"}}/></div><span className="text-xs text-slate-600">{value}%</span></div>;
+  return <div className="flex items-center gap-2"><div className="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden"><div className={"h-full "+col+" rounded-full"} style={{width:value+"%"}}/></div><span className="text-xs text-slate-600 dark:text-slate-400">{value}%</span></div>;
 };
 
-const StatCard = ({label, value, sub, color="text-slate-900", icon}) => (
-  <div className="bg-white rounded-xl border border-slate-200 p-5">
+const StatCard = ({label, value, sub, color="text-slate-900 dark:text-white", icon}) => (
+  <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-5">
     <div className="flex items-center justify-between mb-2">
-      <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</span>
+      <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">{label}</span>
       {icon && <div className={"w-8 h-8 rounded-lg flex items-center justify-center text-white "+icon.bg}>{icon.el}</div>}
     </div>
     <div className={"text-2xl font-bold "+color}>{value}</div>
@@ -282,24 +282,24 @@ const StatCard = ({label, value, sub, color="text-slate-900", icon}) => (
 );
 
 const Modal = ({title, onClose, children, footer}) => (
-  <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
-    <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto my-4">
-      <div className="flex items-center justify-between p-6 border-b border-slate-100 sticky top-0 bg-white z-10">
-        <h2 className="text-lg font-bold text-slate-900">{title}</h2>
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl font-bold">x</button>
+  <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto my-4">
+      <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-700 sticky top-0 bg-white z-10">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white">{title}</h2>
+        <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:text-slate-400 text-xl font-bold">x</button>
       </div>
       <div className="p-6 space-y-4">{children}</div>
-      {footer && <div className="flex gap-3 p-6 border-t border-slate-100 sticky bottom-0 bg-white">{footer}</div>}
+      {footer && <div className="flex gap-3 p-6 border-t border-slate-100 dark:border-slate-700 sticky bottom-0 bg-white">{footer}</div>}
     </div>
   </div>
 );
 
 const Confirm = ({msg, onConfirm, onCancel}) => (
   <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6">
-      <h3 className="font-bold text-slate-900 mb-3">{msg}</h3>
+    <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm shadow-2xl p-6">
+      <h3 className="font-bold text-slate-900 dark:text-white mb-3">{msg}</h3>
       <div className="flex gap-3">
-        <button onClick={onCancel} className="flex-1 border border-slate-200 py-2 rounded-lg text-sm">Annuler</button>
+        <button onClick={onCancel} className="flex-1 border border-slate-200 dark:border-slate-700 py-2 rounded-lg text-sm">Annuler</button>
         <button onClick={onConfirm} className="flex-1 bg-red-600 text-white py-2 rounded-lg text-sm">Confirmer</button>
       </div>
     </div>
@@ -308,15 +308,15 @@ const Confirm = ({msg, onConfirm, onCancel}) => (
 
 const Input = ({label, value, onChange, type="text", placeholder="", required=false, hint=""}) => (
   <div>
-    <label className="block text-sm font-medium text-slate-700 mb-1">{label}{required&&<span className="text-red-500 ml-1">*</span>}{hint&&<span className="text-xs text-slate-400 ml-1">{hint}</span>}</label>
-    <input type={type} value={value||""} onChange={e=>onChange(type==="number"?parseFloat(e.target.value)||0:e.target.value)} placeholder={placeholder} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{label}{required&&<span className="text-red-500 ml-1">*</span>}{hint&&<span className="text-xs text-slate-400 ml-1">{hint}</span>}</label>
+    <input type={type} value={value||""} onChange={e=>onChange(type==="number"?parseFloat(e.target.value)||0:e.target.value)} placeholder={placeholder} className="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400"/>
   </div>
 );
 
 const Select = ({label, value, onChange, options}) => (
   <div>
-    <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
-    <select value={value||""} onChange={e=>onChange(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{label}</label>
+    <select value={value||""} onChange={e=>onChange(e.target.value)} className="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
       {options.map(o => typeof o === "string" ? <option key={o} value={o}>{o}</option> : <option key={o.value} value={o.value}>{o.label}</option>)}
     </select>
   </div>
@@ -371,25 +371,25 @@ const PhotoUpload = ({ label, bucket, folder, value, onChange, multiple = false,
 
   return (
     <div className="space-y-2">
-      {label && <label className="block text-sm font-medium text-slate-700">{label}</label>}
+      {label && <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>}
       {hint && <p className="text-xs text-slate-400">{hint}</p>}
       {urls.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {urls.map((url, idx) => (
             <div key={idx} className="relative group">
-              <img src={url} alt="" className="w-20 h-20 object-cover rounded-lg border border-slate-200 cursor-pointer" onClick={() => window.open(url, "_blank")}/>
+              <img src={url} alt="" className="w-20 h-20 object-cover rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer" onClick={() => window.open(url, "_blank")}/>
               <button type="button" onClick={() => removeUrl(idx)} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">x</button>
             </div>
           ))}
         </div>
       )}
-      <label className={`flex items-center gap-3 px-4 py-3 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploading ? "border-blue-300 bg-blue-50" : "border-slate-200 hover:border-blue-400 hover:bg-blue-50"}`}>
+      <label className={`flex items-center gap-3 px-4 py-3 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploading ? "border-blue-300 bg-blue-50" : "border-slate-200 dark:border-slate-700 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"}`}>
         <input type="file" accept="image/*" multiple={multiple} onChange={handleFiles} className="hidden" disabled={uploading}/>
         {uploading ? (
           <><div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"/><span className="text-sm text-blue-600">Upload en cours...</span></>
         ) : (
           <><svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-          <span className="text-sm text-slate-500">{multiple ? "Cliquer pour ajouter des photos" : "Cliquer pour ajouter une photo"}</span>
+          <span className="text-sm text-slate-500 dark:text-slate-400">{multiple ? "Cliquer pour ajouter des photos" : "Cliquer pour ajouter une photo"}</span>
           {urls.length > 0 && <span className="ml-auto text-xs text-emerald-600 font-medium">{urls.length} photo{urls.length > 1 ? "s" : ""}</span>}</>
         )}
       </label>
@@ -670,12 +670,12 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Tableau de bord</h1>
-          <p className="text-slate-500 text-sm">{new Date().toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Tableau de bord</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">{new Date().toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
         </div>
         <div className="flex gap-2">
           {["tout","jour","semaine","mois"].map(p=>(
-            <button key={p} onClick={()=>setPeriode(p)} className={"px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all "+(periode===p?"bg-blue-600 text-white":"bg-white border border-slate-200 text-slate-600 hover:bg-slate-50")}>{p==="tout"?"Tout":p}</button>
+            <button key={p} onClick={()=>setPeriode(p)} className={"px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all "+(periode===p?"bg-blue-600 text-white":"bg-white border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50")}>{p==="tout"?"Tout":p}</button>
           ))}
         </div>
       </div>
@@ -715,23 +715,23 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
             </div>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h2 className="font-semibold text-slate-900 mb-4">Top chauffeurs par CA</h2>
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-6">
+              <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Top chauffeurs par CA</h2>
               {topDrivers.length===0?<p className="text-slate-400 text-sm">Aucun chauffeur</p>:(
                 <div className="space-y-3">{topDrivers.map((d,i)=>(
                   <div key={d.id} className="flex items-center gap-3">
                     <div className={"w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white "+(i===0?"bg-yellow-500":i===1?"bg-slate-400":i===2?"bg-amber-600":"bg-slate-300")}>{i+1}</div>
-                    <div className="flex-1"><div className="flex items-center justify-between"><span className="text-sm font-medium text-slate-700">{d.prenom} {d.nom}</span><span className="text-sm font-semibold text-emerald-600">{fmt(d.ca||0)}</span></div><div className="w-full bg-slate-100 rounded-full h-1.5 mt-1"><div className="bg-emerald-500 h-1.5 rounded-full" style={{width:topDrivers[0]?.ca>0?((d.ca||0)/(topDrivers[0].ca||1))*100+"%":"0%"}}/></div></div>
+                    <div className="flex-1"><div className="flex items-center justify-between"><span className="text-sm font-medium text-slate-700 dark:text-slate-300">{d.prenom} {d.nom}</span><span className="text-sm font-semibold text-emerald-600">{fmt(d.ca||0)}</span></div><div className="w-full bg-slate-100 rounded-full h-1.5 mt-1"><div className="bg-emerald-500 h-1.5 rounded-full" style={{width:topDrivers[0]?.ca>0?((d.ca||0)/(topDrivers[0].ca||1))*100+"%":"0%"}}/></div></div>
                   </div>
                 ))}</div>
               )}
             </div>
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h2 className="font-semibold text-slate-900 mb-4">Etat de charge flotte</h2>
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-6">
+              <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Etat de charge flotte</h2>
               {vehicles.length===0?<p className="text-slate-400 text-sm">Aucun vehicule</p>:(
                 <div className="space-y-3">{vehicles.slice(0,6).map(v=>(
                   <div key={v.id} className="flex items-center justify-between">
-                    <div><div className="text-sm font-medium text-slate-700">{v.immat}</div><div className="text-xs text-slate-400">{v.modele}</div></div>
+                    <div><div className="text-sm font-medium text-slate-700 dark:text-slate-300">{v.immat}</div><div className="text-xs text-slate-400">{v.modele}</div></div>
                     <div className="flex items-center gap-3"><SocBar soc={v.soc||0}/><Badge color={sc(v.status)}>{v.status}</Badge></div>
                   </div>
                 ))}</div>
@@ -747,7 +747,7 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <StatCard label="Flotte active" value={activeVh+"/"+vehicles.length} sub={"SOC moy: "+avgSoc+"%"} color="text-emerald-600"/>
             <StatCard label="Shifts en cours" value={shiftEnCours.toString()} sub={shiftPlanifie+" planifies"} color="text-blue-600"/>
-            <StatCard label="Shifts termines" value={shiftTermine.toString()} sub={ddManquants+" DD manquants"} color="text-slate-600"/>
+            <StatCard label="Shifts termines" value={shiftTermine.toString()} sub={ddManquants+" DD manquants"} color="text-slate-600 dark:text-slate-400"/>
             <StatCard label="Alertes vehicules" value={alertesVh.length.toString()} sub="documents expirant" color="text-red-600"/>
           </div>
           {ddManquants>0&&<div className="bg-amber-50 border border-amber-200 rounded-xl p-4"><div className="font-semibold text-amber-800 text-sm">⚠ {ddManquants} shift(s) sans DD Driving Datas — la paie ne peut pas etre calculee</div></div>}
@@ -756,12 +756,12 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-5"><div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-amber-700">En recharge</span><span className="text-2xl font-bold text-amber-700">{enRechargeVh}</span></div><div className="w-full bg-amber-200 rounded-full h-2"><div className="bg-amber-500 h-2 rounded-full" style={{width:vehicles.length>0?(enRechargeVh/vehicles.length)*100+"%":"0%"}}/></div></div>
             <div className="bg-red-50 border border-red-200 rounded-xl p-5"><div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-red-700">Immobilises</span><span className="text-2xl font-bold text-red-700">{immobiliseVh}</span></div><div className="w-full bg-red-200 rounded-full h-2"><div className="bg-red-500 h-2 rounded-full" style={{width:vehicles.length>0?(immobiliseVh/vehicles.length)*100+"%":"0%"}}/></div></div>
           </div>
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
-            <h2 className="font-semibold text-slate-900 mb-4">Etat de charge flotte</h2>
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-6">
+            <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Etat de charge flotte</h2>
             {vehicles.length===0?<p className="text-slate-400 text-sm">Aucun vehicule</p>:(
               <div className="space-y-3">{vehicles.map(v=>(
-                <div key={v.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                  <div><div className="text-sm font-medium text-slate-700">{v.immat}</div><div className="text-xs text-slate-400">{v.marque} {v.modele}</div></div>
+                <div key={v.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                  <div><div className="text-sm font-medium text-slate-700 dark:text-slate-300">{v.immat}</div><div className="text-xs text-slate-400">{v.marque} {v.modele}</div></div>
                   <div className="flex items-center gap-3"><SocBar soc={v.soc||0}/><Badge color={sc(v.status)}>{v.status}</Badge></div>
                 </div>
               ))}</div>
@@ -781,8 +781,8 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
           </div>
           {ecarts>0&&<div className="bg-red-50 border border-red-200 rounded-xl p-4"><div className="font-semibold text-red-800 text-sm">⚠ {ecarts} ecart(s) detecte(s) dans les reversements — verification requise</div></div>}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h2 className="font-semibold text-slate-900 mb-4">Top chauffeurs par CA</h2>
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-6">
+              <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Top chauffeurs par CA</h2>
               {topDrivers.length===0?<p className="text-slate-400 text-sm">Aucun chauffeur</p>:(
                 <div className="space-y-3">{topDrivers.map((d,i)=>(
                   <div key={d.id} className="flex items-center gap-3">
@@ -792,12 +792,12 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
                 ))}</div>
               )}
             </div>
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h2 className="font-semibold text-slate-900 mb-4">Derniers reversements</h2>
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-6">
+              <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Derniers reversements</h2>
               {reversements.length===0?<p className="text-slate-400 text-sm">Aucun reversement</p>:(
                 <div className="space-y-2">{reversements.slice(0,6).map(r=>(
-                  <div key={r.id} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
-                    <div className="text-xs text-slate-600">{r.date||"—"} · {r.canal}</div>
+                  <div key={r.id} className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                    <div className="text-xs text-slate-600 dark:text-slate-400">{r.date||"—"} · {r.canal}</div>
                     <div className="flex items-center gap-2"><span className="text-sm font-semibold text-emerald-600">{fmt(r.montant||0)}</span><Badge color={sc(r.status)}>{r.status}</Badge></div>
                   </div>
                 ))}</div>
@@ -822,11 +822,11 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
               {alertesVh.map(v=><div key={v.id} className="text-xs text-amber-700">• {v.immat} — {v.assuranceFin?"Assurance exp. "+v.assuranceFin:""} {v.visiteDate?"Visite tech. "+v.visiteDate:""}</div>)}
             </div>
           )}
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
-            <h2 className="font-semibold text-slate-900 mb-4">SOC temps reel par vehicule</h2>
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-6">
+            <h2 className="font-semibold text-slate-900 dark:text-white mb-4">SOC temps reel par vehicule</h2>
             {vehicles.length===0?<p className="text-slate-400 text-sm">Aucun vehicule</p>:(
               <div className="space-y-3">{vehicles.map(v=>(
-                <div key={v.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                <div key={v.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
                   <div><div className="text-sm font-medium">{v.immat}</div><div className="text-xs text-slate-400">{v.marque} {v.modele}</div></div>
                   <div className="flex items-center gap-3"><SocBar soc={v.soc||0}/><Badge color={sc(v.status)}>{v.status}</Badge></div>
                 </div>
@@ -846,27 +846,27 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
             <StatCard label="Chauffeurs actifs" value={totalDrivers.toString()} color="text-violet-600"/>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h2 className="font-semibold text-slate-900 mb-4">Shifts du jour</h2>
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-6">
+              <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Shifts du jour</h2>
               {shiftsAujourdhui.length===0?<p className="text-slate-400 text-sm">Aucun shift aujourd hui</p>:(
                 <div className="space-y-2">{shiftsAujourdhui.map(s=>(
-                  <div key={s.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                  <div key={s.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
                     <div className="text-sm font-medium">Shift {s.type}</div>
-                    <div className="flex items-center gap-2"><span className="text-xs text-slate-500">{s.date}</span><Badge color={sc(s.status)}>{s.status}</Badge></div>
+                    <div className="flex items-center gap-2"><span className="text-xs text-slate-500 dark:text-slate-400">{s.date}</span><Badge color={sc(s.status)}>{s.status}</Badge></div>
                   </div>
                 ))}</div>
               )}
             </div>
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h2 className="font-semibold text-slate-900 mb-4">Chauffeurs disponibles</h2>
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-6">
+              <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Chauffeurs disponibles</h2>
               {drivers.filter(d=>d.status==="Actif").length===0?<p className="text-slate-400 text-sm">Aucun chauffeur</p>:(
                 <div className="space-y-2">{drivers.filter(d=>d.status==="Actif").slice(0,8).map(d=>(
-                  <div key={d.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                  <div key={d.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-violet-400 flex items-center justify-center text-white text-xs font-bold">{(d.prenom||"?")[0]}</div>
                       <span className="text-sm font-medium">{d.prenom} {d.nom}</span>
                     </div>
-                    <span className="text-xs font-mono text-slate-500">{d.matricule}</span>
+                    <span className="text-xs font-mono text-slate-500 dark:text-slate-400">{d.matricule}</span>
                   </div>
                 ))}</div>
               )}
@@ -943,13 +943,13 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
       <div className="space-y-4">
         <button onClick={()=>setDetail(null)} className="text-sm text-blue-600 hover:underline">← Retour</button>
         {getAlerts(v).map((a,i)=><div key={i} className={"flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium "+a.color}>{a.label}</div>)}
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-emerald-500 flex items-center justify-center text-white text-xl font-bold">{(v.immat||"").substring(0,2)}</div>
               <div>
                 <h2 className="text-xl font-bold">{v.immat}</h2>
-                <p className="text-slate-500 text-sm">{v.marque} {v.modele} {v.annee&&"· "+v.annee} {v.couleur&&"· "+v.couleur}</p>
+                <p className="text-slate-500 dark:text-slate-400 text-sm">{v.marque} {v.modele} {v.annee&&"· "+v.annee} {v.couleur&&"· "+v.couleur}</p>
                 <div className="flex gap-2 mt-1 flex-wrap"><Badge color={sc(v.status)}>{v.status}</Badge><Badge color="bg-blue-100 text-blue-700">{v.typeContrat||"Interne"}</Badge><Badge color="bg-violet-100 text-violet-700">{v.typeService||"VTC"}</Badge></div>
               </div>
             </div>
@@ -957,22 +957,22 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
-              <h3 className="text-xs font-semibold text-slate-500 uppercase">Technique</h3>
+              <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Technique</h3>
               {[["Num. Chassis",v.vin||v.numeroChassis||"—"],["Autonomie",v.autonomie+"km"],["Batterie",(v.capaciteBatterie||"—")+"kWh"],["Classes",(v.classesService||[]).join(", ")||"—"],["Carte grise",v.carteGriseNum||"—"],["Visite tech.",v.visiteDate||v.technical_visit_expiry||"—"],["Assurance",v.assuranceFin||v.insurance_expiry||"—"]].map(([l,val])=>(
-                <div key={l} className="flex justify-between py-1.5 border-b border-slate-100"><span className="text-xs text-slate-500">{l}</span><span className="text-xs font-medium text-slate-700">{val||"—"}</span></div>
+                <div key={l} className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-700"><span className="text-xs text-slate-500 dark:text-slate-400">{l}</span><span className="text-xs font-medium text-slate-700 dark:text-slate-300">{val||"—"}</span></div>
               ))}
-              <div className="flex justify-between py-1.5 border-b border-slate-100"><span className="text-xs text-slate-500">Km</span><span className="text-xs font-medium text-slate-700">{(v.km||0).toLocaleString()}</span></div>
+              <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-700"><span className="text-xs text-slate-500 dark:text-slate-400">Km</span><span className="text-xs font-medium text-slate-700 dark:text-slate-300">{(v.km||0).toLocaleString()}</span></div>
             </div>
             <div className="space-y-2">
-              <h3 className="text-xs font-semibold text-slate-500 uppercase">Documents</h3>
+              <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Documents</h3>
               {[["CG N°",v.carteGriseNum],["CG Date",v.carteGriseDate],["Proprietaire",v.carteGriseProprietaire],["Visite exp.",v.visiteDate],["Assurance N°",v.assuranceNum],["Assur. debut",v.assuranceDebut],["Assur. fin",v.assuranceFin]].map(([l,val])=>(
-                <div key={l} className="flex justify-between py-1.5 border-b border-slate-100"><span className="text-xs text-slate-500">{l}</span><span className={"text-xs font-medium "+(l==="Assur. fin"&&val&&new Date(val)<new Date(Date.now()+7*86400000)?"text-red-600":"text-slate-700")}>{val||"—"}</span></div>
+                <div key={l} className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-700"><span className="text-xs text-slate-500 dark:text-slate-400">{l}</span><span className={"text-xs font-medium "+(l==="Assur. fin"&&val&&new Date(val)<new Date(Date.now()+7*86400000)?"text-red-600":"text-slate-700 dark:text-slate-300")}>{val||"—"}</span></div>
               ))}
             </div>
             <div className="space-y-3">
-              <h3 className="text-xs font-semibold text-slate-500 uppercase">Etat</h3>
-              <div className="p-4 bg-slate-50 rounded-xl"><div className="text-xs text-slate-500 mb-2">SOC</div><SocBar soc={v.soc||0}/></div>
-              <div className="p-4 bg-slate-50 rounded-xl"><div className="text-xs text-slate-500 mb-1">Site</div><div className="font-semibold text-sm">{sitesList.find(s=>s.id===v.site||String(s.id)===String(v.site))?.name||v.site}</div></div>
+              <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Etat</h3>
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl"><div className="text-xs text-slate-500 dark:text-slate-400 mb-2">SOC</div><SocBar soc={v.soc||0}/></div>
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl"><div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Site</div><div className="font-semibold text-sm">{sitesList.find(s=>s.id===v.site||String(s.id)===String(v.site))?.name||v.site}</div></div>
             </div>
           </div>
         </div>
@@ -984,50 +984,50 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Vehicules</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Vehicules</h1>
           {totalAlerts>0&&<p className="text-xs text-red-500 mt-0.5">{totalAlerts} alerte(s) documentaire(s)</p>}
         </div>
         <div className="flex gap-2 flex-wrap">
-          <select value={filter} onChange={e=>setFilter(e.target.value)} className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white">
+          <select value={filter} onChange={e=>setFilter(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white">
             <option value="all">Tous les sites</option>
             {sitesList.map(s=><option key={s.id} value={String(s.id)}>{s.name}</option>)}
           </select>
-          <select value={filterType} onChange={e=>setFilterType(e.target.value)} className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white">
+          <select value={filterType} onChange={e=>setFilterType(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white">
             <option value="all">Tous types</option><option value="VTC">VTC</option><option value="Location B2B">Location B2B</option><option value="Location B2C">Location B2C</option>
           </select>
           <button onClick={openAdd} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">+ Ajouter</button>
         </div>
       </div>
-      <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 overflow-x-auto">
         <table className="w-full">
-          <thead><tr className="bg-slate-50 border-b border-slate-200">
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Vehicule</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Type</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Site</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">SOC</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Km</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Alertes</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Actions</th>
+          <thead><tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 dark:border-slate-700">
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Vehicule</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Type</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Site</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">SOC</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Km</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Alertes</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Status</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Actions</th>
           </tr></thead>
           <tbody>
             {filtered.map(v=>{
               const alerts=getAlerts(v);
               return (
-                <tr key={v.id} className="border-b border-slate-100 hover:bg-slate-50">
+                <tr key={v.id} className="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                   <td className="px-4 py-3 cursor-pointer" onClick={()=>setDetail(v.id)}>
-                    <div className="font-medium text-sm text-slate-800">{v.immat}</div>
+                    <div className="font-medium text-sm text-slate-800 dark:text-slate-100">{v.immat}</div>
                     <div className="text-xs text-slate-400">{v.marque} {v.modele} {v.annee&&"· "+v.annee}</div>
                   </td>
                   <td className="px-4 py-3"><Badge color="bg-violet-100 text-violet-700">{v.typeService||"VTC"}</Badge><div className="text-xs text-slate-400 mt-0.5">{v.typeContrat||"Interne"}</div></td>
-                  <td className="px-4 py-3 text-sm text-slate-600">{sitesList.find(s=>s.id===v.site||String(s.id)===String(v.site))?.name||v.site}</td>
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{sitesList.find(s=>s.id===v.site||String(s.id)===String(v.site))?.name||v.site}</td>
                   <td className="px-4 py-3"><SocBar soc={v.soc||0}/></td>
-                  <td className="px-4 py-3 text-sm text-slate-600">{(v.km||0).toLocaleString()}</td>
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{(v.km||0).toLocaleString()}</td>
                   <td className="px-4 py-3">
                     {alerts.length>0?<div className="space-y-1">{alerts.map((a,i)=><div key={i} className={"text-xs px-2 py-0.5 rounded-full font-medium "+a.color}>{a.label}</div>)}</div>:<span className="text-xs text-emerald-500">OK</span>}
                   </td>
                   <td className="px-4 py-3"><Badge color={sc(v.status)}>{v.status}</Badge></td>
-                  <td className="px-4 py-3"><div className="flex gap-1"><button onClick={()=>openEdit(v)} className="text-blue-600 text-xs border border-blue-200 px-2 py-1 rounded hover:bg-blue-50">Modifier</button><button onClick={()=>setConfirmDelete(v)} className="text-red-600 text-xs border border-red-200 px-2 py-1 rounded hover:bg-red-50">Suppr.</button></div></td>
+                  <td className="px-4 py-3"><div className="flex gap-1"><button onClick={()=>openEdit(v)} className="text-blue-600 text-xs border border-blue-200 px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20">Modifier</button><button onClick={()=>setConfirmDelete(v)} className="text-red-600 text-xs border border-red-200 px-2 py-1 rounded hover:bg-red-50">Suppr.</button></div></td>
                 </tr>
               );
             })}
@@ -1037,23 +1037,23 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
 
       {showModal && (
         <Modal title={editItem?"Modifier le vehicule":"Ajouter un vehicule"} onClose={()=>setShowModal(false)}
-          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm">{editItem?"Enregistrer":"Ajouter"}</button></>}>
+          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm">{editItem?"Enregistrer":"Ajouter"}</button></>}>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2"><Input label="Immatriculation" value={form.immat} onChange={v=>setForm({...form,immat:v})} required placeholder="Ex: AB-1234-CI"/></div>
               <Input label="Marque" value={form.marque} onChange={v=>setForm({...form,marque:v})} placeholder="BYD"/>
               <Input label="Modele" value={form.modele} onChange={v=>setForm({...form,modele:v})} placeholder="e6"/>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Couleur</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Couleur</label>
                 <div className="flex gap-2 flex-wrap">
                   {["Blanc","Noir","Gris","Argent","Bleu","Rouge","Vert","Jaune","Orange","Marron","Beige","Autre"].map(c=>(
                     <button key={c} type="button" onClick={()=>setForm({...form,couleur:c})}
-                      className={"px-3 py-1.5 rounded-lg text-xs font-medium border transition-all "+(form.couleur===c?"bg-blue-600 text-white border-blue-600":"bg-white text-slate-600 border-slate-200 hover:border-blue-300")}>
+                      className={"px-3 py-1.5 rounded-lg text-xs font-medium border transition-all "+(form.couleur===c?"bg-blue-600 text-white border-blue-600":"bg-white text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-blue-300")}>
                       {c}
                     </button>
                   ))}
                 </div>
-                {form.couleur&&<div className="text-xs text-slate-500 mt-1">Selectionnee : <strong>{form.couleur}</strong></div>}
+                {form.couleur&&<div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Selectionnee : <strong>{form.couleur}</strong></div>}
               </div>
               <Input label="Annee" value={form.annee} onChange={v=>setForm({...form,annee:parseInt(v)||new Date().getFullYear()})} type="number"/>
               <Input label="Numero de Chassis (VIN)" value={form.vin} onChange={v=>setForm({...form,vin:v,numeroChassis:v})} placeholder="Ex: VF1RFD00X56789012"/>
@@ -1070,33 +1070,33 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
             </div>
             {form.typeService==="VTC"&&(
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Classes de service</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Classes de service</label>
                 <div className="flex flex-wrap gap-2">
                   {["Eco","Confort","Confort+","Business","Premium","VIP","Standard","Coursier","Livraison","Interurbain"].map(c=>(
                     <label key={c} className="flex items-center gap-1 cursor-pointer">
                       <input type="checkbox" checked={(form.classesService||[]).includes(c)} onChange={e=>{const arr=form.classesService||[];setForm({...form,classesService:e.target.checked?[...arr,c]:arr.filter(x=>x!==c)});}} className="rounded"/>
-                      <span className="text-xs text-slate-700">{c}</span>
+                      <span className="text-xs text-slate-700 dark:text-slate-300">{c}</span>
                     </label>
                   ))}
                 </div>
               </div>
             )}
-            <div className="border-t border-slate-100 pt-4">
-              <p className="text-xs font-semibold text-slate-500 uppercase mb-3">Carte grise</p>
+            <div className="border-t border-slate-100 dark:border-slate-700 pt-4">
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">Carte grise</p>
               <div className="grid grid-cols-2 gap-3">
                 <Input label="N° Carte grise" value={form.carteGriseNum} onChange={v=>setForm({...form,carteGriseNum:v})}/>
                 <Input label="Date immatriculation" value={form.carteGriseDate} onChange={v=>setForm({...form,carteGriseDate:v})} type="date"/>
                 <div className="col-span-2"><Input label="Proprietaire" value={form.carteGriseProprietaire} onChange={v=>setForm({...form,carteGriseProprietaire:v})}/></div>
               </div>
             </div>
-            <div className="border-t border-slate-100 pt-4">
-              <p className="text-xs font-semibold text-slate-500 uppercase mb-3">Photos du vehicule</p>
+            <div className="border-t border-slate-100 dark:border-slate-700 pt-4">
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">Photos du vehicule</p>
               <PhotoUpload bucket="vehicle-photos" folder={"vehicles/"+(form.immat||"new")} label="Photos exterieures (4 angles)" value={form.photosExt||[]} onChange={v=>setForm({...form,photosExt:v})} multiple={true}/>
               <PhotoUpload bucket="vehicle-photos" folder={"vehicles/"+(form.immat||"new")+"/docs"} label="Photo carte grise" value={form.photoCarteGrise} onChange={v=>setForm({...form,photoCarteGrise:v})}/>
               <PhotoUpload bucket="vehicle-photos" folder={"vehicles/"+(form.immat||"new")+"/docs"} label="Photo assurance" value={form.photoAssurance} onChange={v=>setForm({...form,photoAssurance:v})}/>
             </div>
-            <div className="border-t border-slate-100 pt-4">
-              <p className="text-xs font-semibold text-slate-500 uppercase mb-3">Visite technique et Assurance</p>
+            <div className="border-t border-slate-100 dark:border-slate-700 pt-4">
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">Visite technique et Assurance</p>
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2"><Input label="Expiration visite technique" value={form.visiteDate} onChange={v=>setForm({...form,visiteDate:v})} type="date" hint="(alerte 15j avant)"/></div>
                 <Input label="N° Assurance" value={form.assuranceNum} onChange={v=>setForm({...form,assuranceNum:v})}/>
@@ -1228,30 +1228,30 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
       <div className="space-y-4">
         <button onClick={()=>setDetail(null)} className="text-sm text-blue-600 hover:underline">← Retour</button>
         {alerts.map((a,i)=><div key={i} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-amber-600 bg-amber-50">{a}</div>)}
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-xl font-bold">{(d.prenom||"?")[0]}{(d.nom||"?")[0]}</div>
               <div>
                 <h2 className="text-xl font-bold">{d.prenom} {d.nom}</h2>
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
-                  <span className="text-xs font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded">{d.matricule||d.id}</span>
+                  <span className="text-xs font-mono bg-slate-100 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded">{d.matricule||d.id}</span>
                   <Badge color="bg-blue-100 text-blue-700">Shift {d.shift}</Badge>
                   <Badge color={sc(d.status)}>{d.status}</Badge>
                   <Badge color="bg-violet-100 text-violet-700">{d.typeContrat||"Salarie"}</Badge>
                 </div>
-                <p className="text-slate-500 text-sm mt-1">{sitesList.find(s=>s.id===d.site||String(s.id)===String(d.site))?.name} · {vehicles.find(v=>v.id===d.vehicule)?.immat||"—"}</p>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{sitesList.find(s=>s.id===d.site||String(s.id)===String(d.site))?.name} · {vehicles.find(v=>v.id===d.vehicule)?.immat||"—"}</p>
               </div>
             </div>
             <button onClick={()=>{openEdit(d);setDetail(null);}} className="text-blue-600 border border-blue-200 px-4 py-2 rounded-lg text-sm">Modifier</button>
           </div>
-          <div className="flex gap-1 border-b border-slate-200 mb-4">
-            {tabs.map(t=><button key={t.id} onClick={()=>setActiveTab(t.id)} className={"px-4 py-2 text-sm font-medium border-b-2 -mb-px "+(activeTab===t.id?"border-blue-600 text-blue-600":"border-transparent text-slate-500")}>{t.label}</button>)}
+          <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700 mb-4">
+            {tabs.map(t=><button key={t.id} onClick={()=>setActiveTab(t.id)} className={"px-4 py-2 text-sm font-medium border-b-2 -mb-px "+(activeTab===t.id?"border-blue-600 text-blue-600":"border-transparent text-slate-500 dark:text-slate-400")}>{t.label}</button>)}
           </div>
-          {activeTab==="profil"&&<div className="grid grid-cols-1 md:grid-cols-2 gap-2">{[["Tel. travail",d.telephone],["Tel. perso",d.telephonePerso],["Adresse",d.adresse],["Contact urgence",d.contactUrgence],["Tel urgence",d.contactUrgenceTel],["Contrat",d.typeContrat]].map(([l,val])=><div key={l} className="flex justify-between py-2 border-b border-slate-100"><span className="text-xs text-slate-500">{l}</span><span className="text-xs font-medium text-slate-700">{val||"—"}</span></div>)}</div>}
-          {activeTab==="kyc"&&<div className="grid grid-cols-1 md:grid-cols-2 gap-6"><div><h4 className="font-semibold text-sm mb-3">Permis</h4>{[["N°",d.permisNum||d.license_number],["Type",d.permisType||d.permistype],["Delivrance",d.permisDelivrance||d.permisdelivrance],["Expiration",d.permisExpiration||d.license_expiry_date]].map(([l,val])=><div key={l} className="flex justify-between py-1.5 border-b border-slate-100"><span className="text-xs text-slate-500">{l}</span><span className={"text-xs font-medium "+(l==="Expiration"&&val&&new Date(val)<new Date(Date.now()+30*86400000)?"text-red-600":"text-slate-700")}>{val||"—"}</span></div>)}</div><div><h4 className="font-semibold text-sm mb-3">Piece ID ({d.pieceType||d.piecetype||"CNI"})</h4>{[["N°",d.pieceNum||d.id_card_number],["Delivrance",d.pieceDelivrance||d.piecedelivrance],["Expiration",d.pieceExpiration||d.id_card_expiry_date]].map(([l,val])=><div key={l} className="flex justify-between py-1.5 border-b border-slate-100"><span className="text-xs text-slate-500">{l}</span><span className={"text-xs font-medium "+(l==="Expiration"&&val&&new Date(val)<new Date(Date.now()+30*86400000)?"text-red-600":"text-slate-700")}>{val||"—"}</span></div>)}</div></div>}
-          {activeTab==="performance"&&<div className="grid grid-cols-2 md:grid-cols-4 gap-4">{[["Note Yango",(d.noteYango||"—")+"/5","text-amber-500"],["KPI",d.kpi+"%","text-blue-600"],["Courses",(d.courses||0).toLocaleString(),"text-slate-700"],["CA",fmt(d.ca||0),"text-emerald-600"],["Penalites",fmt(d.pen||0),"text-red-600"],["Avance",fmt(d.avance||0),"text-amber-600"]].map(([l,val,color])=><div key={l} className="p-4 bg-slate-50 rounded-xl"><div className="text-xs text-slate-500">{l}</div><div className={"font-bold text-lg "+color}>{val}</div></div>)}</div>}
-          {activeTab==="creance"&&<div className="space-y-4"><div className="p-4 bg-red-50 rounded-xl border border-red-100"><div className="text-xs text-slate-500 mb-1">Solde dettes</div><div className="font-bold text-red-600 text-lg">{fmt(d.dettes||0)}</div>{d.detteCommentaire&&<div className="text-xs text-slate-500 mt-1">{d.detteCommentaire}</div>}</div>{d.commentaires&&<div className="p-4 bg-slate-50 rounded-xl"><div className="text-xs text-slate-500 mb-1">Commentaires</div><div className="text-sm">{d.commentaires}</div></div>}{!d.dettes&&!d.commentaires&&<div className="text-slate-400 text-sm text-center py-4">Aucun incident</div>}</div>}
+          {activeTab==="profil"&&<div className="grid grid-cols-1 md:grid-cols-2 gap-2">{[["Tel. travail",d.telephone],["Tel. perso",d.telephonePerso],["Adresse",d.adresse],["Contact urgence",d.contactUrgence],["Tel urgence",d.contactUrgenceTel],["Contrat",d.typeContrat]].map(([l,val])=><div key={l} className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-700"><span className="text-xs text-slate-500 dark:text-slate-400">{l}</span><span className="text-xs font-medium text-slate-700 dark:text-slate-300">{val||"—"}</span></div>)}</div>}
+          {activeTab==="kyc"&&<div className="grid grid-cols-1 md:grid-cols-2 gap-6"><div><h4 className="font-semibold text-sm mb-3">Permis</h4>{[["N°",d.permisNum||d.license_number],["Type",d.permisType||d.permistype],["Delivrance",d.permisDelivrance||d.permisdelivrance],["Expiration",d.permisExpiration||d.license_expiry_date]].map(([l,val])=><div key={l} className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-700"><span className="text-xs text-slate-500 dark:text-slate-400">{l}</span><span className={"text-xs font-medium "+(l==="Expiration"&&val&&new Date(val)<new Date(Date.now()+30*86400000)?"text-red-600":"text-slate-700 dark:text-slate-300")}>{val||"—"}</span></div>)}</div><div><h4 className="font-semibold text-sm mb-3">Piece ID ({d.pieceType||d.piecetype||"CNI"})</h4>{[["N°",d.pieceNum||d.id_card_number],["Delivrance",d.pieceDelivrance||d.piecedelivrance],["Expiration",d.pieceExpiration||d.id_card_expiry_date]].map(([l,val])=><div key={l} className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-700"><span className="text-xs text-slate-500 dark:text-slate-400">{l}</span><span className={"text-xs font-medium "+(l==="Expiration"&&val&&new Date(val)<new Date(Date.now()+30*86400000)?"text-red-600":"text-slate-700 dark:text-slate-300")}>{val||"—"}</span></div>)}</div></div>}
+          {activeTab==="performance"&&<div className="grid grid-cols-2 md:grid-cols-4 gap-4">{[["Note Yango",(d.noteYango||"—")+"/5","text-amber-500"],["KPI",d.kpi+"%","text-blue-600"],["Courses",(d.courses||0).toLocaleString(),"text-slate-700 dark:text-slate-300"],["CA",fmt(d.ca||0),"text-emerald-600"],["Penalites",fmt(d.pen||0),"text-red-600"],["Avance",fmt(d.avance||0),"text-amber-600"]].map(([l,val,color])=><div key={l} className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl"><div className="text-xs text-slate-500 dark:text-slate-400">{l}</div><div className={"font-bold text-lg "+color}>{val}</div></div>)}</div>}
+          {activeTab==="creance"&&<div className="space-y-4"><div className="p-4 bg-red-50 rounded-xl border border-red-100"><div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Solde dettes</div><div className="font-bold text-red-600 text-lg">{fmt(d.dettes||0)}</div>{d.detteCommentaire&&<div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{d.detteCommentaire}</div>}</div>{d.commentaires&&<div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl"><div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Commentaires</div><div className="text-sm">{d.commentaires}</div></div>}{!d.dettes&&!d.commentaires&&<div className="text-slate-400 text-sm text-center py-4">Aucun incident</div>}</div>}
         </div>
       </div>
     );
@@ -1260,44 +1260,44 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl font-bold text-slate-900">Chauffeurs</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Chauffeurs</h1>
         <div className="flex gap-2">
-          <div className="relative"><svg className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher..." className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm w-48 focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
+          <div className="relative"><svg className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher..." className="pl-9 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm w-48 focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
           <button onClick={openAdd} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">+ Ajouter</button>
         </div>
       </div>
-      <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 overflow-x-auto">
         <table className="w-full">
-          <thead><tr className="bg-slate-50 border-b border-slate-200">
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Chauffeur</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Matricule</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Site</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Vehicule</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Shift</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Yango</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">KPI</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Actions</th>
+          <thead><tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 dark:border-slate-700">
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Chauffeur</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Matricule</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Site</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Vehicule</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Shift</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Yango</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">KPI</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Status</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Actions</th>
           </tr></thead>
           <tbody>
             {filtered.map(d=>{
               const alerts=getDriverAlerts(d);
               return (
-                <tr key={d.id} className="border-b border-slate-100 hover:bg-blue-50 transition-colors">
+                <tr key={d.id} className="border-b border-slate-100 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
                   <td className="px-4 py-3 cursor-pointer" onClick={()=>setDetail(d.id)}>
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-violet-400 flex items-center justify-center text-white text-xs font-bold">{(d.prenom||"?")[0]}{(d.nom||"?")[0]}</div>
-                      <div><div className="font-medium text-sm text-slate-800">{d.prenom} {d.nom}</div>{alerts.length>0&&<div className="text-xs text-amber-600">⚠ {alerts[0]}</div>}</div>
+                      <div><div className="font-medium text-sm text-slate-800 dark:text-slate-100">{d.prenom} {d.nom}</div>{alerts.length>0&&<div className="text-xs text-amber-600">⚠ {alerts[0]}</div>}</div>
                     </div>
                   </td>
-                  <td className="px-4 py-3"><span className="text-xs font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded">{d.matricule||d.id}</span></td>
-                  <td className="px-4 py-3 text-sm text-slate-600">{sitesList.find(s=>s.id===d.site||String(s.id)===String(d.site))?.name||d.site}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600">{vehicles.find(v=>v.id===d.vehicule)?.immat||"—"}</td>
+                  <td className="px-4 py-3"><span className="text-xs font-mono bg-slate-100 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded">{d.matricule||d.id}</span></td>
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{sitesList.find(s=>s.id===d.site||String(s.id)===String(d.site))?.name||d.site}</td>
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{vehicles.find(v=>v.id===d.vehicule)?.immat||"—"}</td>
                   <td className="px-4 py-3"><Badge color="bg-blue-100 text-blue-700">Shift {d.shift}</Badge></td>
                   <td className="px-4 py-3"><span className="text-sm font-bold text-amber-500">{d.noteYango||"—"}</span><span className="text-xs text-slate-400">/5</span></td>
                   <td className="px-4 py-3"><KpiBar value={d.kpi||0}/></td>
                   <td className="px-4 py-3"><Badge color={sc(d.status)}>{d.status}</Badge></td>
-                  <td className="px-4 py-3"><div className="flex gap-1"><button onClick={()=>openEdit(d)} className="text-blue-600 text-xs border border-blue-200 px-2 py-1 rounded hover:bg-blue-50">Modifier</button><button onClick={()=>setConfirmDelete(d)} className="text-red-600 text-xs border border-red-200 px-2 py-1 rounded hover:bg-red-50">Suppr.</button></div></td>
+                  <td className="px-4 py-3"><div className="flex gap-1"><button onClick={()=>openEdit(d)} className="text-blue-600 text-xs border border-blue-200 px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20">Modifier</button><button onClick={()=>setConfirmDelete(d)} className="text-red-600 text-xs border border-red-200 px-2 py-1 rounded hover:bg-red-50">Suppr.</button></div></td>
                 </tr>
               );
             })}
@@ -1307,9 +1307,9 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
 
       {showModal&&(
         <Modal title={editItem?"Modifier chauffeur":"Ajouter chauffeur"} onClose={()=>setShowModal(false)}
-          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm">{editItem?"Enregistrer":"Ajouter"}</button></>}>
-          <div className="flex gap-1 border-b border-slate-200 mb-4">
-            {tabs.map(t=><button key={t.id} onClick={()=>setActiveTab(t.id)} className={"px-3 py-2 text-sm font-medium border-b-2 -mb-px "+(activeTab===t.id?"border-blue-600 text-blue-600":"border-transparent text-slate-500")}>{t.label}</button>)}
+          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm">{editItem?"Enregistrer":"Ajouter"}</button></>}>
+          <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700 mb-4">
+            {tabs.map(t=><button key={t.id} onClick={()=>setActiveTab(t.id)} className={"px-3 py-2 text-sm font-medium border-b-2 -mb-px "+(activeTab===t.id?"border-blue-600 text-blue-600":"border-transparent text-slate-500 dark:text-slate-400")}>{t.label}</button>)}
           </div>
           {activeTab==="profil"&&(
             <div className="grid grid-cols-2 gap-3">
@@ -1331,14 +1331,14 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
           {activeTab==="kyc"&&(
             <div className="space-y-4">
               <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase mb-3">Photos du chauffeur</p>
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">Photos du chauffeur</p>
                 <div className="grid grid-cols-3 gap-3">
                   <PhotoUpload bucket="driver-photos" folder={"drivers/"+(form.nom||"new")+"/face"} label="Photo face" value={form.photoFace} onChange={v=>setForm({...form,photoFace:v})}/>
                   <PhotoUpload bucket="driver-photos" folder={"drivers/"+(form.nom||"new")+"/profil"} label="Photo profil" value={form.photoProfil} onChange={v=>setForm({...form,photoProfil:v})}/>
                   <PhotoUpload bucket="driver-photos" folder={"drivers/"+(form.nom||"new")+"/full"} label="Plein pied" value={form.photoFull} onChange={v=>setForm({...form,photoFull:v})}/>
                 </div>
               </div>
-              <div><p className="text-xs font-semibold text-slate-500 uppercase mb-3">Permis de conduire</p>
+              <div><p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">Permis de conduire</p>
                 <div className="grid grid-cols-2 gap-3">
                   <Input label="N° Permis" value={form.permisNum} onChange={v=>setForm({...form,permisNum:v})}/>
                   <Input label="Type" value={form.permisType} onChange={v=>setForm({...form,permisType:v})} placeholder="B, D..."/>
@@ -1346,7 +1346,7 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
                   <Input label="Expiration" value={form.permisExpiration} onChange={v=>setForm({...form,permisExpiration:v})} type="date" hint="(alerte 30j)"/>
                 </div>
               </div>
-              <div><p className="text-xs font-semibold text-slate-500 uppercase mb-3">Piece d identite</p>
+              <div><p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">Piece d identite</p>
                 <div className="grid grid-cols-2 gap-3">
                   <Select label="Type" value={form.pieceType} onChange={v=>setForm({...form,pieceType:v})} options={["CNI","Passeport","Titre sejour"]}/>
                   <Input label="N° Piece" value={form.pieceNum} onChange={v=>setForm({...form,pieceNum:v})}/>
@@ -1370,7 +1370,7 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
             <div className="space-y-3">
               <Input label="Solde dettes (F CFA)" value={form.dettes||0} onChange={v=>setForm({...form,dettes:parseInt(v)||0})} type="number"/>
               <Input label="Detail dette" value={form.detteCommentaire||""} onChange={v=>setForm({...form,detteCommentaire:v})} placeholder="Ex: manquant du 01/04..."/>
-              <div><label className="block text-sm font-medium text-slate-700 mb-1">Commentaires et incidents</label><textarea value={form.commentaires||""} onChange={e=>setForm({...form,commentaires:e.target.value})} rows={4} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
+              <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Commentaires et incidents</label><textarea value={form.commentaires||""} onChange={e=>setForm({...form,commentaires:e.target.value})} rows={4} className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
             </div>
           )}
         </Modal>
@@ -1401,7 +1401,7 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
   const shiftColors = {
     A:{bg:"bg-blue-50",border:"border-blue-200",title:"text-blue-800",badge:"bg-blue-600",light:"bg-blue-100 text-blue-700"},
     B:{bg:"bg-violet-50",border:"border-violet-200",title:"text-violet-800",badge:"bg-violet-600",light:"bg-violet-100 text-violet-700"},
-    C:{bg:"bg-slate-50",border:"border-slate-200",title:"text-slate-800",badge:"bg-slate-600",light:"bg-slate-100 text-slate-600"},
+    C:{bg:"bg-slate-50",border:"border-slate-200 dark:border-slate-700",title:"text-slate-800 dark:text-slate-100",badge:"bg-slate-600",light:"bg-slate-100 text-slate-600 dark:text-slate-400"},
   };
 
   const getDriver = (id) => drivers.find(d=>d.id===id);
@@ -1482,11 +1482,11 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Planning et Shifts</h1>
-          <p className="text-sm text-slate-500">{new Date().toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Planning et Shifts</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{new Date().toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <input type="date" value={filterDate} onChange={e=>setFilterDate(e.target.value)} className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+          <input type="date" value={filterDate} onChange={e=>setFilterDate(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
           <button onClick={()=>{setForm(emptyShift);setShowModal(true);}} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
             Ajouter shift
@@ -1497,14 +1497,14 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
-          {label:"Total shifts",value:totalShifts,color:"text-slate-700",bg:"bg-slate-50"},
+          {label:"Total shifts",value:totalShifts,color:"text-slate-700 dark:text-slate-300",bg:"bg-slate-50"},
           {label:"Planifies",value:planifies,color:"text-blue-600",bg:"bg-blue-50"},
           {label:"En cours",value:enCours,color:"text-emerald-600",bg:"bg-emerald-50"},
-          {label:"Termines",value:termines,color:"text-slate-500",bg:"bg-slate-50"},
+          {label:"Termines",value:termines,color:"text-slate-500 dark:text-slate-400",bg:"bg-slate-50"},
           {label:"DD saisis",value:ddSaisis+"/"+termines,color:"text-violet-600",bg:"bg-violet-50"},
         ].map(s=>(
-          <div key={s.label} className={s.bg+" rounded-xl p-4 border border-slate-200"}>
-            <div className="text-xs text-slate-500 mb-1">{s.label}</div>
+          <div key={s.label} className={s.bg+" rounded-xl p-4 border border-slate-200 dark:border-slate-700"}>
+            <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">{s.label}</div>
             <div className={"text-2xl font-bold "+s.color}>{s.value}</div>
           </div>
         ))}
@@ -1520,7 +1520,7 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className={"font-bold text-base "+col.title}>Shift {type}</h3>
-                  <p className="text-xs text-slate-500">{shiftHoraires[type]}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{shiftHoraires[type]}</p>
                 </div>
                 <span className={"text-xs px-2.5 py-1 rounded-full text-white font-medium "+col.badge}>{shiftList.length} shift{shiftList.length>1?"s":""}</span>
               </div>
@@ -1537,7 +1537,7 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
                   const hasDDData = (s.courses_count>0||s.nbCourses>0);
                   const isTermine = s.status==="Terminé"||s.status==="Termine";
                   return (
-                    <div key={s.id} className="bg-white rounded-xl p-3 border border-slate-100 shadow-sm">
+                    <div key={s.id} className="bg-white rounded-xl p-3 border border-slate-100 dark:border-slate-700 shadow-sm">
                       {/* En-tete shift */}
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2">
@@ -1545,7 +1545,7 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
                             {driver?(driver.prenom||"?")[0]+(driver.nom||"?")[0]:"?"}
                           </div>
                           <div>
-                            <div className="font-medium text-sm text-slate-800">{driver?driver.prenom+" "+driver.nom:"—"}</div>
+                            <div className="font-medium text-sm text-slate-800 dark:text-slate-100">{driver?driver.prenom+" "+driver.nom:"—"}</div>
                             <div className="text-xs text-slate-400">{vehicle?.immat||"—"} {driver?.matricule?"· "+driver.matricule:""}</div>
                           </div>
                         </div>
@@ -1562,14 +1562,14 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
 
                       {/* DD Data resume si saisi */}
                       {isTermine&&hasDDData&&(
-                        <div className="bg-slate-50 rounded-lg p-2 mb-2 space-y-1">
-                          <div className="text-xs font-semibold text-slate-600 mb-1">DD Driving Datas</div>
-                          <div className="grid grid-cols-2 gap-1 text-xs text-slate-500">
-                            <span>Courses: <strong className="text-slate-700">{s.courses_count||s.nbCourses||0}</strong></span>
+                        <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-2 mb-2 space-y-1">
+                          <div className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">DD Driving Datas</div>
+                          <div className="grid grid-cols-2 gap-1 text-xs text-slate-500 dark:text-slate-400">
+                            <span>Courses: <strong className="text-slate-700 dark:text-slate-300">{s.courses_count||s.nbCourses||0}</strong></span>
                             <span>Rev: <strong className="text-emerald-600">{fmt(s.revenue_cash||s.revenusGeneres||0)}</strong></span>
                             <span>Com.: <strong className="text-red-500">{fmt(s.yango_commission||s.commissionYango||0)}</strong></span>
                             <span>Note: <strong className="text-amber-500">{s.yango_rating||s.noteYangoShift||0}/5</strong></span>
-                            {s.km_driven>0&&<span>Km: <strong className="text-slate-700">{s.km_driven}</strong></span>}
+                            {s.km_driven>0&&<span>Km: <strong className="text-slate-700 dark:text-slate-300">{s.km_driven}</strong></span>}
                             {(s.battery_start>0)&&<span>Batterie: <strong className="text-blue-600">{s.battery_start}%→{s.battery_end}%</strong></span>}
                           </div>
                         </div>
@@ -1634,7 +1634,7 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
       {/* MODAL AJOUT SHIFT */}
       {showModal&&(
         <Modal title="Planifier un shift" onClose={()=>setShowModal(false)}
-          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} disabled={saving} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50">{saving?"Enregistrement...":"Planifier"}</button></>}>
+          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} disabled={saving} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50">{saving?"Enregistrement...":"Planifier"}</button></>}>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2"><Input label="Date" value={form.date} onChange={v=>setForm({...form,date:v})} type="date"/></div>
             <Select label="Vehicule" value={form.vh} onChange={v=>setForm({...form,vh:v})} options={[{value:"",label:"-- Choisir --"},...vehicles.map(v=>({value:v.id,label:v.immat}))]}/>
@@ -1653,8 +1653,8 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
 
       {/* MODAL DD DRIVING DATAS */}
       {showDDModal&&selectedShift&&(()=>{const driver=getDriver(selectedShift.ch);const vehicle=getVehicle(selectedShift.vh);return(
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto my-4">
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto my-4">
               {/* Header DD */}
               <div className="bg-gradient-to-r from-blue-600 to-violet-600 p-6 rounded-t-2xl">
                 <div className="flex items-center justify-between">
@@ -1688,7 +1688,7 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
 
                 {/* Section Temps */}
                 <div>
-                  <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Heures reelles (10% du KPI)</div>
+                  <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">Heures reelles (10% du KPI)</div>
                   <div className="grid grid-cols-2 gap-3">
                     <Input label="Heure debut reelle" value={ddForm.heureDebutReelle||""} onChange={v=>setDDForm({...ddForm,heureDebutReelle:v})} type="time"/>
                     <Input label="Heure fin reelle" value={ddForm.heureFinReelle||""} onChange={v=>setDDForm({...ddForm,heureFinReelle:v})} type="time"/>
@@ -1697,7 +1697,7 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
 
                 {/* Section Courses et Revenus */}
                 <div>
-                  <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Courses et revenus (30% du KPI)</div>
+                  <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">Courses et revenus (30% du KPI)</div>
                   <div className="grid grid-cols-2 gap-3">
                     <Input label="Nombre de courses (5%)" value={ddForm.nbCourses||0} onChange={v=>setDDForm({...ddForm,nbCourses:parseInt(v)||0})} type="number"/>
                     <Input label="Revenus generes — F CFA (25%)" value={ddForm.revenusGeneres||0} onChange={v=>setDDForm({...ddForm,revenusGeneres:parseInt(v)||0})} type="number"/>
@@ -1708,7 +1708,7 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
 
                 {/* Section Batterie */}
                 <div>
-                  <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Consommation batterie (15% du KPI)</div>
+                  <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">Consommation batterie (15% du KPI)</div>
                   <div className="grid grid-cols-3 gap-3">
                     <Input label="Autonomie debut (%)" value={ddForm.autonomieDebut||0} onChange={v=>setDDForm({...ddForm,autonomieDebut:parseInt(v)||0})} type="number"/>
                     <Input label="Autonomie fin (%)" value={ddForm.autonomieFin||0} onChange={v=>setDDForm({...ddForm,autonomieFin:parseInt(v)||0})} type="number"/>
@@ -1718,36 +1718,36 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
 
                 {/* Note Yango */}
                 <div>
-                  <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Note et etat vehicule</div>
+                  <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">Note et etat vehicule</div>
                   <div className="grid grid-cols-2 gap-3">
                     <Input label="Note Yango du shift (/5) — 10%" value={ddForm.noteYangoShift||0} onChange={v=>setDDForm({...ddForm,noteYangoShift:parseFloat(v)||0})} type="number"/>
                     <div className="col-span-1"></div>
                     <div className="col-span-2">
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Etat vehicule et commentaires (20%)</label>
-                      <textarea value={ddForm.commentaireShift||""} onChange={e=>setDDForm({...ddForm,commentaireShift:e.target.value})} rows={3} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Etat du vehicule, incidents, remarques..."/>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Etat vehicule et commentaires (20%)</label>
+                      <textarea value={ddForm.commentaireShift||""} onChange={e=>setDDForm({...ddForm,commentaireShift:e.target.value})} rows={3} className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Etat du vehicule, incidents, remarques..."/>
                     </div>
                   </div>
                 </div>
 
                 {/* Analyse automatique */}
                 {ddForm.revenusGeneres>0&&(
-                  <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                    <div className="text-sm font-semibold text-slate-700 mb-3">Analyse automatique</div>
+                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+                    <div className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Analyse automatique</div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      <div className="text-center p-3 bg-white rounded-lg border border-slate-200">
-                        <div className="text-xs text-slate-500 mb-1">Recette nette</div>
+                      <div className="text-center p-3 bg-white rounded-lg border border-slate-200 dark:border-slate-700">
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Recette nette</div>
                         <div className="font-bold text-emerald-600 text-sm">{fmt(recetteNette)}</div>
                       </div>
-                      <div className="text-center p-3 bg-white rounded-lg border border-slate-200">
-                        <div className="text-xs text-slate-500 mb-1">Ratio commission</div>
+                      <div className="text-center p-3 bg-white rounded-lg border border-slate-200 dark:border-slate-700">
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Ratio commission</div>
                         <div className={"font-bold text-sm "+(ratioCommission>25?"text-red-600":ratioCommission>18?"text-amber-600":"text-emerald-600")}>{ratioCommission}%</div>
                       </div>
-                      <div className="text-center p-3 bg-white rounded-lg border border-slate-200">
-                        <div className="text-xs text-slate-500 mb-1">Conso batterie</div>
+                      <div className="text-center p-3 bg-white rounded-lg border border-slate-200 dark:border-slate-700">
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Conso batterie</div>
                         <div className="font-bold text-blue-600 text-sm">{consoBatterie}%</div>
                       </div>
-                      <div className="text-center p-3 bg-white rounded-lg border border-slate-200">
-                        <div className="text-xs text-slate-500 mb-1">Moy. par course</div>
+                      <div className="text-center p-3 bg-white rounded-lg border border-slate-200 dark:border-slate-700">
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Moy. par course</div>
                         <div className="font-bold text-violet-600 text-sm">{ddForm.nbCourses>0?fmt(Math.round(recetteNette/ddForm.nbCourses)):"—"}</div>
                       </div>
                     </div>
@@ -1755,8 +1755,8 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
                 )}
               </div>
 
-              <div className="flex gap-3 p-6 border-t border-slate-100 sticky bottom-0 bg-white rounded-b-2xl">
-                <button onClick={()=>setShowDDModal(false)} className="flex-1 border border-slate-200 text-slate-600 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-50">Annuler</button>
+              <div className="flex gap-3 p-6 border-t border-slate-100 dark:border-slate-700 sticky bottom-0 bg-white rounded-b-2xl">
+                <button onClick={()=>setShowDDModal(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50">Annuler</button>
                 <button onClick={handleSaveDD} disabled={saving} className="flex-1 bg-gradient-to-r from-blue-600 to-violet-600 text-white py-2.5 rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50">
                   {saving?"Enregistrement...":"Enregistrer les DD"}
                 </button>
@@ -1767,11 +1767,11 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
       })()}
       {confirmDelete&&(
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6">
-            <h3 className="font-bold text-slate-900 mb-2">Supprimer ce shift ?</h3>
-            <p className="text-sm text-slate-500 mb-4">Cette action est irreversible.</p>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm shadow-2xl p-6">
+            <h3 className="font-bold text-slate-900 dark:text-white mb-2">Supprimer ce shift ?</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Cette action est irreversible.</p>
             <div className="flex gap-3">
-              <button onClick={()=>setConfirmDelete(null)} className="flex-1 border border-slate-200 py-2 rounded-lg text-sm">Annuler</button>
+              <button onClick={()=>setConfirmDelete(null)} className="flex-1 border border-slate-200 dark:border-slate-700 py-2 rounded-lg text-sm">Annuler</button>
               <button onClick={async()=>{await onDelete(confirmDelete.id);setConfirmDelete(null);}} className="flex-1 bg-red-600 text-white py-2 rounded-lg text-sm font-medium">Supprimer</button>
             </div>
           </div>
@@ -1845,8 +1845,8 @@ const ReversementsPage = ({reversements, drivers, onAdd, onUpdate, onDelete}) =>
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Recettes et Reversements</h1>
-          <p className="text-xs text-slate-500 mt-0.5">Suivi quotidien des versements Wave / Orange Money</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Recettes et Reversements</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Suivi quotidien des versements Wave / Orange Money</p>
         </div>
         <button onClick={openAdd} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
@@ -1875,11 +1875,11 @@ const ReversementsPage = ({reversements, drivers, onAdd, onUpdate, onDelete}) =>
 
       {/* Filtres */}
       <div className="flex gap-3 flex-wrap">
-        <select value={filterDriver} onChange={e=>setFilterDriver(e.target.value)} className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white">
+        <select value={filterDriver} onChange={e=>setFilterDriver(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white">
           <option value="all">Tous les chauffeurs</option>
           {drivers.map(d=><option key={d.id} value={d.id}>{d.prenom} {d.nom}</option>)}
         </select>
-        <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)} className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white">
+        <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white">
           <option value="all">Tous les statuts</option>
           <option value="En attente">En attente</option>
           <option value="Validé">Valides</option>
@@ -1888,18 +1888,18 @@ const ReversementsPage = ({reversements, drivers, onAdd, onUpdate, onDelete}) =>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 overflow-x-auto">
         <table className="w-full">
-          <thead><tr className="bg-slate-50 border-b border-slate-200">
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Chauffeur</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Montant verse</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Canal</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Depenses aut.</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Preuve</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Date</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Ecart</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Statut</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Actions</th>
+          <thead><tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 dark:border-slate-700">
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Chauffeur</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Montant verse</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Canal</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Depenses aut.</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Preuve</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Date</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Ecart</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Statut</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Actions</th>
           </tr></thead>
           <tbody>
             {filtered.length===0&&<tr><td colSpan={9} className="text-center py-8 text-slate-400 text-sm">Aucun reversement</td></tr>}
@@ -1908,9 +1908,9 @@ const ReversementsPage = ({reversements, drivers, onAdd, onUpdate, onDelete}) =>
               const hasEcart = (r.ecart||0)>0;
               const depenses = r.authorized_expenses||r.depensesAutorisees||0;
               return (
-                <tr key={r.id} className={"border-b border-slate-100 hover:bg-slate-50"+(hasEcart?" bg-red-50/30":"")}>
+                <tr key={r.id} className={"border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50"+(hasEcart?" bg-red-50/30":"")}>
                   <td className="px-4 py-3">
-                    <div className="font-medium text-sm text-slate-800">{driver?driver.prenom+" "+driver.nom:"—"}</div>
+                    <div className="font-medium text-sm text-slate-800 dark:text-slate-100">{driver?driver.prenom+" "+driver.nom:"—"}</div>
                     <div className="text-xs text-slate-400">{driver?.matricule||""}</div>
                   </td>
                   <td className="px-4 py-3 text-sm font-semibold text-emerald-600">{fmt(r.montant||0)}</td>
@@ -1924,7 +1924,7 @@ const ReversementsPage = ({reversements, drivers, onAdd, onUpdate, onDelete}) =>
                       <span className="text-xs text-slate-400">Pas de preuve</span>
                     }
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-600">{r.date||"—"}</td>
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{r.date||"—"}</td>
                   <td className="px-4 py-3">
                     {hasEcart?
                       <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-100 px-2 py-1 rounded-full">
@@ -1936,7 +1936,7 @@ const ReversementsPage = ({reversements, drivers, onAdd, onUpdate, onDelete}) =>
                   <td className="px-4 py-3"><Badge color={sc(r.status)}>{r.status}</Badge></td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
-                      <button onClick={()=>openEdit(r)} className="text-blue-600 text-xs border border-blue-200 px-2 py-1 rounded hover:bg-blue-50">Modifier</button>
+                      <button onClick={()=>openEdit(r)} className="text-blue-600 text-xs border border-blue-200 px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20">Modifier</button>
                       {r.status==="En attente"&&<button onClick={async()=>await onUpdate(r.id,{
   status:"Validé",
   ch:r.ch, driver_id:r.ch,
@@ -1959,7 +1959,7 @@ const ReversementsPage = ({reversements, drivers, onAdd, onUpdate, onDelete}) =>
       {/* MODAL */}
       {showModal&&(
         <Modal title={editItem?"Modifier reversement":"Ajouter reversement"} onClose={()=>setShowModal(false)}
-          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium">{editItem?"Enregistrer":"Ajouter"}</button></>}>
+          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium">{editItem?"Enregistrer":"Ajouter"}</button></>}>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-700 mb-2">
             L ecart est calcule automatiquement. Tolerance de 1% pour les frais Wave Business.
           </div>
@@ -1975,12 +1975,12 @@ const ReversementsPage = ({reversements, drivers, onAdd, onUpdate, onDelete}) =>
               <PhotoUpload bucket="reversement-proofs" folder={"reversements/"+(form.date||"new")} label="Preuve de paiement (screenshot Wave / Orange Money)" value={form.preuve} onChange={v=>setForm({...form,preuve:v})}/>
             </div>
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Commentaire</label>
-              <textarea value={form.commentaire||""} onChange={e=>setForm({...form,commentaire:e.target.value})} rows={2} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Remarques eventuelles..."/>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Commentaire</label>
+              <textarea value={form.commentaire||""} onChange={e=>setForm({...form,commentaire:e.target.value})} rows={2} className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Remarques eventuelles..."/>
             </div>
           </div>
           {form.montant>0&&(
-            <div className="bg-slate-50 rounded-lg p-3 mt-2 text-xs text-slate-600">
+            <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3 mt-2 text-xs text-slate-600 dark:text-slate-400">
               Ecart calcule automatiquement : {fmt(calcEcart(form.montant,form.montant,form.depensesAutorisees||0,form.canal))} 
               {form.canal==="Wave Business"&&<span className="text-slate-400"> (tolerance 1% frais Wave deduite)</span>}
             </div>
@@ -2167,7 +2167,7 @@ const KpiPaiePage = ({drivers, shifts}) => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl font-bold text-slate-900">KPI, Paie et Incentives</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">KPI, Paie et Incentives</h1>
         <button onClick={exportExcelTD01} className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           Exporter Excel (TD01)
@@ -2175,65 +2175,65 @@ const KpiPaiePage = ({drivers, shifts}) => {
       </div>
 
       {/* Filtre periode */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-wrap items-center gap-4">
-        <div className="font-semibold text-slate-700 text-sm">Periode de calcul :</div>
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-4 flex flex-wrap items-center gap-4">
+        <div className="font-semibold text-slate-700 dark:text-slate-300 text-sm">Periode de calcul :</div>
         <div className="flex items-center gap-2">
-          <label className="text-xs text-slate-500">Du</label>
-          <input type="date" value={periodeDebut} onChange={e=>setPeriodeDebut(e.target.value)} className="text-sm border border-slate-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+          <label className="text-xs text-slate-500 dark:text-slate-400">Du</label>
+          <input type="date" value={periodeDebut} onChange={e=>setPeriodeDebut(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
         </div>
         <div className="flex items-center gap-2">
-          <label className="text-xs text-slate-500">Au</label>
-          <input type="date" value={periodeFin} onChange={e=>setPeriodeFin(e.target.value)} className="text-sm border border-slate-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+          <label className="text-xs text-slate-500 dark:text-slate-400">Au</label>
+          <input type="date" value={periodeFin} onChange={e=>setPeriodeFin(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
         </div>
-        {(periodeDebut||periodeFin)&&<button onClick={()=>{setPeriodeDebut("");setPeriodeFin("");}} className="text-xs text-slate-500 hover:text-red-500 border border-slate-200 px-3 py-1.5 rounded-lg">Effacer</button>}
+        {(periodeDebut||periodeFin)&&<button onClick={()=>{setPeriodeDebut("");setPeriodeFin("");}} className="text-xs text-slate-500 dark:text-slate-400 hover:text-red-500 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg">Effacer</button>}
         <div className="ml-auto text-xs text-slate-400">{paies.length} chauffeur(s) actifs · {shiftsFiltres.filter(s=>s.status==="Terminé"||s.status==="Termine").length} shifts termines</div>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 p-6">
-        <h2 className="font-semibold text-slate-900 mb-4">Regles de remuneration SAVER</h2>
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-6">
+        <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Regles de remuneration SAVER</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
           <div className="p-4 bg-emerald-50 rounded-xl"><div className="font-semibold text-emerald-800">Fixe journalier</div><div className="text-emerald-700">{fmt(FIXE_JOURNALIER)} / jour</div></div>
           <div className="p-4 bg-blue-50 rounded-xl"><div className="font-semibold text-blue-800">KPI Recettes</div><div className="text-blue-700">{fmt(KPI_RECETTES)} / shift</div></div>
           <div className="p-4 bg-violet-50 rounded-xl"><div className="font-semibold text-violet-800">KPI Courses</div><div className="text-violet-700">{KPI_COURSES} courses / shift</div></div>
           <div className="p-4 bg-amber-50 rounded-xl"><div className="font-semibold text-amber-800">Bonus max</div><div className="text-amber-700">{fmt(BONUS_MAX)}</div></div>
         </div>
-        <div className="mt-4 p-4 bg-slate-50 rounded-xl">
-          <div className="font-semibold text-slate-700 text-sm mb-2">Paliers de bonus (courses supplementaires)</div>
+        <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+          <div className="font-semibold text-slate-700 dark:text-slate-300 text-sm mb-2">Paliers de bonus (courses supplementaires)</div>
           <div className="flex flex-wrap gap-2 text-xs">
             {[[1,10,"10%"],[11,19,"25%"],[20,25,"35%"],[26,35,"50%"],[36,"...","75%"]].map(([min,max,pct])=>(
-              <div key={min} className="bg-white border border-slate-200 px-3 py-1.5 rounded-lg"><span className="text-slate-600">{min}-{max} courses</span> → <span className="font-semibold text-blue-600">{pct} du surplus</span></div>
+              <div key={min} className="bg-white border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg"><span className="text-slate-600 dark:text-slate-400">{min}-{max} courses</span> → <span className="font-semibold text-blue-600">{pct} du surplus</span></div>
             ))}
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-          <h2 className="font-semibold text-slate-900">Fiche de paie (calcul automatique)</h2>
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+          <h2 className="font-semibold text-slate-900 dark:text-white">Fiche de paie (calcul automatique)</h2>
           <span className="text-xs text-slate-400">{paies.length} chauffeur(s)</span>
         </div>
         {paies.length===0?<div className="text-center text-slate-400 py-8">Ajoutez des chauffeurs et des shifts pour voir la paie</div>:(
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead><tr className="bg-slate-50 border-b border-slate-200">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Chauffeur</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Jours</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Courses sup.</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Surplus</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Palier</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Base</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Bonus</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Deductions</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">NET</th>
+              <thead><tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 dark:border-slate-700">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Chauffeur</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Jours</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Courses sup.</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Surplus</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Palier</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Base</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Bonus</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Deductions</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">NET</th>
               </tr></thead>
               <tbody>
                 {paies.map(({d,joursTravailes,salaireBase,surplus,coursesSup,palierPct,bonus,avances,manquants,net})=>(
-                  <tr key={d.id} className="border-b border-slate-100">
-                    <td className="px-4 py-3 text-sm font-medium text-slate-700">{d.prenom} {d.nom}</td>
-                    <td className="px-4 py-3 text-sm text-right text-slate-600">{joursTravailes}</td>
-                    <td className="px-4 py-3 text-sm text-right text-slate-600">{coursesSup}</td>
-                    <td className="px-4 py-3 text-sm text-right text-slate-600">{fmtK(surplus)} F</td>
-                    <td className="px-4 py-3 text-sm text-right"><span className={"px-2 py-0.5 rounded-full text-xs font-semibold "+(palierPct>=0.5?"bg-emerald-100 text-emerald-700":palierPct>0?"bg-blue-100 text-blue-700":"bg-slate-100 text-slate-500")}>{Math.round(palierPct*100)}%</span></td>
+                  <tr key={d.id} className="border-b border-slate-100 dark:border-slate-700">
+                    <td className="px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300">{d.prenom} {d.nom}</td>
+                    <td className="px-4 py-3 text-sm text-right text-slate-600 dark:text-slate-400">{joursTravailes}</td>
+                    <td className="px-4 py-3 text-sm text-right text-slate-600 dark:text-slate-400">{coursesSup}</td>
+                    <td className="px-4 py-3 text-sm text-right text-slate-600 dark:text-slate-400">{fmtK(surplus)} F</td>
+                    <td className="px-4 py-3 text-sm text-right"><span className={"px-2 py-0.5 rounded-full text-xs font-semibold "+(palierPct>=0.5?"bg-emerald-100 text-emerald-700":palierPct>0?"bg-blue-100 text-blue-700":"bg-slate-100 text-slate-500 dark:text-slate-400")}>{Math.round(palierPct*100)}%</span></td>
                     <td className="px-4 py-3 text-sm text-right">{fmt(salaireBase)}</td>
                     <td className="px-4 py-3 text-sm text-right text-emerald-600">{bonus>0?fmt(bonus):"—"}</td>
                     <td className="px-4 py-3 text-sm text-right text-red-600">{(avances+manquants)>0?"-"+fmt(avances+manquants):"—"}</td>
@@ -2296,7 +2296,7 @@ const RechargePage = ({recharges, vehicles, drivers, onAdd, onUpdate, onDelete})
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl font-bold text-slate-900">Recharge EV</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Recharge EV</h1>
         <button onClick={()=>{setForm(emptyForm);setEditItem(null);setShowModal(true);}} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">+ Ajouter recharge</button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -2305,36 +2305,36 @@ const RechargePage = ({recharges, vehicles, drivers, onAdd, onUpdate, onDelete})
         <StatCard label="Sessions de recharge" value={filtered.length.toString()} color="text-blue-600"/>
       </div>
       <div className="flex gap-3 flex-wrap">
-        <select value={filterVh} onChange={e=>setFilterVh(e.target.value)} className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white">
+        <select value={filterVh} onChange={e=>setFilterVh(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white">
           <option value="all">Tous les vehicules</option>
           {vehicles.map(v=><option key={v.id} value={v.id}>{v.immat}</option>)}
         </select>
-        <select value={filterDriver} onChange={e=>setFilterDriver(e.target.value)} className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white">
+        <select value={filterDriver} onChange={e=>setFilterDriver(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white">
           <option value="all">Tous les chauffeurs</option>
           {drivers.map(d=><option key={d.id} value={d.id}>{d.prenom} {d.nom}</option>)}
         </select>
       </div>
-      <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 overflow-x-auto">
         <table className="w-full">
-          <thead><tr className="bg-slate-50 border-b border-slate-200">
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Date</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Vehicule</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Chauffeur</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Type</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Partenaire</th>
-            <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">kWh</th>
-            <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Cout</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">SOC</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Actions</th>
+          <thead><tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 dark:border-slate-700">
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Date</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Vehicule</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Chauffeur</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Type</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Partenaire</th>
+            <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">kWh</th>
+            <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Cout</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">SOC</th>
+            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Actions</th>
           </tr></thead>
           <tbody>
             {filtered.map(r=>(
-              <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50">
-                <td className="px-4 py-3 text-sm text-slate-600">{r.date}</td>
+              <tr key={r.id} className="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{r.date}</td>
                 <td className="px-4 py-3 text-sm font-medium">{vehicles.find(v=>v.id===r.vh)?.immat||r.vh}</td>
-                <td className="px-4 py-3 text-sm text-slate-600">{drivers.find(d=>d.id===r.ch)?`${drivers.find(d=>d.id===r.ch).prenom} ${drivers.find(d=>d.id===r.ch).nom}`:"—"}</td>
+                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{drivers.find(d=>d.id===r.ch)?`${drivers.find(d=>d.id===r.ch).prenom} ${drivers.find(d=>d.id===r.ch).nom}`:"—"}</td>
                 <td className="px-4 py-3"><Badge color="bg-blue-100 text-blue-700">{r.typeCharge||"Partenaire"}</Badge></td>
-                <td className="px-4 py-3 text-sm text-slate-600">{r.partenaire||"—"}</td>
+                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{r.partenaire||"—"}</td>
                 <td className="px-4 py-3 text-sm text-right font-medium text-emerald-600">{r.kWh} kWh</td>
                 <td className="px-4 py-3 text-sm text-right font-medium">{fmt(r.cout||0)}</td>
                 <td className="px-4 py-3 text-sm"><span className="text-red-500">{r.socAv}%</span> → <span className="text-emerald-500">{r.socAp}%</span></td>
@@ -2347,7 +2347,7 @@ const RechargePage = ({recharges, vehicles, drivers, onAdd, onUpdate, onDelete})
 
       {showModal&&(
         <Modal title={editItem?"Modifier recharge":"Ajouter recharge"} onClose={()=>setShowModal(false)}
-          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm">{editItem?"Enregistrer":"Ajouter"}</button></>}>
+          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm">{editItem?"Enregistrer":"Ajouter"}</button></>}>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2"><Input label="Date" value={form.date} onChange={v=>setForm({...form,date:v})} type="date"/></div>
             <Select label="Vehicule" value={form.vh} onChange={v=>setForm({...form,vh:v})} options={[{value:"",label:"-- Choisir --"},...vehicles.map(v=>({value:v.id,label:v.immat}))]}/>
@@ -2394,7 +2394,7 @@ const MaintenancePage = ({maintenances, vehicles, onAdd, onUpdate, onDelete}) =>
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Maintenance</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Maintenance</h1>
         <button onClick={()=>{setForm(emptyForm);setEditItem(null);setShowModal(true);}} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">+ Ajouter</button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -2402,17 +2402,17 @@ const MaintenancePage = ({maintenances, vehicles, onAdd, onUpdate, onDelete}) =>
         <StatCard label="En cours" value={maintenances.filter(m=>m.status==="En cours").length.toString()} color="text-amber-600"/>
         <StatCard label="Cout total" value={fmt(maintenances.reduce((a,m)=>a+(m.cout||0),0))} color="text-red-600"/>
       </div>
-      <div className="bg-white rounded-xl border border-slate-200">
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700">
         <div className="space-y-0">
           {maintenances.length===0&&<div className="text-center text-slate-400 py-8">Aucune maintenance</div>}
           {maintenances.map(m=>(
-            <div key={m.id} className="flex items-center justify-between p-4 border-b border-slate-100 last:border-0">
+            <div key={m.id} className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-700 last:border-0">
               <div className="flex items-center gap-4">
                 <div className={"w-10 h-10 rounded-lg flex items-center justify-center "+(m.type==="Corrective"?"bg-red-100 text-red-600":"bg-blue-100 text-blue-600")}>
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 </div>
                 <div>
-                  <div className="font-medium text-sm text-slate-800">{m.desc||m.description}</div>
+                  <div className="font-medium text-sm text-slate-800 dark:text-slate-100">{m.desc||m.description}</div>
                   <div className="text-xs text-slate-400">{vehicles.find(v=>v.id===m.vh)?.immat||m.vh} · {m.type} · {m.garage}</div>
                 </div>
               </div>
@@ -2434,7 +2434,7 @@ const MaintenancePage = ({maintenances, vehicles, onAdd, onUpdate, onDelete}) =>
 
       {showModal&&(
         <Modal title={editItem?"Modifier maintenance":"Ajouter maintenance"} onClose={()=>setShowModal(false)}
-          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm">{editItem?"Enregistrer":"Ajouter"}</button></>}>
+          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm">{editItem?"Enregistrer":"Ajouter"}</button></>}>
           <div className="grid grid-cols-2 gap-3">
             <Select label="Vehicule" value={form.vh} onChange={v=>setForm({...form,vh:v})} options={[{value:"",label:"-- Choisir --"},...vehicles.map(v=>({value:v.id,label:v.immat}))]}/>
             <Select label="Type" value={form.type} onChange={v=>setForm({...form,type:v})} options={["Preventive","Corrective","Inspection"]}/>
@@ -2489,7 +2489,7 @@ const ReportingPage = ({vehicles, drivers, recharges, maintenances, shifts, reve
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900">Reporting et Exports</h1>
+      <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Reporting et Exports</h1>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard label="CA cumule" value={fmtK(totalCA)+" F"} color="text-emerald-600"/>
         <StatCard label="Courses totales" value={totalCourses.toLocaleString()} color="text-blue-600"/>
@@ -2497,26 +2497,26 @@ const ReportingPage = ({vehicles, drivers, recharges, maintenances, shifts, reve
         <StatCard label="Cout maintenance" value={fmtK(totalMaint)+" F"} color="text-red-600"/>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h2 className="font-semibold text-slate-900 mb-4">P&L par vehicule</h2>
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-6">
+          <h2 className="font-semibold text-slate-900 dark:text-white mb-4">P&L par vehicule</h2>
           {vehicles.length===0?<p className="text-slate-400 text-sm">Aucun vehicule</p>:vehicles.map(v=>{
             const vCA=drivers.filter(d=>d.vehicule===v.id).reduce((a,d)=>a+(d.ca||0),0);
             const vRecharge=recharges.filter(r=>r.vh===v.id).reduce((a,r)=>a+(r.cout||0),0);
             const vMaint=maintenances.filter(m=>m.vh===v.id).reduce((a,m)=>a+(m.cout||0),0);
             return (
-              <div key={v.id} className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
+              <div key={v.id} className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-slate-700 last:border-0">
                 <div><div className="font-medium text-sm">{v.immat}</div><div className="text-xs text-slate-400">{v.modele}</div></div>
-                <div className="text-right text-xs"><div className="text-emerald-600 font-medium">CA: {fmtK(vCA)} F</div><div className="text-slate-500">Couts: {fmtK(vRecharge+vMaint)} F</div><div className="font-bold text-blue-700">Marge: {fmtK(vCA-vRecharge-vMaint)} F</div></div>
+                <div className="text-right text-xs"><div className="text-emerald-600 font-medium">CA: {fmtK(vCA)} F</div><div className="text-slate-500 dark:text-slate-400">Couts: {fmtK(vRecharge+vMaint)} F</div><div className="font-bold text-blue-700">Marge: {fmtK(vCA-vRecharge-vMaint)} F</div></div>
               </div>
             );
           })}
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h2 className="font-semibold text-slate-900 mb-4">Rapports disponibles</h2>
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-6">
+          <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Rapports disponibles</h2>
           <div className="space-y-3">
             {rapports.map(r=>(
-              <div key={r.label} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <div><div className="font-medium text-sm text-slate-700">{r.label}</div><div className="text-xs text-slate-400">{r.desc}</div></div>
+              <div key={r.label} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                <div><div className="font-medium text-sm text-slate-700 dark:text-slate-300">{r.label}</div><div className="text-xs text-slate-400">{r.desc}</div></div>
                 <div className="flex gap-2">
                   <button onClick={r.onCSV} className="px-3 py-1.5 bg-emerald-600 text-white text-xs rounded-lg hover:bg-emerald-700">CSV</button>
                   <button onClick={r.onPDF} className="px-3 py-1.5 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700">PDF</button>
@@ -2535,10 +2535,10 @@ const ReportingPage = ({vehicles, drivers, recharges, maintenances, shifts, reve
 // ============================================================
 const GpsPage = ({vehicles}) => (
   <div className="space-y-6">
-    <h1 className="text-2xl font-bold text-slate-900">GPS et Securite</h1>
-    <div className="bg-white rounded-xl border border-slate-200 p-6">
-      <h2 className="font-semibold text-slate-900 mb-4">Carte de la flotte</h2>
-      <div className="bg-gradient-to-br from-blue-50 to-emerald-50 rounded-xl h-64 flex items-center justify-center border border-slate-200">
+    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">GPS et Securite</h1>
+    <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-6">
+      <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Carte de la flotte</h2>
+      <div className="bg-gradient-to-br from-blue-50 to-emerald-50 rounded-xl h-64 flex items-center justify-center border border-slate-200 dark:border-slate-700">
         <div className="text-center text-slate-400">
           <svg className="w-16 h-16 mx-auto mb-3 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
           <p className="font-medium">Carte GPS LUOGU</p>
@@ -2574,7 +2574,7 @@ const SitesPage = ({sites, vehicles, drivers, onAdd, onUpdate, onDelete}) => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Sites et Comptes Business</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Sites et Comptes Business</h1>
         <button onClick={()=>{setForm(emptyForm);setEditItem(null);setShowModal(true);}} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">+ Ajouter site</button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -2582,9 +2582,9 @@ const SitesPage = ({sites, vehicles, drivers, onAdd, onUpdate, onDelete}) => {
           const sVh=vehicles.filter(v=>String(v.site)===String(site.id)||v.site===site.name);
           const sDr=drivers.filter(d=>String(d.site)===String(site.id)||d.site===site.name);
           return (
-            <div key={site.id} className="bg-white rounded-xl border border-slate-200 p-6">
+            <div key={site.id} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-6">
               <div className="flex items-center justify-between mb-4">
-                <div><h3 className="text-lg font-bold">{site.name}</h3><p className="text-sm text-slate-500">{site.ville} · Zone {site.zone}</p></div>
+                <div><h3 className="text-lg font-bold">{site.name}</h3><p className="text-sm text-slate-500 dark:text-slate-400">{site.ville} · Zone {site.zone}</p></div>
                 <div className="flex gap-2">
                   <Badge color="bg-emerald-100 text-emerald-700">Actif</Badge>
                   <button onClick={()=>{setForm({...emptyForm,...site});setEditItem(site);setShowModal(true);}} className="text-blue-600 text-xs border border-blue-200 px-2 py-1 rounded">Modifier</button>
@@ -2592,11 +2592,11 @@ const SitesPage = ({sites, vehicles, drivers, onAdd, onUpdate, onDelete}) => {
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-3 mb-4">
-                <div className="text-center p-3 bg-slate-50 rounded-lg"><div className="text-lg font-bold text-blue-600">{sVh.length}</div><div className="text-xs text-slate-500">Vehicules</div></div>
-                <div className="text-center p-3 bg-slate-50 rounded-lg"><div className="text-lg font-bold text-violet-600">{sDr.length}</div><div className="text-xs text-slate-500">Chauffeurs</div></div>
-                <div className="text-center p-3 bg-slate-50 rounded-lg"><div className="text-lg font-bold text-emerald-600">{sVh.filter(v=>v.status==="En exploitation").length}</div><div className="text-xs text-slate-500">Actifs</div></div>
+                <div className="text-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg"><div className="text-lg font-bold text-blue-600">{sVh.length}</div><div className="text-xs text-slate-500 dark:text-slate-400">Vehicules</div></div>
+                <div className="text-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg"><div className="text-lg font-bold text-violet-600">{sDr.length}</div><div className="text-xs text-slate-500 dark:text-slate-400">Chauffeurs</div></div>
+                <div className="text-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg"><div className="text-lg font-bold text-emerald-600">{sVh.filter(v=>v.status==="En exploitation").length}</div><div className="text-xs text-slate-500 dark:text-slate-400">Actifs</div></div>
               </div>
-              {site.waveAccount&&<div className="p-3 bg-blue-50 rounded-lg"><div className="text-xs text-slate-500">Compte Business · {site.businessType||"Wave Business"}</div><div className="font-mono font-semibold text-blue-700">{site.waveAccount}</div></div>}
+              {site.waveAccount&&<div className="p-3 bg-blue-50 rounded-lg"><div className="text-xs text-slate-500 dark:text-slate-400">Compte Business · {site.businessType||"Wave Business"}</div><div className="font-mono font-semibold text-blue-700">{site.waveAccount}</div></div>}
             </div>
           );
         })}
@@ -2604,7 +2604,7 @@ const SitesPage = ({sites, vehicles, drivers, onAdd, onUpdate, onDelete}) => {
 
       {showModal&&(
         <Modal title={editItem?"Modifier site":"Ajouter site"} onClose={()=>setShowModal(false)}
-          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm">{editItem?"Enregistrer":"Ajouter"}</button></>}>
+          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm">{editItem?"Enregistrer":"Ajouter"}</button></>}>
           <Input label="Nom du site" value={form.name} onChange={v=>setForm({...form,name:v})} required/>
           <Input label="Ville" value={form.ville} onChange={v=>setForm({...form,ville:v})} required/>
           <Input label="Zone" value={form.zone} onChange={v=>setForm({...form,zone:v})}/>
@@ -2672,12 +2672,12 @@ const RbacPage = ({currentUser}) => {
     setPwdForm({current:"",next:"",confirm:""});
   };
 
-  const roleColor = (r) => ({"admin":"bg-red-100 text-red-700","ops":"bg-blue-100 text-blue-700","finance":"bg-emerald-100 text-emerald-700","supervisor":"bg-violet-100 text-violet-700","dispatcher":"bg-amber-100 text-amber-700"}[r]||"bg-slate-100 text-slate-600");
+  const roleColor = (r) => ({"admin":"bg-red-100 text-red-700","ops":"bg-blue-100 text-blue-700","finance":"bg-emerald-100 text-emerald-700","supervisor":"bg-violet-100 text-violet-700","dispatcher":"bg-amber-100 text-amber-700"}[r]||"bg-slate-100 text-slate-600 dark:text-slate-400");
   const roleLabel = (r) => ({"admin":"Administrateur","ops":"Ops Manager","finance":"Finance","supervisor":"Superviseur Logistique","dispatcher":"Dispatcher"}[r]||r);
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900">Gestion des comptes</h1>
+      <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Gestion des comptes</h1>
 
       {/* Alerte lien invitation */}
       {inviteInfo && (
@@ -2686,7 +2686,7 @@ const RbacPage = ({currentUser}) => {
             <div>
               <div className="font-semibold text-emerald-800 mb-1">Compte cree pour {inviteInfo.name}</div>
               <div className="text-sm text-emerald-700 mb-3">Envoyez ce lien a {inviteInfo.email} pour qu il definisse son mot de passe :</div>
-              <div className="bg-white border border-emerald-200 rounded-lg px-4 py-2 font-mono text-sm text-slate-700 break-all">{inviteInfo.lien}</div>
+              <div className="bg-white border border-emerald-200 rounded-lg px-4 py-2 font-mono text-sm text-slate-700 dark:text-slate-300 break-all">{inviteInfo.lien}</div>
               <div className="text-xs text-emerald-600 mt-2">Token : {inviteInfo.token}</div>
             </div>
             <button onClick={()=>setInviteInfo(null)} className="text-emerald-400 hover:text-emerald-600 ml-4 text-xl font-bold">x</button>
@@ -2694,10 +2694,10 @@ const RbacPage = ({currentUser}) => {
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-slate-200 p-6">
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="font-semibold text-slate-900">Utilisateurs ({users.length})</h2>
+            <h2 className="font-semibold text-slate-900 dark:text-white">Utilisateurs ({users.length})</h2>
             <p className="text-xs text-slate-400 mt-0.5">Seul l administrateur peut creer et modifier les comptes</p>
           </div>
           {currentUser?.role==="admin"&&(
@@ -2708,13 +2708,13 @@ const RbacPage = ({currentUser}) => {
         </div>
         <div className="space-y-3">
           {users.map(u=>(
-            <div key={u.id} className={"flex items-center justify-between p-4 rounded-xl border "+(u.invite_pending?"bg-amber-50 border-amber-200":"bg-slate-50 border-slate-100")}>
+            <div key={u.id} className={"flex items-center justify-between p-4 rounded-xl border "+(u.invite_pending?"bg-amber-50 border-amber-200":"bg-slate-50 border-slate-100 dark:border-slate-700")}>
               <div className="flex items-center gap-3">
                 <div className={"w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm "+(u.invite_pending?"bg-amber-400":"bg-gradient-to-br from-blue-500 to-violet-500")}>
                   {(u.name||"?")[0].toUpperCase()}
                 </div>
                 <div>
-                  <div className="font-medium text-sm text-slate-800">
+                  <div className="font-medium text-sm text-slate-800 dark:text-slate-100">
                     {u.name}
                     {u.id===currentUser?.id&&<span className="text-xs text-blue-500 ml-2">(vous)</span>}
                     {u.invite_pending&&<span className="text-xs text-amber-600 ml-2">— invitation en attente</span>}
@@ -2724,12 +2724,12 @@ const RbacPage = ({currentUser}) => {
               </div>
               <div className="flex items-center gap-3">
                 {u.id===currentUser?.id&&(
-                  <button onClick={()=>{setShowChangePwd(true);setPwdForm({current:"",next:"",confirm:""});setPwdError("");setPwdSuccess("");}} className="text-blue-600 text-xs border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50">
+                  <button onClick={()=>{setShowChangePwd(true);setPwdForm({current:"",next:"",confirm:""});setPwdError("");setPwdSuccess("");}} className="text-blue-600 text-xs border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20">
                     Modifier mot de passe
                   </button>
                 )}
                 {currentUser?.role==="admin"&&u.id!==currentUser?.id?(
-                  <select value={u.role} onChange={e=>handleRoleChange(u.id,e.target.value)} className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select value={u.role} onChange={e=>handleRoleChange(u.id,e.target.value)} className="text-xs border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="admin">Administrateur</option>
                     <option value="ops">Ops Manager</option>
                     <option value="finance">Finance</option>
@@ -2753,7 +2753,7 @@ const RbacPage = ({currentUser}) => {
       {/* MODAL CREER COMPTE */}
       {showAddUser&&(
         <Modal title="Creer un nouveau compte" onClose={()=>setShowAddUser(false)}
-          footer={<><button onClick={()=>setShowAddUser(false)} className="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleAddUser} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium">Envoyer invitation</button></>}>
+          footer={<><button onClick={()=>setShowAddUser(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleAddUser} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium">Envoyer invitation</button></>}>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700 mb-2">
             Un lien sera genere pour que l utilisateur definisse son propre mot de passe.
           </div>
@@ -3241,11 +3241,11 @@ const App = () => {
         </div>
       </aside>
       <div className="flex-1 flex flex-col min-h-screen">
-        <header className={`border-b px-4 py-3 flex items-center justify-between sticky top-0 z-10 ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200"}`}>
-          <button onClick={()=>setSideOpen(!sideOpen)} className="text-slate-400 hover:text-slate-600 dark:text-slate-300">
+        <header className={`border-b px-4 py-3 flex items-center justify-between sticky top-0 z-10 ${darkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200 dark:border-slate-700"}`}>
+          <button onClick={()=>setSideOpen(!sideOpen)} className="text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:text-slate-300">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
-          <div className="text-sm font-semibold text-slate-700 lg:hidden">{ALL_NAV.find(n=>n.id===page)?.label}</div>
+          <div className="text-sm font-semibold text-slate-700 dark:text-slate-300 lg:hidden">{ALL_NAV.find(n=>n.id===page)?.label}</div>
           {/* Recherche globale */}
           <div className="relative hidden md:block">
             <div className="flex items-center">
@@ -3257,20 +3257,20 @@ const App = () => {
                   onFocus={()=>setShowSearch(true)}
                   onBlur={()=>setTimeout(()=>setShowSearch(false),200)}
                   placeholder="Rechercher vehicule, chauffeur..."
-                  className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className="pl-9 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                 />
               </div>
             </div>
             {showSearch && searchResults.length > 0 && (
-              <div className="absolute top-10 left-0 w-80 bg-white rounded-xl shadow-xl border border-slate-200 z-50 max-h-64 overflow-y-auto">
+              <div className="absolute top-10 left-0 w-80 bg-white rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-50 max-h-64 overflow-y-auto">
                 {searchResults.map((r,i) => (
                   <button key={i} onClick={()=>{setPage(r.page);setSearch("");setShowSearch(false);}}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 text-left border-b border-slate-100 last:border-0">
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-left border-b border-slate-100 dark:border-slate-700 last:border-0">
                     <div className={"w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 "+(r.type==="vehicule"?"bg-blue-500":"bg-violet-500")}>
                       {r.type==="vehicule"?"V":"C"}
                     </div>
                     <div>
-                      <div className="text-sm font-medium text-slate-800">{r.label}</div>
+                      <div className="text-sm font-medium text-slate-800 dark:text-slate-100">{r.label}</div>
                       <div className="text-xs text-slate-400 capitalize">{r.type}</div>
                     </div>
                   </button>
@@ -3278,13 +3278,13 @@ const App = () => {
               </div>
             )}
             {showSearch && search.length >= 2 && searchResults.length === 0 && (
-              <div className="absolute top-10 left-0 w-80 bg-white rounded-xl shadow-xl border border-slate-200 z-50 p-4 text-center text-slate-400 text-sm">
+              <div className="absolute top-10 left-0 w-80 bg-white rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-50 p-4 text-center text-slate-400 text-sm">
                 Aucun résultat pour "{search}"
               </div>
             )}
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={()=>setDarkMode(!darkMode)} className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all" title={darkMode?"Mode clair":"Mode sombre"}>
+            <button onClick={()=>setDarkMode(!darkMode)} className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-100 transition-all" title={darkMode?"Mode clair":"Mode sombre"}>
               {darkMode ? (
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
               ) : (
@@ -3293,8 +3293,8 @@ const App = () => {
             </button>
             <div className="hidden sm:flex items-center gap-2">
               <div className="h-8 w-px bg-slate-200"/>
-              <div className="text-sm text-slate-500">{user.name}</div>
-              <Badge color={{"admin":"bg-red-100 text-red-700","ops":"bg-blue-100 text-blue-700","finance":"bg-emerald-100 text-emerald-700","supervisor":"bg-violet-100 text-violet-700","dispatcher":"bg-amber-100 text-amber-700"}[user.role]||"bg-slate-100 text-slate-600"}>{ROLE_LABELS[user.role]||user.role}</Badge>
+              <div className="text-sm text-slate-500 dark:text-slate-400">{user.name}</div>
+              <Badge color={{"admin":"bg-red-100 text-red-700","ops":"bg-blue-100 text-blue-700","finance":"bg-emerald-100 text-emerald-700","supervisor":"bg-violet-100 text-violet-700","dispatcher":"bg-amber-100 text-amber-700"}[user.role]||"bg-slate-100 text-slate-600 dark:text-slate-400"}>{ROLE_LABELS[user.role]||user.role}</Badge>
             </div>
           </div>
         </header>
@@ -3305,28 +3305,28 @@ const App = () => {
     {/* Modal changement mot de passe */}
     {showPwdModal&&(
       <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm shadow-2xl p-6">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-lg font-bold text-slate-900">Changer mon mot de passe</h2>
-            <button onClick={()=>setShowPwdModal(false)} className="text-slate-400 hover:text-slate-600 text-xl font-bold">x</button>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Changer mon mot de passe</h2>
+            <button onClick={()=>setShowPwdModal(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-400 text-xl font-bold">x</button>
           </div>
           {pwdError&&<div className="bg-red-50 border border-red-200 text-red-600 text-sm px-3 py-2 rounded-lg mb-3">{pwdError}</div>}
           {pwdSuccess&&<div className="bg-emerald-50 border border-emerald-200 text-emerald-600 text-sm px-3 py-2 rounded-lg mb-3">{pwdSuccess}</div>}
           <div className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Mot de passe actuel</label>
-              <input type="password" value={pwdForm.current} onChange={e=>setPwdForm({...pwdForm,current:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="••••••••"/>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Mot de passe actuel</label>
+              <input type="password" value={pwdForm.current} onChange={e=>setPwdForm({...pwdForm,current:e.target.value})} className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="••••••••"/>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Nouveau mot de passe</label>
-              <input type="password" value={pwdForm.next} onChange={e=>setPwdForm({...pwdForm,next:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Minimum 6 caracteres"/>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nouveau mot de passe</label>
+              <input type="password" value={pwdForm.next} onChange={e=>setPwdForm({...pwdForm,next:e.target.value})} className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Minimum 6 caracteres"/>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Confirmer le nouveau mot de passe</label>
-              <input type="password" value={pwdForm.confirm} onChange={e=>setPwdForm({...pwdForm,confirm:e.target.value})} onKeyDown={e=>e.key==="Enter"&&handleChangePwd()} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="••••••••"/>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Confirmer le nouveau mot de passe</label>
+              <input type="password" value={pwdForm.confirm} onChange={e=>setPwdForm({...pwdForm,confirm:e.target.value})} onKeyDown={e=>e.key==="Enter"&&handleChangePwd()} className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="••••••••"/>
             </div>
             <div className="flex gap-3 pt-2">
-              <button onClick={()=>setShowPwdModal(false)} className="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-sm">Annuler</button>
+              <button onClick={()=>setShowPwdModal(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button>
               <button onClick={handleChangePwd} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700">Modifier</button>
             </div>
           </div>
