@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { createClient } from "@supabase/supabase-js";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 
 // ============================================================
 // SUPABASE CLIENT
@@ -613,6 +614,8 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
   const role = user?.role || "ops";
   const [periode, setPeriode] = useState("tout");
 
+  // Recharts est importe en haut du fichier
+
   // Filtre par periode
   const now = new Date();
   const filterShifts = (s) => {
@@ -631,7 +634,7 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
     return true;
   });
 
-  // Stats communes
+  // Stats
   const activeVh = vehicles.filter(v=>v.status==="En exploitation").length;
   const enRechargeVh = vehicles.filter(v=>v.status==="En recharge").length;
   const immobiliseVh = vehicles.filter(v=>v.status==="Immobilise"||v.status==="Immobilisé"||v.status==="Maintenance").length;
@@ -646,24 +649,44 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
   const topDrivers = [...drivers].sort((a,b)=>(b.ca||0)-(a.ca||0)).slice(0,5);
   const ddManquants = filteredShifts.filter(s=>(s.status==="Terminé"||s.status==="Termine")&&!(s.courses_count>0||s.nbCourses>0)).length;
 
-  // Alertes vehicules
+  // Alertes
   const alertesVh = vehicles.filter(v=>{
     const now = new Date();
     const assOk = v.assuranceFin&&Math.floor((new Date(v.assuranceFin)-now)/86400000)<=7;
     const vtOk = v.visiteDate&&Math.floor((new Date(v.visiteDate)-now)/86400000)<=15;
     return assOk||vtOk;
   });
-
-  // Alertes chauffeurs
   const alertesCh = drivers.filter(d=>{
     const now = new Date();
     const permis = d.permisExpiration&&Math.floor((new Date(d.permisExpiration)-now)/86400000)<=30;
     const piece = d.pieceExpiration&&Math.floor((new Date(d.pieceExpiration)-now)/86400000)<=30;
     return permis||piece;
   });
-
   const today = new Date().toISOString().split("T")[0];
   const shiftsAujourdhui = filteredShifts.filter(s=>(s.date||s.planned_start_date||"").startsWith(today));
+
+  // Données graphiques - recettes 7 derniers jours
+  const last7Days = Array.from({length:7}, (_,i) => {
+    const d = new Date(); d.setDate(d.getDate()-6+i);
+    const dateStr = d.toISOString().split("T")[0];
+    const dayShifts = shifts.filter(s=>(s.date||s.planned_start_date||"").startsWith(dateStr));
+    const recettes = dayShifts.reduce((a,s)=>a+(s.revenue_cash||s.recette||0),0);
+    return { jour: d.toLocaleDateString("fr-FR",{weekday:"short", day:"numeric"}), recettes, shifts: dayShifts.length };
+  });
+
+  // Répartition shifts A/B/C
+  const shiftRepartition = ["A","B","C"].map(t => ({
+    name: "Shift "+t,
+    value: shifts.filter(s=>s.type===t).length,
+    color: t==="A"?"#3B82F6":t==="B"?"#7C3AED":"#64748B"
+  })).filter(s=>s.value>0);
+
+  // Flotte status
+  const flotteData = [
+    {name:"En exploitation", value:activeVh, color:"#10B981"},
+    {name:"En recharge", value:enRechargeVh, color:"#F59E0B"},
+    {name:"Immobilises", value:immobiliseVh, color:"#EF4444"},
+  ].filter(f=>f.value>0);
 
   return (
     <div className="space-y-6">
@@ -675,205 +698,165 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
         </div>
         <div className="flex gap-2">
           {["tout","jour","semaine","mois"].map(p=>(
-            <button key={p} onClick={()=>setPeriode(p)} className={"px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all "+(periode===p?"bg-blue-600 text-white":"bg-white border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50")}>{p==="tout"?"Tout":p}</button>
+            <button key={p} onClick={()=>setPeriode(p)} className={"px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all "+(periode===p?"bg-blue-600 text-white":"bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50")}>{p==="tout"?"Tout":p}</button>
           ))}
         </div>
       </div>
 
-      {/* ADMIN - Vue complete */}
-      {role==="admin"&&(
-        <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard label="Recettes cumulees" value={fmtK(totalRecette)+" F"} sub={shiftEnCours+" shifts en cours"} color="text-emerald-600"/>
-            <StatCard label="Reverses valides" value={fmtK(totalReverse)+" F"} sub={ecarts+" ecart(s) detecte(s)"} color="text-blue-600"/>
-            <StatCard label="Chauffeurs actifs" value={totalDrivers.toString()} sub={shiftPlanifie+" shifts planifies"} color="text-violet-600"/>
-            <StatCard label="Flotte active" value={activeVh+"/"+vehicles.length} sub={"SOC moy: "+avgSoc+"%"} color="text-emerald-600"/>
+      {/* Alertes */}
+      {(alertesVh.length>0||alertesCh.length>0||ddManquants>0||ecarts>0)&&(
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
+          <div className="font-semibold text-red-800 dark:text-red-400 text-sm mb-2">⚠ Alertes actives</div>
+          <div className="space-y-1">
+            {alertesVh.length>0&&<div className="text-xs text-red-700 dark:text-red-400">• {alertesVh.length} vehicule(s) avec documents expirant bientot</div>}
+            {alertesCh.length>0&&<div className="text-xs text-red-700 dark:text-red-400">• {alertesCh.length} chauffeur(s) avec documents expirant bientot</div>}
+            {ddManquants>0&&<div className="text-xs text-amber-700 dark:text-amber-400">• {ddManquants} shift(s) sans DD Driving Datas</div>}
+            {ecarts>0&&<div className="text-xs text-red-700 dark:text-red-400">• {ecarts} ecart(s) detecte(s) dans les reversements</div>}
           </div>
-          {(alertesVh.length>0||alertesCh.length>0||ddManquants>0||ecarts>0)&&(
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-              <div className="font-semibold text-red-800 text-sm mb-2">Alertes actives</div>
-              <div className="space-y-1">
-                {alertesVh.length>0&&<div className="text-xs text-red-700">• {alertesVh.length} vehicule(s) avec documents expirant bientot</div>}
-                {alertesCh.length>0&&<div className="text-xs text-red-700">• {alertesCh.length} chauffeur(s) avec documents expirant bientot</div>}
-                {ddManquants>0&&<div className="text-xs text-amber-700">• {ddManquants} shift(s) sans DD Driving Datas</div>}
-                {ecarts>0&&<div className="text-xs text-red-700">• {ecarts} ecart(s) detecte(s) dans les reversements</div>}
+        </div>
+      )}
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-5 text-white">
+          <div className="text-xs font-medium opacity-80 uppercase tracking-wide mb-2">Recettes cumulees</div>
+          <div className="text-2xl font-bold">{fmtK(totalRecette)} F</div>
+          <div className="text-xs opacity-70 mt-1">{shiftEnCours} shifts en cours</div>
+        </div>
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-5 text-white">
+          <div className="text-xs font-medium opacity-80 uppercase tracking-wide mb-2">Reverses valides</div>
+          <div className="text-2xl font-bold">{fmtK(totalReverse)} F</div>
+          <div className="text-xs opacity-70 mt-1">{ecarts > 0 ? ecarts+" ecart(s)" : "Aucun ecart"}</div>
+        </div>
+        <div className="bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl p-5 text-white">
+          <div className="text-xs font-medium opacity-80 uppercase tracking-wide mb-2">Chauffeurs actifs</div>
+          <div className="text-2xl font-bold">{totalDrivers}</div>
+          <div className="text-xs opacity-70 mt-1">{shiftPlanifie} shifts planifies</div>
+        </div>
+        <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-5 text-white">
+          <div className="text-xs font-medium opacity-80 uppercase tracking-wide mb-2">Flotte active</div>
+          <div className="text-2xl font-bold">{activeVh}/{vehicles.length}</div>
+          <div className="text-xs opacity-70 mt-1">SOC moy: {avgSoc}%</div>
+        </div>
+      </div>
+
+      {/* Graphiques row 1 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recettes 7 jours */}
+        <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+          <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Recettes — 7 derniers jours</h2>
+          <div className="h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={last7Days} margin={{top:5,right:5,bottom:5,left:5}}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0"/>
+                <XAxis dataKey="jour" tick={{fontSize:11, fill:"#94a3b8"}} axisLine={false} tickLine={false}/>
+                <YAxis tick={{fontSize:11, fill:"#94a3b8"}} axisLine={false} tickLine={false} tickFormatter={v=>fmtK(v)}/>
+                <Tooltip formatter={(v)=>[fmtK(v)+" F","Recettes"]} contentStyle={{borderRadius:"8px",border:"1px solid #e2e8f0",fontSize:"12px"}}/>
+                <Bar dataKey="recettes" fill="#3B82F6" radius={[4,4,0,0]}/>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Flotte status */}
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+          <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Etat de la flotte</h2>
+          {flotteData.length > 0 ? (
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={flotteData} cx="50%" cy="50%" innerRadius={50} outerRadius={75} dataKey="value" paddingAngle={3}>
+                    {flotteData.map((entry,i)=><Cell key={i} fill={entry.color}/>)}
+                  </Pie>
+                  <Tooltip formatter={(v,n)=>[v+" vehicule(s)",n]} contentStyle={{borderRadius:"8px",fontSize:"12px"}}/>
+                  <Legend iconType="circle" iconSize={8} formatter={(v)=><span style={{fontSize:"11px",color:"#64748b"}}>{v}</span>}/>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-48 flex items-center justify-center text-slate-400 text-sm">Aucun vehicule</div>
+          )}
+        </div>
+      </div>
+
+      {/* Graphiques row 2 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top chauffeurs */}
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+          <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Top chauffeurs par CA</h2>
+          {topDrivers.length===0 ? <p className="text-slate-400 text-sm">Aucun chauffeur</p> : (
+            <div className="space-y-3">
+              {topDrivers.map((d,i)=>(
+                <div key={d.id} className="flex items-center gap-3">
+                  <div className={"w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 "+(i===0?"bg-yellow-500":i===1?"bg-slate-400":i===2?"bg-amber-600":"bg-slate-300")}>{i+1}</div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{d.prenom} {d.nom}</span>
+                      <span className="text-sm font-semibold text-emerald-600">{fmt(d.ca||0)}</span>
+                    </div>
+                    <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5">
+                      <div className="bg-emerald-500 h-1.5 rounded-full transition-all" style={{width:topDrivers[0]?.ca>0?((d.ca||0)/(topDrivers[0].ca||1))*100+"%":"0%"}}/>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Shifts repartition + SOC */}
+        <div className="space-y-4">
+          {/* Repartition shifts */}
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+            <h2 className="font-semibold text-slate-900 dark:text-white mb-3">Shifts — {shiftTermine} termines / {shiftEnCours} en cours</h2>
+            <div className="grid grid-cols-3 gap-3">
+              {["A","B","C"].map(t=>{
+                const count = shifts.filter(s=>s.type===t).length;
+                const color = t==="A"?"bg-blue-500":t==="B"?"bg-violet-500":"bg-slate-500";
+                const textColor = t==="A"?"text-blue-600":t==="B"?"text-violet-600":"text-slate-600";
+                return (
+                  <div key={t} className="text-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl">
+                    <div className={"text-2xl font-bold "+textColor}>{count}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Shift {t}</div>
+                    <div className={"w-full h-1 rounded-full mt-2 "+color} style={{opacity:0.6}}/>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* SOC flotte */}
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+            <h2 className="font-semibold text-slate-900 dark:text-white mb-3">SOC Flotte</h2>
+            <div className="flex items-center gap-4">
+              <div className="relative w-20 h-20">
+                <svg viewBox="0 0 36 36" className="w-20 h-20 -rotate-90">
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e2e8f0" strokeWidth="3"/>
+                  <circle cx="18" cy="18" r="15.9" fill="none" 
+                    stroke={avgSoc>70?"#10B981":avgSoc>40?"#F59E0B":"#EF4444"} 
+                    strokeWidth="3" strokeDasharray={`${avgSoc} 100`} strokeLinecap="round"/>
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className={"text-lg font-bold "+(avgSoc>70?"text-emerald-600":avgSoc>40?"text-amber-600":"text-red-600")}>{avgSoc}%</span>
+                </div>
+              </div>
+              <div className="flex-1 space-y-2">
+                {vehicles.slice(0,4).map(v=>(
+                  <div key={v.id} className="flex items-center justify-between">
+                    <span className="text-xs text-slate-600 dark:text-slate-400">{v.immat}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-16 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full">
+                        <div className={"h-full rounded-full "+(v.soc>70?"bg-emerald-500":v.soc>40?"bg-amber-500":"bg-red-500")} style={{width:(v.soc||0)+"%"}}/>
+                      </div>
+                      <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{v.soc||0}%</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          )}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5">
-              <div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-emerald-700">En exploitation</span><span className="text-2xl font-bold text-emerald-700">{activeVh}</span></div>
-              <div className="w-full bg-emerald-200 rounded-full h-2"><div className="bg-emerald-500 h-2 rounded-full" style={{width:vehicles.length>0?(activeVh/vehicles.length)*100+"%":"0%"}}/></div>
-            </div>
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
-              <div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-amber-700">En recharge</span><span className="text-2xl font-bold text-amber-700">{enRechargeVh}</span></div>
-              <div className="w-full bg-amber-200 rounded-full h-2"><div className="bg-amber-500 h-2 rounded-full" style={{width:vehicles.length>0?(enRechargeVh/vehicles.length)*100+"%":"0%"}}/></div>
-            </div>
-            <div className="bg-red-50 border border-red-200 rounded-xl p-5">
-              <div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-red-700">Immobilises</span><span className="text-2xl font-bold text-red-700">{immobiliseVh}</span></div>
-              <div className="w-full bg-red-200 rounded-full h-2"><div className="bg-red-500 h-2 rounded-full" style={{width:vehicles.length>0?(immobiliseVh/vehicles.length)*100+"%":"0%"}}/></div>
-            </div>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-6">
-              <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Top chauffeurs par CA</h2>
-              {topDrivers.length===0?<p className="text-slate-400 text-sm">Aucun chauffeur</p>:(
-                <div className="space-y-3">{topDrivers.map((d,i)=>(
-                  <div key={d.id} className="flex items-center gap-3">
-                    <div className={"w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white "+(i===0?"bg-yellow-500":i===1?"bg-slate-400":i===2?"bg-amber-600":"bg-slate-300")}>{i+1}</div>
-                    <div className="flex-1"><div className="flex items-center justify-between"><span className="text-sm font-medium text-slate-700 dark:text-slate-300">{d.prenom} {d.nom}</span><span className="text-sm font-semibold text-emerald-600">{fmt(d.ca||0)}</span></div><div className="w-full bg-slate-100 rounded-full h-1.5 mt-1"><div className="bg-emerald-500 h-1.5 rounded-full" style={{width:topDrivers[0]?.ca>0?((d.ca||0)/(topDrivers[0].ca||1))*100+"%":"0%"}}/></div></div>
-                  </div>
-                ))}</div>
-              )}
-            </div>
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-6">
-              <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Etat de charge flotte</h2>
-              {vehicles.length===0?<p className="text-slate-400 text-sm">Aucun vehicule</p>:(
-                <div className="space-y-3">{vehicles.slice(0,6).map(v=>(
-                  <div key={v.id} className="flex items-center justify-between">
-                    <div><div className="text-sm font-medium text-slate-700 dark:text-slate-300">{v.immat}</div><div className="text-xs text-slate-400">{v.modele}</div></div>
-                    <div className="flex items-center gap-3"><SocBar soc={v.soc||0}/><Badge color={sc(v.status)}>{v.status}</Badge></div>
-                  </div>
-                ))}</div>
-              )}
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* OPS MANAGER */}
-      {role==="ops"&&(
-        <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard label="Flotte active" value={activeVh+"/"+vehicles.length} sub={"SOC moy: "+avgSoc+"%"} color="text-emerald-600"/>
-            <StatCard label="Shifts en cours" value={shiftEnCours.toString()} sub={shiftPlanifie+" planifies"} color="text-blue-600"/>
-            <StatCard label="Shifts termines" value={shiftTermine.toString()} sub={ddManquants+" DD manquants"} color="text-slate-600 dark:text-slate-400"/>
-            <StatCard label="Alertes vehicules" value={alertesVh.length.toString()} sub="documents expirant" color="text-red-600"/>
-          </div>
-          {ddManquants>0&&<div className="bg-amber-50 border border-amber-200 rounded-xl p-4"><div className="font-semibold text-amber-800 text-sm">⚠ {ddManquants} shift(s) sans DD Driving Datas — la paie ne peut pas etre calculee</div></div>}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5"><div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-emerald-700">En exploitation</span><span className="text-2xl font-bold text-emerald-700">{activeVh}</span></div><div className="w-full bg-emerald-200 rounded-full h-2"><div className="bg-emerald-500 h-2 rounded-full" style={{width:vehicles.length>0?(activeVh/vehicles.length)*100+"%":"0%"}}/></div></div>
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-5"><div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-amber-700">En recharge</span><span className="text-2xl font-bold text-amber-700">{enRechargeVh}</span></div><div className="w-full bg-amber-200 rounded-full h-2"><div className="bg-amber-500 h-2 rounded-full" style={{width:vehicles.length>0?(enRechargeVh/vehicles.length)*100+"%":"0%"}}/></div></div>
-            <div className="bg-red-50 border border-red-200 rounded-xl p-5"><div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-red-700">Immobilises</span><span className="text-2xl font-bold text-red-700">{immobiliseVh}</span></div><div className="w-full bg-red-200 rounded-full h-2"><div className="bg-red-500 h-2 rounded-full" style={{width:vehicles.length>0?(immobiliseVh/vehicles.length)*100+"%":"0%"}}/></div></div>
-          </div>
-          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-6">
-            <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Etat de charge flotte</h2>
-            {vehicles.length===0?<p className="text-slate-400 text-sm">Aucun vehicule</p>:(
-              <div className="space-y-3">{vehicles.map(v=>(
-                <div key={v.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                  <div><div className="text-sm font-medium text-slate-700 dark:text-slate-300">{v.immat}</div><div className="text-xs text-slate-400">{v.marque} {v.modele}</div></div>
-                  <div className="flex items-center gap-3"><SocBar soc={v.soc||0}/><Badge color={sc(v.status)}>{v.status}</Badge></div>
-                </div>
-              ))}</div>
-            )}
-          </div>
-        </>
-      )}
-
-      {/* FINANCE */}
-      {role==="finance"&&(
-        <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard label="Recettes cumulees" value={fmtK(totalRecette)+" F"} sub={shiftTermine+" shifts termines"} color="text-emerald-600"/>
-            <StatCard label="Reverses valides" value={fmtK(totalReverse)+" F"} sub="total valide" color="text-blue-600"/>
-            <StatCard label="Ecarts detectes" value={ecarts.toString()} sub="a verifier" color="text-red-600"/>
-            <StatCard label="En attente" value={reversements.filter(r=>r.status==="En attente").length.toString()} sub="reversements" color="text-amber-600"/>
-          </div>
-          {ecarts>0&&<div className="bg-red-50 border border-red-200 rounded-xl p-4"><div className="font-semibold text-red-800 text-sm">⚠ {ecarts} ecart(s) detecte(s) dans les reversements — verification requise</div></div>}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-6">
-              <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Top chauffeurs par CA</h2>
-              {topDrivers.length===0?<p className="text-slate-400 text-sm">Aucun chauffeur</p>:(
-                <div className="space-y-3">{topDrivers.map((d,i)=>(
-                  <div key={d.id} className="flex items-center gap-3">
-                    <div className={"w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white "+(i===0?"bg-yellow-500":i===1?"bg-slate-400":i===2?"bg-amber-600":"bg-slate-300")}>{i+1}</div>
-                    <div className="flex-1"><div className="flex items-center justify-between"><span className="text-sm font-medium">{d.prenom} {d.nom}</span><span className="text-sm font-semibold text-emerald-600">{fmt(d.ca||0)}</span></div></div>
-                  </div>
-                ))}</div>
-              )}
-            </div>
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-6">
-              <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Derniers reversements</h2>
-              {reversements.length===0?<p className="text-slate-400 text-sm">Aucun reversement</p>:(
-                <div className="space-y-2">{reversements.slice(0,6).map(r=>(
-                  <div key={r.id} className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                    <div className="text-xs text-slate-600 dark:text-slate-400">{r.date||"—"} · {r.canal}</div>
-                    <div className="flex items-center gap-2"><span className="text-sm font-semibold text-emerald-600">{fmt(r.montant||0)}</span><Badge color={sc(r.status)}>{r.status}</Badge></div>
-                  </div>
-                ))}</div>
-              )}
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* SUPERVISEUR */}
-      {role==="supervisor"&&(
-        <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard label="Flotte active" value={activeVh+"/"+vehicles.length} color="text-emerald-600"/>
-            <StatCard label="SOC moyen" value={avgSoc+"%"} sub="batterie flotte" color={avgSoc>50?"text-emerald-600":"text-red-600"}/>
-            <StatCard label="En recharge" value={enRechargeVh.toString()} color="text-amber-600"/>
-            <StatCard label="Alertes docs" value={(alertesVh.length+alertesCh.length).toString()} sub="vehicules + chauffeurs" color="text-red-600"/>
-          </div>
-          {alertesVh.length>0&&(
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-              <div className="font-semibold text-amber-800 text-sm mb-2">Alertes documentaires vehicules</div>
-              {alertesVh.map(v=><div key={v.id} className="text-xs text-amber-700">• {v.immat} — {v.assuranceFin?"Assurance exp. "+v.assuranceFin:""} {v.visiteDate?"Visite tech. "+v.visiteDate:""}</div>)}
-            </div>
-          )}
-          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-6">
-            <h2 className="font-semibold text-slate-900 dark:text-white mb-4">SOC temps reel par vehicule</h2>
-            {vehicles.length===0?<p className="text-slate-400 text-sm">Aucun vehicule</p>:(
-              <div className="space-y-3">{vehicles.map(v=>(
-                <div key={v.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                  <div><div className="text-sm font-medium">{v.immat}</div><div className="text-xs text-slate-400">{v.marque} {v.modele}</div></div>
-                  <div className="flex items-center gap-3"><SocBar soc={v.soc||0}/><Badge color={sc(v.status)}>{v.status}</Badge></div>
-                </div>
-              ))}</div>
-            )}
-          </div>
-        </>
-      )}
-
-      {/* DISPATCHER */}
-      {role==="dispatcher"&&(
-        <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard label="Shifts aujourd hui" value={shiftsAujourdhui.length.toString()} color="text-blue-600"/>
-            <StatCard label="En cours" value={shiftEnCours.toString()} color="text-emerald-600"/>
-            <StatCard label="Planifies" value={shiftPlanifie.toString()} color="text-amber-600"/>
-            <StatCard label="Chauffeurs actifs" value={totalDrivers.toString()} color="text-violet-600"/>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-6">
-              <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Shifts du jour</h2>
-              {shiftsAujourdhui.length===0?<p className="text-slate-400 text-sm">Aucun shift aujourd hui</p>:(
-                <div className="space-y-2">{shiftsAujourdhui.map(s=>(
-                  <div key={s.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                    <div className="text-sm font-medium">Shift {s.type}</div>
-                    <div className="flex items-center gap-2"><span className="text-xs text-slate-500 dark:text-slate-400">{s.date}</span><Badge color={sc(s.status)}>{s.status}</Badge></div>
-                  </div>
-                ))}</div>
-              )}
-            </div>
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-6">
-              <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Chauffeurs disponibles</h2>
-              {drivers.filter(d=>d.status==="Actif").length===0?<p className="text-slate-400 text-sm">Aucun chauffeur</p>:(
-                <div className="space-y-2">{drivers.filter(d=>d.status==="Actif").slice(0,8).map(d=>(
-                  <div key={d.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-violet-400 flex items-center justify-center text-white text-xs font-bold">{(d.prenom||"?")[0]}</div>
-                      <span className="text-sm font-medium">{d.prenom} {d.nom}</span>
-                    </div>
-                    <span className="text-xs font-mono text-slate-500 dark:text-slate-400">{d.matricule}</span>
-                  </div>
-                ))}</div>
-              )}
-            </div>
-          </div>
-        </>
-      )}
+        </div>
+      </div>
     </div>
   );
 };
