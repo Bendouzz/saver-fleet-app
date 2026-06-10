@@ -426,6 +426,27 @@ const LoginPage = ({onLogin}) => {
   const [role, setRole] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showResetForm, setShowResetForm] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetMsg, setResetMsg] = useState(null);
+
+  const handleReset = async () => {
+    if(!resetEmail) return setResetMsg({ok:false, text:"Email requis"});
+    setResetLoading(true);
+    const users = await getUsers();
+    const found = users.find(u => u.email === resetEmail);
+    if(!found) {
+      setResetLoading(false);
+      return setResetMsg({ok:false, text:"Aucun compte avec cet email"});
+    }
+    // Generer un token de reinitialisation
+    const token = Math.random().toString(36).substring(2, 10).toUpperCase();
+    await supabase.from("users").update({invite_token: token, invite_pending: false}).eq("email", resetEmail);
+    const lien = window.location.origin + "?token=" + token;
+    setResetLoading(false);
+    setResetMsg({ok:true, text:"Lien genere ! Copiez-le : " + lien});
+  };
 
   const handleLogin = async () => {
     if (!email) return setError("Email requis");
@@ -491,6 +512,27 @@ const LoginPage = ({onLogin}) => {
               className="w-full bg-gradient-to-r from-emerald-500 to-blue-500 text-white py-3 rounded-lg font-semibold hover:from-emerald-600 hover:to-blue-600 transition-all shadow-lg disabled:opacity-50">
               {loading ? "Connexion..." : "Se connecter"}
             </button>
+            {showResetForm ? (
+              <div className="mt-4 space-y-3 border-t border-white/20 pt-4">
+                <p className="text-blue-200 text-sm text-center">Entrez votre email pour reinitialiser votre mot de passe</p>
+                <input type="email" value={resetEmail} onChange={e=>setResetEmail(e.target.value)}
+                  placeholder="votre@email.com"
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-400"/>
+                {resetMsg && <div className={`text-sm px-3 py-2 rounded-lg ${resetMsg.ok ? "bg-emerald-500/20 text-emerald-200" : "bg-red-500/20 text-red-200"}`}>{resetMsg.text}</div>}
+                <button onClick={handleReset} disabled={resetLoading}
+                  className="w-full bg-white/20 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-white/30 transition-all disabled:opacity-50">
+                  {resetLoading ? "Envoi..." : "Envoyer le lien"}
+                </button>
+                <button onClick={()=>{setShowResetForm(false);setResetMsg(null);setResetEmail("");}}
+                  className="w-full text-blue-300 text-sm hover:text-white transition-colors">
+                  ← Retour à la connexion
+                </button>
+              </div>
+            ) : (
+              <button onClick={()=>setShowResetForm(true)} className="w-full text-blue-300 text-xs hover:text-white transition-colors text-center mt-2">
+                Mot de passe oublié ?
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -2780,6 +2822,24 @@ const App = () => {
   const [page, setPage] = useState("dashboard");
   const [sideOpen, setSideOpen] = useState(true);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("darkMode") === "true");
+  const [showPwdModal, setShowPwdModal] = useState(false);
+  const [pwdForm, setPwdForm] = useState({current:"", next:"", confirm:""});
+  const [pwdError, setPwdError] = useState("");
+  const [pwdSuccess, setPwdSuccess] = useState("");
+
+  const handleChangePwd = async () => {
+    setPwdError(""); setPwdSuccess("");
+    if(!pwdForm.current) return setPwdError("Mot de passe actuel requis");
+    if(pwdForm.next.length < 6) return setPwdError("Nouveau mot de passe minimum 6 caracteres");
+    if(pwdForm.next !== pwdForm.confirm) return setPwdError("Les mots de passe ne correspondent pas");
+    const users = await getUsers();
+    const me = users.find(u => u.id === user?.id);
+    if(!me || me.password !== pwdForm.current) return setPwdError("Mot de passe actuel incorrect");
+    await supabase.from("users").update({password: pwdForm.next}).eq("id", user.id);
+    setPwdSuccess("Mot de passe modifie avec succes !");
+    setPwdForm({current:"", next:"", confirm:""});
+    setTimeout(() => { setShowPwdModal(false); setPwdSuccess(""); }, 2000);
+  };
   const [search, setSearch] = useState("");
   const [showSearch, setShowSearch] = useState(false);
 
@@ -3170,8 +3230,12 @@ const App = () => {
         </nav>
         <div className="p-4 border-t border-slate-700/50">
           {sideOpen&&<div className="flex items-center gap-3 mb-3"><div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-violet-400 flex items-center justify-center text-xs font-bold">{(user.name||"?")[0]}</div><div><div className="text-sm font-medium">{user.name}</div><div className="text-xs text-slate-400">{ROLE_LABELS[user.role]||user.role}</div></div></div>}
+          <button onClick={()=>{setShowPwdModal(true);setPwdForm({current:"",next:"",confirm:""});setPwdError("");setPwdSuccess("");}} className="w-full flex items-center gap-2 text-sm text-slate-400 hover:text-blue-400 transition-colors mb-2">
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+            {sideOpen&&"Changer mot de passe"}
+          </button>
           <button onClick={()=>setUser(null)} className="w-full flex items-center gap-2 text-sm text-slate-400 hover:text-red-400 transition-colors">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
             {sideOpen&&"Deconnexion"}
           </button>
         </div>
@@ -3237,6 +3301,38 @@ const App = () => {
         <main className={`flex-1 p-4 lg:p-6 overflow-y-auto ${darkMode ? "bg-slate-900" : "bg-slate-100"}`}>{pages[page]}</main>
       </div>
     </div>
+
+    {/* Modal changement mot de passe */}
+    {showPwdModal&&(
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-lg font-bold text-slate-900">Changer mon mot de passe</h2>
+            <button onClick={()=>setShowPwdModal(false)} className="text-slate-400 hover:text-slate-600 text-xl font-bold">x</button>
+          </div>
+          {pwdError&&<div className="bg-red-50 border border-red-200 text-red-600 text-sm px-3 py-2 rounded-lg mb-3">{pwdError}</div>}
+          {pwdSuccess&&<div className="bg-emerald-50 border border-emerald-200 text-emerald-600 text-sm px-3 py-2 rounded-lg mb-3">{pwdSuccess}</div>}
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Mot de passe actuel</label>
+              <input type="password" value={pwdForm.current} onChange={e=>setPwdForm({...pwdForm,current:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="••••••••"/>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Nouveau mot de passe</label>
+              <input type="password" value={pwdForm.next} onChange={e=>setPwdForm({...pwdForm,next:e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Minimum 6 caracteres"/>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Confirmer le nouveau mot de passe</label>
+              <input type="password" value={pwdForm.confirm} onChange={e=>setPwdForm({...pwdForm,confirm:e.target.value})} onKeyDown={e=>e.key==="Enter"&&handleChangePwd()} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="••••••••"/>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button onClick={()=>setShowPwdModal(false)} className="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-sm">Annuler</button>
+              <button onClick={handleChangePwd} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700">Modifier</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
   );
 };
 
