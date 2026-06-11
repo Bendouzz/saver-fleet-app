@@ -3272,7 +3272,7 @@ const App = () => {
   const unread = 0;
 
   return (
-    <div className="min-h-screen bg-slate-100 flex">
+    <><div className="min-h-screen bg-slate-100 flex">
       {sideOpen&&<div className="fixed inset-0 bg-black/50 z-20 lg:hidden" onClick={()=>setSideOpen(false)}/>}
       <aside className={(sideOpen?"w-64 translate-x-0":"-translate-x-full lg:translate-x-0 lg:w-20")+" fixed lg:relative z-30 h-full lg:h-auto bg-slate-900 text-white flex flex-col transition-all duration-300 flex-shrink-0"}>
         <div className="p-4 flex items-center gap-3 border-b border-slate-700/50">
@@ -3325,8 +3325,6 @@ const App = () => {
         <main className={`flex-1 p-4 lg:p-6 overflow-y-auto ${darkMode ? "bg-slate-900" : "bg-slate-100"}`}>{pages[page]}</main>
       </div>
     </div>
-
-    {/* Modal changement mot de passe */}
     {showPwdModal&&(
       <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
         <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm shadow-2xl p-6">
@@ -3357,6 +3355,7 @@ const App = () => {
         </div>
       </div>
     )}
+    </>
   );
 };
 
