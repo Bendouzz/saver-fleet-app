@@ -3048,6 +3048,9 @@ const App = () => {
   const addDriver = async (item) => {
     // item vient directement du handleSave avec les bons noms de colonnes
     // On n utilise PAS buildDriverPayload pour eviter l ecrasement
+    // Generer matricule si absent
+    const matricule = item.driver_code || item.matricule ||
+      (item.nom && item.prenom ? ((item.nom[0]||"X")+(item.prenom[0]||"X")).toUpperCase()+"-"+(String(Date.now()).slice(-2)) : "DR-01");
     const payload = {
       id:"CH-"+Date.now(),
       nom:item.nom||null, prenom:item.prenom||null,
@@ -3055,7 +3058,7 @@ const App = () => {
       shift:item.shift||"A", status:item.status||"Actif",
       kpi:item.kpi||80, courses:item.courses||0,
       ca:item.ca||0, pen:item.pen||0, avance:item.avance||0,
-      driver_code:item.driver_code||item.matricule||null,
+      driver_code:matricule,
       contract_type:item.contract_type||item.typeContrat||"Salarie",
       telephone:item.telephone||null,
       telephoneperso:item.telephoneperso||item.telephonePerso||null,
