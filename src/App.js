@@ -2901,18 +2901,18 @@ const App = () => {
   const [search, setSearch] = useState("");
   const [showSearch, setShowSearch] = useState(false);
 
-  // Global search results
+  // Global search results - avec guards pour eviter les crashes
   const searchResults = search.length >= 2 ? [
-    ...vh.data.filter(v => 
-      v.immat?.toLowerCase().includes(search.toLowerCase()) ||
-      v.marque?.toLowerCase().includes(search.toLowerCase()) ||
-      v.modele?.toLowerCase().includes(search.toLowerCase())
-    ).map(v => ({type:"vehicule", label:v.immat+" — "+v.marque+" "+v.modele, id:v.id, page:"vehicules"})),
-    ...dr.data.filter(d =>
-      d.nom?.toLowerCase().includes(search.toLowerCase()) ||
-      d.prenom?.toLowerCase().includes(search.toLowerCase()) ||
-      d.matricule?.toLowerCase().includes(search.toLowerCase())
-    ).map(d => ({type:"chauffeur", label:d.prenom+" "+d.nom+" ("+d.matricule+")", id:d.id, page:"chauffeurs"})),
+    ...(vh?.data||[]).filter(v => 
+      (v.immat||"").toLowerCase().includes(search.toLowerCase()) ||
+      (v.marque||"").toLowerCase().includes(search.toLowerCase()) ||
+      (v.modele||"").toLowerCase().includes(search.toLowerCase())
+    ).map(v => ({type:"vehicule", label:(v.immat||"")+" — "+(v.marque||"")+" "+(v.modele||""), id:v.id, page:"vehicules"})),
+    ...(dr?.data||[]).filter(d =>
+      (d.nom||"").toLowerCase().includes(search.toLowerCase()) ||
+      (d.prenom||"").toLowerCase().includes(search.toLowerCase()) ||
+      (d.matricule||d.driver_code||"").toLowerCase().includes(search.toLowerCase())
+    ).map(d => ({type:"chauffeur", label:(d.prenom||"")+" "+(d.nom||"")+" ("+(d.matricule||d.driver_code||"")+")", id:d.id, page:"chauffeurs"})),
   ] : [];
 
   // Apply dark mode to body
