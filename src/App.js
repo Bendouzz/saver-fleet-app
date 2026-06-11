@@ -3,6 +3,76 @@ import * as XLSX from "xlsx";
 import { createClient } from "@supabase/supabase-js";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 
+// Injection CSS globale pour le mode sombre
+const darkModeCSS = `
+  .dark-mode * {
+    --tw-bg-opacity: 1;
+  }
+  .dark-mode .bg-white {
+    background-color: #1e293b !important;
+  }
+  .dark-mode .bg-slate-50 {
+    background-color: #0f172a !important;
+  }
+  .dark-mode .bg-slate-100 {
+    background-color: #0f172a !important;
+  }
+  .dark-mode .border-slate-200 {
+    border-color: #334155 !important;
+  }
+  .dark-mode .border-slate-100 {
+    border-color: #1e293b !important;
+  }
+  .dark-mode .text-slate-900 {
+    color: #f1f5f9 !important;
+  }
+  .dark-mode .text-slate-800 {
+    color: #e2e8f0 !important;
+  }
+  .dark-mode .text-slate-700 {
+    color: #cbd5e1 !important;
+  }
+  .dark-mode .text-slate-600 {
+    color: #94a3b8 !important;
+  }
+  .dark-mode .text-slate-500 {
+    color: #64748b !important;
+  }
+  .dark-mode .text-slate-400 {
+    color: #475569 !important;
+  }
+  .dark-mode .hover\:bg-slate-50:hover {
+    background-color: #1e293b !important;
+  }
+  .dark-mode .hover\:bg-blue-50:hover {
+    background-color: #1e3a5f !important;
+  }
+  .dark-mode input, .dark-mode select, .dark-mode textarea {
+    background-color: #334155 !important;
+    color: #f1f5f9 !important;
+    border-color: #475569 !important;
+  }
+  .dark-mode input::placeholder {
+    color: #64748b !important;
+  }
+  .dark-mode .bg-slate-900 {
+    background-color: #020617 !important;
+  }
+  .dark-mode .border-slate-700 {
+    border-color: #334155 !important;
+  }
+`;
+
+// Injecter le CSS
+if(typeof document !== "undefined") {
+  const style = document.createElement("style");
+  style.id = "dark-mode-styles";
+  style.textContent = darkModeCSS;
+  if(!document.getElementById("dark-mode-styles")) {
+    document.head.appendChild(style);
+  }
+}
+
 // ============================================================
 // SUPABASE CLIENT
 // ============================================================
@@ -2915,10 +2985,36 @@ const App = () => {
     ).map(d => ({type:"chauffeur", label:(d.prenom||"")+" "+(d.nom||"")+" ("+(d.matricule||d.driver_code||"")+")", id:d.id, page:"chauffeurs"})),
   ] : [];
 
-  // Apply dark mode to body
+  // Apply dark mode via CSS variables
   useEffect(() => {
-    if(darkMode) document.documentElement.classList.add("dark");
-    else document.documentElement.classList.remove("dark");
+    const root = document.documentElement;
+    if(darkMode) {
+      root.style.setProperty("--bg-primary", "#0f172a");
+      root.style.setProperty("--bg-secondary", "#1e293b");
+      root.style.setProperty("--bg-card", "#1e293b");
+      root.style.setProperty("--bg-input", "#334155");
+      root.style.setProperty("--bg-hover", "#334155");
+      root.style.setProperty("--bg-table-header", "#1e293b");
+      root.style.setProperty("--text-primary", "#f1f5f9");
+      root.style.setProperty("--text-secondary", "#94a3b8");
+      root.style.setProperty("--text-muted", "#64748b");
+      root.style.setProperty("--border-color", "#334155");
+      root.style.setProperty("--border-light", "#334155");
+      root.classList.add("dark-mode");
+    } else {
+      root.style.setProperty("--bg-primary", "#f1f5f9");
+      root.style.setProperty("--bg-secondary", "#f8fafc");
+      root.style.setProperty("--bg-card", "#ffffff");
+      root.style.setProperty("--bg-input", "#ffffff");
+      root.style.setProperty("--bg-hover", "#f8fafc");
+      root.style.setProperty("--bg-table-header", "#f8fafc");
+      root.style.setProperty("--text-primary", "#0f172a");
+      root.style.setProperty("--text-secondary", "#475569");
+      root.style.setProperty("--text-muted", "#94a3b8");
+      root.style.setProperty("--border-color", "#e2e8f0");
+      root.style.setProperty("--border-light", "#f1f5f9");
+      root.classList.remove("dark-mode");
+    }
     localStorage.setItem("darkMode", darkMode);
   }, [darkMode]);
 
