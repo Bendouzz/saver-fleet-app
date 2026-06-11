@@ -3307,43 +3307,6 @@ const App = () => {
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
           <div className="text-sm font-semibold text-slate-700 dark:text-slate-300 lg:hidden">{ALL_NAV.find(n=>n.id===page)?.label}</div>
-          {/* Recherche globale */}
-          <div className="relative hidden md:block">
-            <div className="flex items-center">
-              <div className="relative">
-                <svg className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                <input
-                  value={search}
-                  onChange={e=>{setSearch(e.target.value);setShowSearch(true);}}
-                  onFocus={()=>setShowSearch(true)}
-                  onBlur={()=>setTimeout(()=>setShowSearch(false),200)}
-                  placeholder="Rechercher vehicule, chauffeur..."
-                  className="pl-9 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                />
-              </div>
-            </div>
-            {showSearch && searchResults.length > 0 && (
-              <div className="absolute top-10 left-0 w-80 bg-white rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-50 max-h-64 overflow-y-auto">
-                {searchResults.map((r,i) => (
-                  <button key={i} onClick={()=>{setPage(r.page);setSearch("");setShowSearch(false);}}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-left border-b border-slate-100 dark:border-slate-700 last:border-0">
-                    <div className={"w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 "+(r.type==="vehicule"?"bg-blue-500":"bg-violet-500")}>
-                      {r.type==="vehicule"?"V":"C"}
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-slate-800 dark:text-slate-100">{r.label}</div>
-                      <div className="text-xs text-slate-400 capitalize">{r.type}</div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-            {showSearch && search.length >= 2 && searchResults.length === 0 && (
-              <div className="absolute top-10 left-0 w-80 bg-white rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-50 p-4 text-center text-slate-400 text-sm">
-                Aucun résultat pour "{search}"
-              </div>
-            )}
-          </div>
           <div className="flex items-center gap-3">
             <button onClick={()=>setDarkMode(!darkMode)} className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-100 transition-all" title={darkMode?"Mode clair":"Mode sombre"}>
               {darkMode ? (
