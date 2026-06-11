@@ -1367,13 +1367,18 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
   const [editItem, setEditItem] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [activeTab, setActiveTab] = useState("profil");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterSite, setFilterSite] = useState("all");
 
   const sitesList = sites.length>0?sites:[{id:1,name:"Abidjan"},{id:2,name:"Yamoussoukro"}];
-  const filtered = drivers.filter(d=>!search||`${d.prenom} ${d.nom}`.toLowerCase().includes(search.toLowerCase()));
+  const filtered = drivers
+    .filter(d=>!search||`${d.prenom} ${d.nom}`.toLowerCase().includes(search.toLowerCase()))
+    .filter(d=>filterStatus==="all"||d.status===filterStatus)
+    .filter(d=>filterSite==="all"||String(d.site)===filterSite);
 
   const genMatricule = (prenom, nom) => {
     const base=((nom||"X")[0]+(prenom||"X")[0]).toUpperCase();
-    const count=drivers.filter(d=>(d.matricule||"").startsWith(base)).length+1;
+    const count=drivers.filter(d=>(d.matricule||d.driver_code||"").startsWith(base)).length+1;
     return base+"-"+String(count).padStart(2,"0");
   };
 
@@ -1412,8 +1417,8 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
 
   const getDriverAlerts = (d) => {
     const alerts=[];
-    if(d.permisExpiration){const diff=Math.floor((new Date(d.permisExpiration)-new Date())/86400000);if(diff<=30)alerts.push("Permis expire dans "+diff+"j");}
-    if(d.pieceExpiration){const diff=Math.floor((new Date(d.pieceExpiration)-new Date())/86400000);if(diff<=30)alerts.push("Piece ID expire dans "+diff+"j");}
+    if(d.permisExpiration||d.license_expiry_date){const exp=d.permisExpiration||d.license_expiry_date;const diff=Math.floor((new Date(exp)-new Date())/86400000);if(diff<=30)alerts.push("Permis expire dans "+diff+"j");}
+    if(d.pieceExpiration||d.id_card_expiry_date){const exp=d.pieceExpiration||d.id_card_expiry_date;const diff=Math.floor((new Date(exp)-new Date())/86400000);if(diff<=30)alerts.push("Piece ID expire dans "+diff+"j");}
     return alerts;
   };
 
@@ -1421,41 +1426,22 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
     if (!form.nom||!form.prenom) return;
     const mat = form.matricule||genMatricule(form.prenom,form.nom);
     const payload = {
-      nom:form.nom||null,
-      prenom:form.prenom||null,
-      site:form.site||1,
-      vehicule:form.vehicule||null,
-      shift:form.shift||"A",
-      status:form.status||"Actif",
-      kpi:form.kpi||80,
-      courses:form.courses||0,
-      ca:form.ca||0,
-      pen:form.pen||0,
-      avance:form.avance||0,
-      driver_code:mat,
-      contract_type:form.typeContrat||"Salarie",
-      telephone:form.telephone||null,
-      telephoneperso:form.telephonePerso||null,
-      adresse:form.adresse||null,
+      nom:form.nom||null, prenom:form.prenom||null, site:form.site||1, vehicule:form.vehicule||null,
+      shift:form.shift||"A", status:form.status||"Actif", kpi:form.kpi||80, courses:form.courses||0,
+      ca:form.ca||0, pen:form.pen||0, avance:form.avance||0, driver_code:mat,
+      contract_type:form.typeContrat||"Salarie", telephone:form.telephone||null,
+      telephoneperso:form.telephonePerso||null, adresse:form.adresse||null,
       emergency_contact:(form.contactUrgence||"")+" - "+(form.contactUrgenceTel||""),
       contacturgencetel:form.contactUrgenceTel||null,
-      license_number:form.permisNum||null,
-      license_expiry_date:form.permisExpiration||null,
-      id_card_number:form.pieceNum||null,
-      id_card_expiry_date:form.pieceExpiration||null,
-      permistype:form.permisType||null,
-      permisdelivrance:form.permisDelivrance||null,
-      piecetype:form.pieceType||"CNI",
-      piecedelivrance:form.pieceDelivrance||null,
-      yango_score:form.noteYango||4.0,
-      internal_score:form.noteInterne||80,
-      commentaires:form.commentaires||null,
-      dettes:form.dettes||0,
+      license_number:form.permisNum||null, license_expiry_date:form.permisExpiration||null,
+      id_card_number:form.pieceNum||null, id_card_expiry_date:form.pieceExpiration||null,
+      permistype:form.permisType||null, permisdelivrance:form.permisDelivrance||null,
+      piecetype:form.pieceType||"CNI", piecedelivrance:form.pieceDelivrance||null,
+      yango_score:form.noteYango||4.0, internal_score:form.noteInterne||80,
+      commentaires:form.commentaires||null, dettes:form.dettes||0,
       dettecommentaire:form.detteCommentaire||null,
-      photo_face:form.photoFace||null,
-      photos_profil:form.photosProfil||[],
-      photo_plein_pied:form.photoPleinPied||null,
-      photo_permis:form.photoPermis||null,
+      photo_face:form.photoFace||null, photos_profil:form.photosProfil||[],
+      photo_plein_pied:form.photoPleinPied||null, photo_permis:form.photoPermis||null,
       photo_piece:form.photoPiece||null,
     };
     if(editItem){await onUpdate(editItem.id,payload);}
@@ -1463,40 +1449,138 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
     setShowModal(false);
   };
 
-  const tabs = [{id:"profil",label:"Profil"},{id:"kyc",label:"KYC"},{id:"performance",label:"Perf."},{id:"creance",label:"Creance Chauffeur"}];
+  const tabs = [{id:"profil",label:"Profil"},{id:"kyc",label:"KYC"},{id:"photos",label:"Photos"},{id:"performance",label:"Perf."},{id:"creance",label:"Creance"}];
+
+  const shiftColors = {"A":"bg-blue-100 text-blue-700","B":"bg-violet-100 text-violet-700","C":"bg-slate-100 text-slate-600"};
 
   if(detail){
     const d=drivers.find(x=>x.id===detail);
     if(!d){setDetail(null);return null;}
     const alerts=getDriverAlerts(d);
+    const mat = d.matricule||d.driver_code||d.id;
+    const vh = vehicles.find(v=>v.id===d.vehicule);
     return (
       <div className="space-y-4">
-        <button onClick={()=>setDetail(null)} className="text-sm text-blue-600 hover:underline">← Retour</button>
-        {alerts.map((a,i)=><div key={i} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-amber-600 bg-amber-50">{a}</div>)}
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 p-6">
-          <div className="flex items-center justify-between mb-4">
+        <button onClick={()=>setDetail(null)} className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
+          Retour
+        </button>
+        {alerts.map((a,i)=><div key={i} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200">{a}</div>)}
+        
+        {/* Hero */}
+        <div className="bg-gradient-to-br from-blue-600 to-violet-600 rounded-2xl p-6 text-white">
+          <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-xl font-bold">{(d.prenom||"?")[0]}{(d.nom||"?")[0]}</div>
+              <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center text-2xl font-bold">
+                {(d.prenom||"?")[0]}{(d.nom||"?")[0]}
+              </div>
               <div>
-                <h2 className="text-xl font-bold">{d.prenom} {d.nom}</h2>
+                <h2 className="text-2xl font-bold">{d.prenom} {d.nom}</h2>
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
-                  <span className="text-xs font-mono bg-slate-100 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded">{d.matricule||d.id}</span>
-                  <Badge color="bg-blue-100 text-blue-700">Shift {d.shift}</Badge>
-                  <Badge color={sc(d.status)}>{d.status}</Badge>
-                  <Badge color="bg-violet-100 text-violet-700">{d.typeContrat||"Salarie"}</Badge>
+                  <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs font-mono">{mat}</span>
+                  <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs">Shift {d.shift}</span>
+                  <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs">{d.typeContrat||d.contract_type||"Salarie"}</span>
                 </div>
-                <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{sitesList.find(s=>s.id===d.site||String(s.id)===String(d.site))?.name} · {vehicles.find(v=>v.id===d.vehicule)?.immat||"—"}</p>
+                <p className="text-white/70 text-sm mt-1">{sitesList.find(s=>s.id===d.site||String(s.id)===String(d.site))?.name} {vh&&"· "+vh.immat}</p>
               </div>
             </div>
-            <button onClick={()=>{openEdit(d);setDetail(null);}} className="text-blue-600 border border-blue-200 px-4 py-2 rounded-lg text-sm">Modifier</button>
+            <button onClick={()=>{openEdit(d);setDetail(null);}} className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-xl text-sm font-medium">
+              Modifier
+            </button>
           </div>
-          <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700 mb-4">
-            {tabs.map(t=><button key={t.id} onClick={()=>setActiveTab(t.id)} className={"px-4 py-2 text-sm font-medium border-b-2 -mb-px "+(activeTab===t.id?"border-blue-600 text-blue-600":"border-transparent text-slate-500 dark:text-slate-400")}>{t.label}</button>)}
+          {/* KPI bar */}
+          <div className="mt-4 grid grid-cols-3 gap-4">
+            <div className="bg-white/10 rounded-xl p-3 text-center">
+              <div className="text-2xl font-bold">{d.noteYango||d.yango_score||"—"}</div>
+              <div className="text-white/60 text-xs mt-1">Note Yango</div>
+            </div>
+            <div className="bg-white/10 rounded-xl p-3 text-center">
+              <div className="text-2xl font-bold">{d.kpi||0}%</div>
+              <div className="text-white/60 text-xs mt-1">KPI Interne</div>
+            </div>
+            <div className="bg-white/10 rounded-xl p-3 text-center">
+              <div className="text-2xl font-bold">{(d.courses||0)}</div>
+              <div className="text-white/60 text-xs mt-1">Courses</div>
+            </div>
           </div>
-          {activeTab==="profil"&&<div className="grid grid-cols-1 md:grid-cols-2 gap-2">{[["Tel. travail",d.telephone],["Tel. perso",d.telephonePerso],["Adresse",d.adresse],["Contact urgence",d.contactUrgence],["Tel urgence",d.contactUrgenceTel],["Contrat",d.typeContrat]].map(([l,val])=><div key={l} className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-700"><span className="text-xs text-slate-500 dark:text-slate-400">{l}</span><span className="text-xs font-medium text-slate-700 dark:text-slate-300">{val||"—"}</span></div>)}</div>}
-          {activeTab==="kyc"&&<div className="grid grid-cols-1 md:grid-cols-2 gap-6"><div><h4 className="font-semibold text-sm mb-3">Permis</h4>{[["N°",d.permisNum||d.license_number],["Type",d.permisType||d.permistype],["Delivrance",d.permisDelivrance||d.permisdelivrance],["Expiration",d.permisExpiration||d.license_expiry_date]].map(([l,val])=><div key={l} className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-700"><span className="text-xs text-slate-500 dark:text-slate-400">{l}</span><span className={"text-xs font-medium "+(l==="Expiration"&&val&&new Date(val)<new Date(Date.now()+30*86400000)?"text-red-600":"text-slate-700 dark:text-slate-300")}>{val||"—"}</span></div>)}</div><div><h4 className="font-semibold text-sm mb-3">Piece ID ({d.pieceType||d.piecetype||"CNI"})</h4>{[["N°",d.pieceNum||d.id_card_number],["Delivrance",d.pieceDelivrance||d.piecedelivrance],["Expiration",d.pieceExpiration||d.id_card_expiry_date]].map(([l,val])=><div key={l} className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-700"><span className="text-xs text-slate-500 dark:text-slate-400">{l}</span><span className={"text-xs font-medium "+(l==="Expiration"&&val&&new Date(val)<new Date(Date.now()+30*86400000)?"text-red-600":"text-slate-700 dark:text-slate-300")}>{val||"—"}</span></div>)}</div></div>}
-          {activeTab==="performance"&&<div className="grid grid-cols-2 md:grid-cols-4 gap-4">{[["Note Yango",(d.noteYango||"—")+"/5","text-amber-500"],["KPI",d.kpi+"%","text-blue-600"],["Courses",(d.courses||0).toLocaleString(),"text-slate-700 dark:text-slate-300"],["CA",fmt(d.ca||0),"text-emerald-600"],["Penalites",fmt(d.pen||0),"text-red-600"],["Avance",fmt(d.avance||0),"text-amber-600"]].map(([l,val,color])=><div key={l} className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl"><div className="text-xs text-slate-500 dark:text-slate-400">{l}</div><div className={"font-bold text-lg "+color}>{val}</div></div>)}</div>}
-          {activeTab==="creance"&&<div className="space-y-4"><div className="p-4 bg-red-50 rounded-xl border border-red-100"><div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Solde dettes</div><div className="font-bold text-red-600 text-lg">{fmt(d.dettes||0)}</div>{d.detteCommentaire&&<div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{d.detteCommentaire}</div>}</div>{d.commentaires&&<div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl"><div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Commentaires</div><div className="text-sm">{d.commentaires}</div></div>}{!d.dettes&&!d.commentaires&&<div className="text-slate-400 text-sm text-center py-4">Aucun incident</div>}</div>}
+        </div>
+
+        {/* Tabs */}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="flex border-b border-slate-200 overflow-x-auto">
+            {tabs.map(t=><button key={t.id} onClick={()=>setActiveTab(t.id)} className={"px-5 py-3 text-sm font-medium border-b-2 -mb-px whitespace-nowrap "+(activeTab===t.id?"border-blue-600 text-blue-600":"border-transparent text-slate-500 hover:text-slate-700")}>{t.label}</button>)}
+          </div>
+          <div className="p-6">
+            {activeTab==="profil"&&(
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {[["📞 Tel. travail",d.telephone],["📱 Tel. perso",d.telephonePerso||d.telephoneperso],["🏠 Adresse",d.adresse],["🚨 Urgence 1",d.contactUrgence||(d.emergency_contact?.split(" - ")[0])],["🚨 Urgence 2",d.contactUrgenceTel||d.contacturgencetel],["📋 Contrat",d.typeContrat||d.contract_type]].map(([l,val])=>(
+                  <div key={l} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
+                    <span className="text-sm text-slate-500 w-28">{l}</span>
+                    <span className="text-sm font-medium text-slate-700 flex-1">{val||"—"}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {activeTab==="kyc"&&(
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-semibold text-sm text-slate-700 mb-3 flex items-center gap-2">
+                    <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-xs">🪪</span>
+                    Permis de conduire
+                  </h4>
+                  {[["N°",d.permisNum||d.license_number],["Type",d.permisType||d.permistype],["Delivrance",d.permisDelivrance||d.permisdelivrance],["Expiration",d.permisExpiration||d.license_expiry_date]].map(([l,val])=>(
+                    <div key={l} className="flex justify-between py-2 border-b border-slate-100 last:border-0">
+                      <span className="text-xs text-slate-500">{l}</span>
+                      <span className={"text-xs font-medium "+(l==="Expiration"&&val&&new Date(val)<new Date(Date.now()+30*86400000)?"text-red-600":"text-slate-700")}>{val||"—"}</span>
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm text-slate-700 mb-3 flex items-center gap-2">
+                    <span className="w-6 h-6 bg-violet-100 text-violet-600 rounded-lg flex items-center justify-center text-xs">📄</span>
+                    Piece ID ({d.pieceType||d.piecetype||"CNI"})
+                  </h4>
+                  {[["N°",d.pieceNum||d.id_card_number],["Delivrance",d.pieceDelivrance||d.piecedelivrance],["Expiration",d.pieceExpiration||d.id_card_expiry_date]].map(([l,val])=>(
+                    <div key={l} className="flex justify-between py-2 border-b border-slate-100 last:border-0">
+                      <span className="text-xs text-slate-500">{l}</span>
+                      <span className={"text-xs font-medium "+(l==="Expiration"&&val&&new Date(val)<new Date(Date.now()+30*86400000)?"text-red-600":"text-slate-700")}>{val||"—"}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {activeTab==="photos"&&(
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {[d.photo_face, d.photo_plein_pied, ...(d.photos_profil||[])].filter(Boolean).map((url,i)=>(
+                  <img key={i} src={url} alt="" className="w-full h-32 object-cover rounded-xl border border-slate-200 cursor-pointer hover:opacity-90" onClick={()=>window.open(url,"_blank")}/>
+                ))}
+                {![d.photo_face, d.photo_plein_pied, ...(d.photos_profil||[])].filter(Boolean).length&&(
+                  <div className="col-span-3 text-center text-slate-400 py-8">Aucune photo</div>
+                )}
+              </div>
+            )}
+            {activeTab==="performance"&&(
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {[["Note Yango",d.noteYango||d.yango_score||"—","text-amber-500","/5"],["KPI Interne",(d.kpi||0)+"%","text-blue-600",""],["Courses",(d.courses||0).toLocaleString(),"text-slate-700",""],["CA",fmt(d.ca||0),"text-emerald-600",""],["Penalites",fmt(d.pen||0),"text-red-500",""],["Avance",fmt(d.avance||0),"text-amber-600",""]].map(([l,val,color,suffix])=>(
+                  <div key={l} className="bg-slate-50 rounded-xl p-4 text-center">
+                    <div className={"text-xl font-bold "+color}>{val}{suffix}</div>
+                    <div className="text-xs text-slate-500 mt-1">{l}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {activeTab==="creance"&&(
+              <div className="space-y-4">
+                <div className="bg-red-50 border border-red-100 rounded-xl p-5">
+                  <div className="text-xs text-slate-500 mb-1">Solde dettes</div>
+                  <div className="text-2xl font-bold text-red-600">{fmt(d.dettes||0)}</div>
+                  {(d.detteCommentaire||d.dettecommentaire)&&<div className="text-xs text-slate-500 mt-2">{d.detteCommentaire||d.dettecommentaire}</div>}
+                </div>
+                {d.commentaires&&<div className="bg-slate-50 rounded-xl p-4"><div className="text-xs text-slate-500 mb-1">Commentaires</div><div className="text-sm text-slate-700">{d.commentaires}</div></div>}
+                {!d.dettes&&!d.commentaires&&<div className="text-slate-400 text-sm text-center py-8">Aucune creance</div>}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -1504,57 +1588,122 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Chauffeurs</h1>
-        <div className="flex gap-2">
-          <div className="relative"><svg className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher..." className="pl-9 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm w-48 focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
-          <button onClick={openAdd} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">+ Ajouter</button>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Chauffeurs</h1>
+          <p className="text-slate-500 text-sm mt-0.5">{filtered.length} chauffeur(s) · {drivers.filter(d=>d.status==="Actif").length} actifs</p>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <div className="relative">
+            <svg className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher..." className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm w-48 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"/>
+          </div>
+          <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)} className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white">
+            <option value="all">Tous statuts</option>
+            <option value="Actif">Actifs</option>
+            <option value="Suspendu">Suspendus</option>
+            <option value="Inactif">Inactifs</option>
+          </select>
+          <button onClick={openAdd} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
+            Ajouter
+          </button>
         </div>
       </div>
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 dark:border-slate-700 overflow-x-auto">
-        <table className="w-full">
-          <thead><tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 dark:border-slate-700">
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Chauffeur</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Matricule</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Site</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Vehicule</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Shift</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Yango</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">KPI</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Status</th>
-            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Actions</th>
-          </tr></thead>
-          <tbody>
-            {filtered.map(d=>{
-              const alerts=getDriverAlerts(d);
-              return (
-                <tr key={d.id} className="border-b border-slate-100 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
-                  <td className="px-4 py-3 cursor-pointer" onClick={()=>setDetail(d.id)}>
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-violet-400 flex items-center justify-center text-white text-xs font-bold">{(d.prenom||"?")[0]}{(d.nom||"?")[0]}</div>
-                      <div><div className="font-medium text-sm text-slate-800 dark:text-slate-100">{d.prenom} {d.nom}</div>{alerts.length>0&&<div className="text-xs text-amber-600">⚠ {alerts[0]}</div>}</div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3"><span className="text-xs font-mono bg-slate-100 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded">{d.matricule||d.id}</span></td>
-                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{sitesList.find(s=>s.id===d.site||String(s.id)===String(d.site))?.name||d.site}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{vehicles.find(v=>v.id===d.vehicule)?.immat||"—"}</td>
-                  <td className="px-4 py-3"><Badge color="bg-blue-100 text-blue-700">Shift {d.shift}</Badge></td>
-                  <td className="px-4 py-3"><span className="text-sm font-bold text-amber-500">{d.noteYango||"—"}</span><span className="text-xs text-slate-400">/5</span></td>
-                  <td className="px-4 py-3"><KpiBar value={d.kpi||0}/></td>
-                  <td className="px-4 py-3"><Badge color={sc(d.status)}>{d.status}</Badge></td>
-                  <td className="px-4 py-3"><div className="flex gap-1"><button onClick={()=>openEdit(d)} className="text-blue-600 text-xs border border-blue-200 px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20">Modifier</button><button onClick={()=>setConfirmDelete(d)} className="text-red-600 text-xs border border-red-200 px-2 py-1 rounded hover:bg-red-50">Suppr.</button></div></td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          {label:"Actifs", count:drivers.filter(d=>d.status==="Actif").length, color:"bg-emerald-500", bg:"bg-emerald-50 border-emerald-200"},
+          {label:"Suspendus", count:drivers.filter(d=>d.status==="Suspendu").length, color:"bg-amber-500", bg:"bg-amber-50 border-amber-200"},
+          {label:"Inactifs", count:drivers.filter(d=>d.status==="Inactif").length, color:"bg-slate-500", bg:"bg-slate-50 border-slate-200"},
+        ].map(s=>(
+          <div key={s.label} className={`rounded-xl border p-4 ${s.bg}`}>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-medium text-slate-600">{s.label}</span>
+              <div className={`w-2 h-2 rounded-full ${s.color}`}/>
+            </div>
+            <div className="text-2xl font-bold text-slate-800">{s.count}</div>
+          </div>
+        ))}
       </div>
 
+      {/* Liste chauffeurs */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filtered.length===0&&(
+          <div className="col-span-3 text-center py-12 text-slate-400">
+            <svg className="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            Aucun chauffeur
+          </div>
+        )}
+        {filtered.map(d=>{
+          const alerts = getDriverAlerts(d);
+          const mat = d.matricule||d.driver_code||"—";
+          const vh = vehicles.find(v=>v.id===d.vehicule);
+          const siteName = sitesList.find(s=>s.id===d.site||String(s.id)===String(d.site))?.name||"—";
+          return (
+            <div key={d.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg transition-all cursor-pointer group">
+              <div className="p-5" onClick={()=>setDetail(d.id)}>
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-lg font-bold flex-shrink-0">
+                    {(d.prenom||"?")[0]}{(d.nom||"?")[0]}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-slate-800 truncate">{d.prenom} {d.nom}</div>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <span className="text-xs font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded">{mat}</span>
+                      <Badge color={sc(d.status)}>{d.status}</Badge>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Infos */}
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <div className="bg-slate-50 rounded-lg p-2">
+                    <div className="text-xs text-slate-400">Vehicule</div>
+                    <div className="text-xs font-semibold text-slate-700 truncate">{vh?.immat||"—"}</div>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-2">
+                    <div className="text-xs text-slate-400">Site</div>
+                    <div className="text-xs font-semibold text-slate-700">{siteName}</div>
+                  </div>
+                </div>
+
+                {/* KPI + Yango */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-amber-500 font-bold text-sm">{d.noteYango||d.yango_score||"—"}</span>
+                    <span className="text-xs text-slate-400">/5 Yango</span>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${shiftColors[d.shift]||"bg-slate-100 text-slate-600"}`}>Shift {d.shift}</span>
+                  <KpiBar value={d.kpi||0}/>
+                </div>
+
+                {alerts.length>0&&(
+                  <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5">
+                    <div className="text-xs text-amber-700">⚠ {alerts[0]}</div>
+                  </div>
+                )}
+              </div>
+
+              <div className="px-5 pb-4 flex gap-2 border-t border-slate-100 pt-3">
+                <button onClick={()=>openEdit(d)} className="flex-1 text-xs border border-blue-200 text-blue-600 py-2 rounded-lg hover:bg-blue-50 font-medium transition-all">Modifier</button>
+                <button onClick={()=>setConfirmDelete(d)} className="text-xs border border-red-200 text-red-500 px-3 py-2 rounded-lg hover:bg-red-50 transition-all">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Modal */}
       {showModal&&(
         <Modal title={editItem?"Modifier chauffeur":"Ajouter chauffeur"} onClose={()=>setShowModal(false)}
-          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm">{editItem?"Enregistrer":"Ajouter"}</button></>}>
-          <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700 mb-4">
-            {tabs.map(t=><button key={t.id} onClick={()=>setActiveTab(t.id)} className={"px-3 py-2 text-sm font-medium border-b-2 -mb-px "+(activeTab===t.id?"border-blue-600 text-blue-600":"border-transparent text-slate-500 dark:text-slate-400")}>{t.label}</button>)}
+          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm">{editItem?"Enregistrer":"Ajouter"}</button></>}>
+          <div className="flex gap-1 border-b border-slate-200 mb-4 overflow-x-auto">
+            {tabs.map(t=><button key={t.id} onClick={()=>setActiveTab(t.id)} className={"px-3 py-2 text-sm font-medium border-b-2 -mb-px whitespace-nowrap "+(activeTab===t.id?"border-blue-600 text-blue-600":"border-transparent text-slate-500")}>{t.label}</button>)}
           </div>
           {activeTab==="profil"&&(
             <div className="grid grid-cols-2 gap-3">
@@ -1575,30 +1724,31 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
           )}
           {activeTab==="kyc"&&(
             <div className="space-y-4">
-              <div>
-                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">Photos du chauffeur</p>
-                <div className="grid grid-cols-3 gap-3">
-                  <PhotoUpload bucket="driver-photos" folder={"drivers/"+(form.nom||"new")+"/face"} label="Photo face" value={form.photoFace} onChange={v=>setForm({...form,photoFace:v})}/>
-                  <PhotoUpload bucket="driver-photos" folder={"drivers/"+(form.nom||"new")+"/profil"} label="Photo profil" value={form.photoProfil} onChange={v=>setForm({...form,photoProfil:v})}/>
-                  <PhotoUpload bucket="driver-photos" folder={"drivers/"+(form.nom||"new")+"/full"} label="Plein pied" value={form.photoFull} onChange={v=>setForm({...form,photoFull:v})}/>
-                </div>
-              </div>
-              <div><p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">Permis de conduire</p>
+              <div><p className="text-xs font-semibold text-slate-500 uppercase mb-3">Permis de conduire</p>
                 <div className="grid grid-cols-2 gap-3">
                   <Input label="N° Permis" value={form.permisNum} onChange={v=>setForm({...form,permisNum:v})}/>
                   <Input label="Type" value={form.permisType} onChange={v=>setForm({...form,permisType:v})} placeholder="B, D..."/>
                   <Input label="Date delivrance" value={form.permisDelivrance} onChange={v=>setForm({...form,permisDelivrance:v})} type="date"/>
                   <Input label="Expiration" value={form.permisExpiration} onChange={v=>setForm({...form,permisExpiration:v})} type="date" hint="(alerte 30j)"/>
+                  <div className="col-span-2"><PhotoUpload label="Photo permis" bucket="driver-photos" folder={"permis/"+(form.nom||"new")} value={form.photoPermis||""} onChange={v=>setForm({...form,photoPermis:v})}/></div>
                 </div>
               </div>
-              <div><p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-3">Piece d identite</p>
+              <div><p className="text-xs font-semibold text-slate-500 uppercase mb-3">Piece d identite</p>
                 <div className="grid grid-cols-2 gap-3">
                   <Select label="Type" value={form.pieceType} onChange={v=>setForm({...form,pieceType:v})} options={["CNI","Passeport","Titre sejour"]}/>
                   <Input label="N° Piece" value={form.pieceNum} onChange={v=>setForm({...form,pieceNum:v})}/>
                   <Input label="Date delivrance" value={form.pieceDelivrance} onChange={v=>setForm({...form,pieceDelivrance:v})} type="date"/>
                   <Input label="Expiration" value={form.pieceExpiration} onChange={v=>setForm({...form,pieceExpiration:v})} type="date" hint="(alerte 30j)"/>
+                  <div className="col-span-2"><PhotoUpload label="Photo piece ID" bucket="driver-photos" folder={"piece/"+(form.nom||"new")} value={form.photoPiece||""} onChange={v=>setForm({...form,photoPiece:v})}/></div>
                 </div>
               </div>
+            </div>
+          )}
+          {activeTab==="photos"&&(
+            <div className="space-y-4">
+              <PhotoUpload label="Photo face (portrait)" bucket="driver-photos" folder={"portrait/"+(form.nom||"new")} value={form.photoFace||""} onChange={v=>setForm({...form,photoFace:v})} hint="Photo de face, fond neutre"/>
+              <PhotoUpload label="Photos profil" bucket="driver-photos" folder={"profil/"+(form.nom||"new")} value={form.photosProfil||[]} onChange={v=>setForm({...form,photosProfil:v})} multiple/>
+              <PhotoUpload label="Photo plein pied" bucket="driver-photos" folder={"fullbody/"+(form.nom||"new")} value={form.photoPleinPied||""} onChange={v=>setForm({...form,photoPleinPied:v})}/>
             </div>
           )}
           {activeTab==="performance"&&(
@@ -1615,7 +1765,7 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
             <div className="space-y-3">
               <Input label="Solde dettes (F CFA)" value={form.dettes||0} onChange={v=>setForm({...form,dettes:parseInt(v)||0})} type="number"/>
               <Input label="Detail dette" value={form.detteCommentaire||""} onChange={v=>setForm({...form,detteCommentaire:v})} placeholder="Ex: manquant du 01/04..."/>
-              <div><label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Commentaires et incidents</label><textarea value={form.commentaires||""} onChange={e=>setForm({...form,commentaires:e.target.value})} rows={4} className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
+              <div><label className="block text-sm font-medium text-slate-700 mb-1">Commentaires</label><textarea value={form.commentaires||""} onChange={e=>setForm({...form,commentaires:e.target.value})} rows={3} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
             </div>
           )}
         </Modal>
@@ -1624,7 +1774,6 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
     </div>
   );
 };
-
 // ============================================================
 // PLANNING PAGE
 // ============================================================
@@ -1732,9 +1881,9 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
         </div>
         <div className="flex gap-2 flex-wrap">
           <input type="date" value={filterDate} onChange={e=>setFilterDate(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-          <button onClick={()=>{setForm(emptyShift);setShowModal(true);}} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2">
+          <button onClick={()=>{setForm(emptyShift);setShowModal(true);}} className="bg-gradient-to-r from-blue-600 to-violet-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 flex items-center gap-2 shadow-md">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
-            Ajouter shift
+            Planifier shift
           </button>
         </div>
       </div>
@@ -2488,7 +2637,7 @@ const KpiPaiePage = ({drivers, shifts}) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">KPI, Paie et Incentives</h1>
-        <button onClick={exportExcelTD01} className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700">
+        <button onClick={exportExcelTD01} className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 shadow-md">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           Exporter Excel (TD01)
         </button>
