@@ -318,14 +318,14 @@ const Badge = ({color, children}) => <span className={"inline-flex items-center 
 const sc = (s) => {
   const map = {
     "Actif":"bg-emerald-100 text-emerald-700","En exploitation":"bg-emerald-100 text-emerald-700",
-    "En cours":"bg-blue-100 text-blue-700","Planifie":"bg-slate-100 text-slate-600 dark:text-slate-400",
+    "En cours":"bg-emerald-100 text-emerald-700","Planifie":"bg-slate-100 text-slate-600 dark:text-slate-400",
     "Planifié":"bg-slate-100 text-slate-600 dark:text-slate-400","Terminé":"bg-slate-100 text-slate-500 dark:text-slate-400",
     "Termine":"bg-slate-100 text-slate-500 dark:text-slate-400","Suspendu":"bg-red-100 text-red-700",
     "Inactif":"bg-slate-100 text-slate-400","En recharge":"bg-amber-100 text-amber-700",
     "Maintenance":"bg-orange-100 text-orange-700","Immobilisé":"bg-red-100 text-red-700",
     "Immobilise":"bg-red-100 text-red-700","Validé":"bg-emerald-100 text-emerald-700",
     "En attente":"bg-amber-100 text-amber-700","Écart détecté":"bg-red-100 text-red-700",
-    "Ecart detecte":"bg-red-100 text-red-700","Planifiée":"bg-blue-100 text-blue-700",
+    "Ecart detecte":"bg-red-100 text-red-700","Planifiée":"bg-emerald-100 text-emerald-700",
     "Terminée":"bg-slate-100 text-slate-500 dark:text-slate-400",
   };
   return map[s] || "bg-slate-100 text-slate-600 dark:text-slate-400";
@@ -380,14 +380,14 @@ const Confirm = ({msg, onConfirm, onCancel}) => (
 const Input = ({label, value, onChange, type="text", placeholder="", required=false, hint=""}) => (
   <div>
     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{label}{required&&<span className="text-red-500 ml-1">*</span>}{hint&&<span className="text-xs text-slate-400 ml-1">{hint}</span>}</label>
-    <input type={type} value={value||""} onChange={e=>onChange(type==="number"?parseFloat(e.target.value)||0:e.target.value)} placeholder={placeholder} className="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400"/>
+    <input type={type} value={value||""} onChange={e=>onChange(type==="number"?parseFloat(e.target.value)||0:e.target.value)} placeholder={placeholder} className="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400"/>
   </div>
 );
 
 const Select = ({label, value, onChange, options}) => (
   <div>
     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{label}</label>
-    <select value={value||""} onChange={e=>onChange(e.target.value)} className="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+    <select value={value||""} onChange={e=>onChange(e.target.value)} className="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
       {options.map(o => typeof o === "string" ? <option key={o} value={o}>{o}</option> : <option key={o.value} value={o.value}>{o.label}</option>)}
     </select>
   </div>
@@ -532,10 +532,10 @@ const LoginPage = ({onLogin}) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
           </div>
           <h1 className="text-3xl font-bold text-white">Easy by Saver</h1>
@@ -580,7 +580,7 @@ const LoginPage = ({onLogin}) => {
             </div>
 
             <button onClick={handleLogin} disabled={loading}
-              className="w-full bg-gradient-to-r from-emerald-500 to-blue-500 text-white py-3 rounded-lg font-semibold hover:from-emerald-600 hover:to-blue-600 transition-all shadow-lg disabled:opacity-50">
+              className="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-all shadow-lg disabled:opacity-50">
               {loading ? "Connexion..." : "Se connecter"}
             </button>
             {showResetForm ? (
@@ -640,10 +640,10 @@ const SetPasswordPage = ({token, onDone}) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
           </div>
           <h1 className="text-3xl font-bold text-white">Easy by Saver</h1>
@@ -788,22 +788,22 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-5 text-white">
+        <div className="bg-emerald-600 rounded-xl p-5 text-white">
           <div className="text-xs font-medium opacity-80 uppercase tracking-wide mb-2">Recettes cumulees</div>
           <div className="text-2xl font-bold">{fmtK(totalRecette)} F</div>
           <div className="text-xs opacity-70 mt-1">{shiftEnCours} shifts en cours</div>
         </div>
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-5 text-white">
+        <div className="bg-slate-700 rounded-xl p-5 text-white">
           <div className="text-xs font-medium opacity-80 uppercase tracking-wide mb-2">Reverses valides</div>
           <div className="text-2xl font-bold">{fmtK(totalReverse)} F</div>
           <div className="text-xs opacity-70 mt-1">{ecarts > 0 ? ecarts+" ecart(s)" : "Aucun ecart"}</div>
         </div>
-        <div className="bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl p-5 text-white">
+        <div className="bg-slate-600 rounded-xl p-5 text-white">
           <div className="text-xs font-medium opacity-80 uppercase tracking-wide mb-2">Chauffeurs actifs</div>
           <div className="text-2xl font-bold">{totalDrivers}</div>
           <div className="text-xs opacity-70 mt-1">{shiftPlanifie} shifts planifies</div>
         </div>
-        <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-5 text-white">
+        <div className="bg-amber-500 rounded-xl p-5 text-white">
           <div className="text-xs font-medium opacity-80 uppercase tracking-wide mb-2">Flotte active</div>
           <div className="text-2xl font-bold">{activeVh}/{vehicles.length}</div>
           <div className="text-xs opacity-70 mt-1">SOC moy: {avgSoc}%</div>
@@ -1014,7 +1014,7 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
     const siteName = sitesList.find(s=>s.id===v.site||String(s.id)===String(v.site))?.name||v.site;
     return (
       <div className="space-y-4">
-        <button onClick={()=>setDetail(null)} className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium">
+        <button onClick={()=>setDetail(null)} className="flex items-center gap-2 text-sm text-emerald-600 hover:text-emerald-800 font-medium">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
           Retour
         </button>
@@ -1146,7 +1146,7 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
             <option value="Maintenance">Maintenance</option>
             <option value="Immobilise">Immobilise</option>
           </select>
-          <button onClick={openAdd} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2">
+          <button onClick={openAdd} className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
             Ajouter
           </button>
@@ -1278,7 +1278,7 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
       {/* Modal ajout/modification */}
       {showModal && (
         <Modal title={editItem?"Modifier le vehicule":"Ajouter un vehicule"} onClose={()=>setShowModal(false)}
-          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm">{editItem?"Enregistrer":"Ajouter"}</button></>}>
+          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm">{editItem?"Enregistrer":"Ajouter"}</button></>}>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2"><Input label="Immatriculation" value={form.immat} onChange={v=>setForm({...form,immat:v})} required placeholder="Ex: AB-1234-CI"/></div>
@@ -1451,7 +1451,7 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
 
   const tabs = [{id:"profil",label:"Profil"},{id:"kyc",label:"KYC"},{id:"photos",label:"Photos"},{id:"performance",label:"Perf."},{id:"creance",label:"Creance"}];
 
-  const shiftColors = {"A":"bg-blue-100 text-blue-700","B":"bg-violet-100 text-violet-700","C":"bg-slate-100 text-slate-600"};
+  const shiftColors = {"A":"bg-emerald-100 text-emerald-700","B":"bg-violet-100 text-violet-700","C":"bg-slate-100 text-slate-600"};
 
   if(detail){
     const d=drivers.find(x=>x.id===detail);
@@ -1461,17 +1461,17 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
     const vh = vehicles.find(v=>v.id===d.vehicule);
     return (
       <div className="space-y-4">
-        <button onClick={()=>setDetail(null)} className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium">
+        <button onClick={()=>setDetail(null)} className="flex items-center gap-2 text-sm text-emerald-600 hover:text-emerald-800 font-medium">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
           Retour
         </button>
         {alerts.map((a,i)=><div key={i} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200">{a}</div>)}
         
         {/* Hero */}
-        <div className="bg-gradient-to-br from-blue-600 to-violet-600 rounded-2xl p-6 text-white">
+        <div className="bg-emerald-700 rounded-2xl p-6 text-white">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center text-2xl font-bold">
+              <div className="w-16 h-16 rounded-2xl bg-emerald-500 flex items-center justify-center text-2xl font-bold">
                 {(d.prenom||"?")[0]}{(d.nom||"?")[0]}
               </div>
               <div>
@@ -1508,12 +1508,12 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
         {/* Tabs */}
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div className="flex border-b border-slate-200 overflow-x-auto">
-            {tabs.map(t=><button key={t.id} onClick={()=>setActiveTab(t.id)} className={"px-5 py-3 text-sm font-medium border-b-2 -mb-px whitespace-nowrap "+(activeTab===t.id?"border-blue-600 text-blue-600":"border-transparent text-slate-500 hover:text-slate-700")}>{t.label}</button>)}
+            {tabs.map(t=><button key={t.id} onClick={()=>setActiveTab(t.id)} className={"px-5 py-3 text-sm font-medium border-b-2 -mb-px whitespace-nowrap "+(activeTab===t.id?"border-emerald-600 text-emerald-600":"border-transparent text-slate-500 hover:text-slate-700")}>{t.label}</button>)}
           </div>
           <div className="p-6">
             {activeTab==="profil"&&(
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {[["📞 Tel. travail",d.telephone],["📱 Tel. perso",d.telephonePerso||d.telephoneperso],["🏠 Adresse",d.adresse],["🚨 Urgence 1",d.contactUrgence||(d.emergency_contact?.split(" - ")[0])],["🚨 Urgence 2",d.contactUrgenceTel||d.contacturgencetel],["📋 Contrat",d.typeContrat||d.contract_type]].map(([l,val])=>(
+                {[["Tel. travail",d.telephone],["Tel. perso",d.telephonePerso||d.telephoneperso],["Adresse",d.adresse],["Urgence 1",d.contactUrgence||(d.emergency_contact?.split(" - ")[0])],["Urgence 2",d.contactUrgenceTel||d.contacturgencetel],["Contrat",d.typeContrat||d.contract_type]].map(([l,val])=>(
                   <div key={l} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
                     <span className="text-sm text-slate-500 w-28">{l}</span>
                     <span className="text-sm font-medium text-slate-700 flex-1">{val||"—"}</span>
@@ -1597,7 +1597,7 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
         <div className="flex gap-2 flex-wrap">
           <div className="relative">
             <svg className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher..." className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm w-48 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"/>
+            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher..." className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm w-48 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"/>
           </div>
           <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)} className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white">
             <option value="all">Tous statuts</option>
@@ -1605,7 +1605,7 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
             <option value="Suspendu">Suspendus</option>
             <option value="Inactif">Inactifs</option>
           </select>
-          <button onClick={openAdd} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2">
+          <button onClick={openAdd} className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
             Ajouter
           </button>
@@ -1646,7 +1646,7 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
             <div key={d.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg transition-all cursor-pointer group">
               <div className="p-5" onClick={()=>setDetail(d.id)}>
                 <div className="flex items-start gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-lg font-bold flex-shrink-0">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-600 flex items-center justify-center text-white text-lg font-bold flex-shrink-0">
                     {(d.prenom||"?")[0]}{(d.nom||"?")[0]}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -1701,9 +1701,9 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
       {/* Modal */}
       {showModal&&(
         <Modal title={editItem?"Modifier chauffeur":"Ajouter chauffeur"} onClose={()=>setShowModal(false)}
-          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm">{editItem?"Enregistrer":"Ajouter"}</button></>}>
+          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 text-slate-600 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm">{editItem?"Enregistrer":"Ajouter"}</button></>}>
           <div className="flex gap-1 border-b border-slate-200 mb-4 overflow-x-auto">
-            {tabs.map(t=><button key={t.id} onClick={()=>setActiveTab(t.id)} className={"px-3 py-2 text-sm font-medium border-b-2 -mb-px whitespace-nowrap "+(activeTab===t.id?"border-blue-600 text-blue-600":"border-transparent text-slate-500")}>{t.label}</button>)}
+            {tabs.map(t=><button key={t.id} onClick={()=>setActiveTab(t.id)} className={"px-3 py-2 text-sm font-medium border-b-2 -mb-px whitespace-nowrap "+(activeTab===t.id?"border-emerald-600 text-emerald-600":"border-transparent text-slate-500")}>{t.label}</button>)}
           </div>
           {activeTab==="profil"&&(
             <div className="grid grid-cols-2 gap-3">
@@ -1765,7 +1765,7 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
             <div className="space-y-3">
               <Input label="Solde dettes (F CFA)" value={form.dettes||0} onChange={v=>setForm({...form,dettes:parseInt(v)||0})} type="number"/>
               <Input label="Detail dette" value={form.detteCommentaire||""} onChange={v=>setForm({...form,detteCommentaire:v})} placeholder="Ex: manquant du 01/04..."/>
-              <div><label className="block text-sm font-medium text-slate-700 mb-1">Commentaires</label><textarea value={form.commentaires||""} onChange={e=>setForm({...form,commentaires:e.target.value})} rows={3} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/></div>
+              <div><label className="block text-sm font-medium text-slate-700 mb-1">Commentaires</label><textarea value={form.commentaires||""} onChange={e=>setForm({...form,commentaires:e.target.value})} rows={3} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"/></div>
             </div>
           )}
         </Modal>
@@ -1793,7 +1793,7 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
 
   const shiftHoraires = {A:"06:00 - 14:00",B:"15:00 - 23:00",C:"22:00 - 06:00"};
   const shiftColors = {
-    A:{bg:"bg-blue-50",border:"border-blue-200",title:"text-blue-800",badge:"bg-blue-600",light:"bg-blue-100 text-blue-700"},
+    A:{bg:"bg-blue-50",border:"border-blue-200",title:"text-blue-800",badge:"bg-blue-600",light:"bg-emerald-100 text-emerald-700"},
     B:{bg:"bg-violet-50",border:"border-violet-200",title:"text-violet-800",badge:"bg-violet-600",light:"bg-violet-100 text-violet-700"},
     C:{bg:"bg-slate-50",border:"border-slate-200 dark:border-slate-700",title:"text-slate-800 dark:text-slate-100",badge:"bg-slate-600",light:"bg-slate-100 text-slate-600 dark:text-slate-400"},
   };
@@ -1880,8 +1880,8 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
           <p className="text-sm text-slate-500 dark:text-slate-400">{new Date().toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <input type="date" value={filterDate} onChange={e=>setFilterDate(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-          <button onClick={()=>{setForm(emptyShift);setShowModal(true);}} className="bg-gradient-to-r from-blue-600 to-violet-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 flex items-center gap-2 shadow-md">
+          <input type="date" value={filterDate} onChange={e=>setFilterDate(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"/>
+          <button onClick={()=>{setForm(emptyShift);setShowModal(true);}} className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 flex items-center gap-2 shadow-md">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
             Planifier shift
           </button>
@@ -2011,7 +2011,7 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
                             });
                             setSelectedShift(s);
                             setShowDDModal(true);
-                          }} className={"flex-1 text-xs px-2 py-1.5 rounded-lg font-medium "+(hasDDData?"bg-blue-100 text-blue-700 hover:bg-blue-200":"bg-blue-600 text-white hover:bg-blue-700")}>
+                          }} className={"flex-1 text-xs px-2 py-1.5 rounded-lg font-medium "+(hasDDData?"bg-emerald-100 text-emerald-700 hover:bg-blue-200":"bg-blue-600 text-white hover:bg-blue-700")}>
                             {hasDDData?"Modifier DD":"Saisir DD"}
                           </button>
                         )}
@@ -2028,7 +2028,7 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
       {/* MODAL AJOUT SHIFT */}
       {showModal&&(
         <Modal title="Planifier un shift" onClose={()=>setShowModal(false)}
-          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} disabled={saving} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50">{saving?"Enregistrement...":"Planifier"}</button></>}>
+          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} disabled={saving} className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50">{saving?"Enregistrement...":"Planifier"}</button></>}>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2"><Input label="Date" value={form.date} onChange={v=>setForm({...form,date:v})} type="date"/></div>
             <Select label="Vehicule" value={form.vh} onChange={v=>setForm({...form,vh:v})} options={[{value:"",label:"-- Choisir --"},...vehicles.map(v=>({value:v.id,label:v.immat}))]}/>
@@ -2050,7 +2050,7 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
           <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
             <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto my-4">
               {/* Header DD */}
-              <div className="bg-gradient-to-r from-blue-600 to-violet-600 p-6 rounded-t-2xl">
+              <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 p-6 rounded-t-2xl">
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-xl font-bold text-white">DD Driving Datas</h2>
@@ -2068,7 +2068,7 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
                     <div className="text-blue-200 text-xs">{vehicle?.immat||"—"} · Shift {selectedShift.type} · {selectedShift.date||selectedShift.planned_start_date||""}</div>
                   </div>
                   <div className="ml-auto">
-                    <Badge color={"bg-blue-100 text-blue-700"}>Shift {selectedShift.type}</Badge>
+                    <Badge color={"bg-emerald-100 text-emerald-700"}>Shift {selectedShift.type}</Badge>
                   </div>
                 </div>
               </div>
@@ -2118,7 +2118,7 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
                     <div className="col-span-1"></div>
                     <div className="col-span-2">
                       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Etat vehicule et commentaires (20%)</label>
-                      <textarea value={ddForm.commentaireShift||""} onChange={e=>setDDForm({...ddForm,commentaireShift:e.target.value})} rows={3} className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Etat du vehicule, incidents, remarques..."/>
+                      <textarea value={ddForm.commentaireShift||""} onChange={e=>setDDForm({...ddForm,commentaireShift:e.target.value})} rows={3} className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Etat du vehicule, incidents, remarques..."/>
                     </div>
                   </div>
                 </div>
@@ -2151,7 +2151,7 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
 
               <div className="flex gap-3 p-6 border-t border-slate-100 dark:border-slate-700 sticky bottom-0 bg-white rounded-b-2xl">
                 <button onClick={()=>setShowDDModal(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50">Annuler</button>
-                <button onClick={handleSaveDD} disabled={saving} className="flex-1 bg-gradient-to-r from-blue-600 to-violet-600 text-white py-2.5 rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50">
+                <button onClick={handleSaveDD} disabled={saving} className="flex-1 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white py-2.5 rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50">
                   {saving?"Enregistrement...":"Enregistrer les DD"}
                 </button>
               </div>
@@ -2281,7 +2281,7 @@ const ReversementsPage = ({reversements, drivers, shifts, onAdd, onUpdate, onDel
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Recettes et Reversements</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Suivi quotidien des versements Wave / Orange Money</p>
         </div>
-        <button onClick={openAdd} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2">
+        <button onClick={openAdd} className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 flex items-center gap-2">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
           Ajouter reversement
         </button>
@@ -2367,7 +2367,7 @@ const ReversementsPage = ({reversements, drivers, shifts, onAdd, onUpdate, onDel
                     <div className="text-xs text-slate-400">{driver?.matricule||""}</div>
                   </td>
                   <td className="px-4 py-3 text-sm font-semibold text-emerald-600">{fmt(r.montant||0)}</td>
-                  <td className="px-4 py-3"><Badge color="bg-blue-100 text-blue-700">{r.canal||"—"}</Badge></td>
+                  <td className="px-4 py-3"><Badge color="bg-emerald-100 text-emerald-700">{r.canal||"—"}</Badge></td>
                   <td className="px-4 py-3 text-sm text-amber-600">{depenses>0?fmt(depenses):"—"}</td>
                   <td className="px-4 py-3">
                     {(r.transaction_proof_url||r.preuve)?
@@ -2412,7 +2412,7 @@ const ReversementsPage = ({reversements, drivers, shifts, onAdd, onUpdate, onDel
       {/* MODAL */}
       {showModal&&(
         <Modal title={editItem?"Modifier reversement":"Ajouter reversement"} onClose={()=>setShowModal(false)}
-          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium">{editItem?"Enregistrer":"Ajouter"}</button></>}>
+          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium">{editItem?"Enregistrer":"Ajouter"}</button></>}>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-700 mb-2">
             L ecart est calcule automatiquement. Tolerance de 1% pour les frais Wave Business.
           </div>
@@ -2445,7 +2445,7 @@ const ReversementsPage = ({reversements, drivers, shifts, onAdd, onUpdate, onDel
             </div>
             <div className="col-span-2">
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Commentaire</label>
-              <textarea value={form.commentaire||""} onChange={e=>setForm({...form,commentaire:e.target.value})} rows={2} className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Remarques eventuelles..."/>
+              <textarea value={form.commentaire||""} onChange={e=>setForm({...form,commentaire:e.target.value})} rows={2} className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Remarques eventuelles..."/>
             </div>
           </div>
           {form.montant>0&&(
@@ -2648,11 +2648,11 @@ const KpiPaiePage = ({drivers, shifts}) => {
         <div className="font-semibold text-slate-700 dark:text-slate-300 text-sm">Periode de calcul :</div>
         <div className="flex items-center gap-2">
           <label className="text-xs text-slate-500 dark:text-slate-400">Du</label>
-          <input type="date" value={periodeDebut} onChange={e=>setPeriodeDebut(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+          <input type="date" value={periodeDebut} onChange={e=>setPeriodeDebut(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"/>
         </div>
         <div className="flex items-center gap-2">
           <label className="text-xs text-slate-500 dark:text-slate-400">Au</label>
-          <input type="date" value={periodeFin} onChange={e=>setPeriodeFin(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+          <input type="date" value={periodeFin} onChange={e=>setPeriodeFin(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"/>
         </div>
         {(periodeDebut||periodeFin)&&<button onClick={()=>{setPeriodeDebut("");setPeriodeFin("");}} className="text-xs text-slate-500 dark:text-slate-400 hover:text-red-500 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg">Effacer</button>}
         <div className="ml-auto text-xs text-slate-400">{paies.length} chauffeur(s) actifs · {shiftsFiltres.filter(s=>s.status==="Terminé"||s.status==="Termine").length} shifts termines</div>
@@ -2702,7 +2702,7 @@ const KpiPaiePage = ({drivers, shifts}) => {
                     <td className="px-4 py-3 text-sm text-right text-slate-600 dark:text-slate-400">{joursTravailes}</td>
                     <td className="px-4 py-3 text-sm text-right text-slate-600 dark:text-slate-400">{coursesSup}</td>
                     <td className="px-4 py-3 text-sm text-right text-slate-600 dark:text-slate-400">{fmtK(surplus)} F</td>
-                    <td className="px-4 py-3 text-sm text-right"><span className={"px-2 py-0.5 rounded-full text-xs font-semibold "+(palierPct>=0.5?"bg-emerald-100 text-emerald-700":palierPct>0?"bg-blue-100 text-blue-700":"bg-slate-100 text-slate-500 dark:text-slate-400")}>{Math.round(palierPct*100)}%</span></td>
+                    <td className="px-4 py-3 text-sm text-right"><span className={"px-2 py-0.5 rounded-full text-xs font-semibold "+(palierPct>=0.5?"bg-emerald-100 text-emerald-700":palierPct>0?"bg-emerald-100 text-emerald-700":"bg-slate-100 text-slate-500 dark:text-slate-400")}>{Math.round(palierPct*100)}%</span></td>
                     <td className="px-4 py-3 text-sm text-right">{fmt(salaireBase)}</td>
                     <td className="px-4 py-3 text-sm text-right text-emerald-600">{bonus>0?fmt(bonus):"—"}</td>
                     <td className="px-4 py-3 text-sm text-right text-red-600">{(avances+manquants)>0?"-"+fmt(avances+manquants):"—"}</td>
@@ -2766,7 +2766,7 @@ const RechargePage = ({recharges, vehicles, drivers, onAdd, onUpdate, onDelete})
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Recharge EV</h1>
-        <button onClick={()=>{setForm(emptyForm);setEditItem(null);setShowModal(true);}} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">+ Ajouter recharge</button>
+        <button onClick={()=>{setForm(emptyForm);setEditItem(null);setShowModal(true);}} className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700">+ Ajouter recharge</button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard label="Total kWh consommes" value={totalKwh.toFixed(1)+" kWh"} color="text-emerald-600"/>
@@ -2802,7 +2802,7 @@ const RechargePage = ({recharges, vehicles, drivers, onAdd, onUpdate, onDelete})
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{r.date}</td>
                 <td className="px-4 py-3 text-sm font-medium">{vehicles.find(v=>v.id===r.vh)?.immat||r.vh}</td>
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{drivers.find(d=>d.id===r.ch)?`${drivers.find(d=>d.id===r.ch).prenom} ${drivers.find(d=>d.id===r.ch).nom}`:"—"}</td>
-                <td className="px-4 py-3"><Badge color="bg-blue-100 text-blue-700">{r.typeCharge||"Partenaire"}</Badge></td>
+                <td className="px-4 py-3"><Badge color="bg-emerald-100 text-emerald-700">{r.typeCharge||"Partenaire"}</Badge></td>
                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{r.partenaire||"—"}</td>
                 <td className="px-4 py-3 text-sm text-right font-medium text-emerald-600">{r.kWh} kWh</td>
                 <td className="px-4 py-3 text-sm text-right font-medium">{fmt(r.cout||0)}</td>
@@ -2816,7 +2816,7 @@ const RechargePage = ({recharges, vehicles, drivers, onAdd, onUpdate, onDelete})
 
       {showModal&&(
         <Modal title={editItem?"Modifier recharge":"Ajouter recharge"} onClose={()=>setShowModal(false)}
-          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm">{editItem?"Enregistrer":"Ajouter"}</button></>}>
+          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm">{editItem?"Enregistrer":"Ajouter"}</button></>}>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2"><Input label="Date" value={form.date} onChange={v=>setForm({...form,date:v})} type="date"/></div>
             <Select label="Vehicule" value={form.vh} onChange={v=>setForm({...form,vh:v})} options={[{value:"",label:"-- Choisir --"},...vehicles.map(v=>({value:v.id,label:v.immat}))]}/>
@@ -2864,7 +2864,7 @@ const MaintenancePage = ({maintenances, vehicles, onAdd, onUpdate, onDelete}) =>
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Maintenance</h1>
-        <button onClick={()=>{setForm(emptyForm);setEditItem(null);setShowModal(true);}} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">+ Ajouter</button>
+        <button onClick={()=>{setForm(emptyForm);setEditItem(null);setShowModal(true);}} className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700">+ Ajouter</button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard label="Planifiees" value={maintenances.filter(m=>m.status==="Planifiee"||m.status==="Planifiée").length.toString()} color="text-blue-600"/>
@@ -2903,7 +2903,7 @@ const MaintenancePage = ({maintenances, vehicles, onAdd, onUpdate, onDelete}) =>
 
       {showModal&&(
         <Modal title={editItem?"Modifier maintenance":"Ajouter maintenance"} onClose={()=>setShowModal(false)}
-          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm">{editItem?"Enregistrer":"Ajouter"}</button></>}>
+          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm">{editItem?"Enregistrer":"Ajouter"}</button></>}>
           <div className="grid grid-cols-2 gap-3">
             <Select label="Vehicule" value={form.vh} onChange={v=>setForm({...form,vh:v})} options={[{value:"",label:"-- Choisir --"},...vehicles.map(v=>({value:v.id,label:v.immat}))]}/>
             <Select label="Type" value={form.type} onChange={v=>setForm({...form,type:v})} options={["Preventive","Corrective","Inspection"]}/>
@@ -3044,7 +3044,7 @@ const SitesPage = ({sites, vehicles, drivers, onAdd, onUpdate, onDelete}) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Sites et Comptes Business</h1>
-        <button onClick={()=>{setForm(emptyForm);setEditItem(null);setShowModal(true);}} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">+ Ajouter site</button>
+        <button onClick={()=>{setForm(emptyForm);setEditItem(null);setShowModal(true);}} className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700">+ Ajouter site</button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {displaySites.map(site=>{
@@ -3073,7 +3073,7 @@ const SitesPage = ({sites, vehicles, drivers, onAdd, onUpdate, onDelete}) => {
 
       {showModal&&(
         <Modal title={editItem?"Modifier site":"Ajouter site"} onClose={()=>setShowModal(false)}
-          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm">{editItem?"Enregistrer":"Ajouter"}</button></>}>
+          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm">{editItem?"Enregistrer":"Ajouter"}</button></>}>
           <Input label="Nom du site" value={form.name} onChange={v=>setForm({...form,name:v})} required/>
           <Input label="Ville" value={form.ville} onChange={v=>setForm({...form,ville:v})} required/>
           <Input label="Zone" value={form.zone} onChange={v=>setForm({...form,zone:v})}/>
@@ -3141,7 +3141,7 @@ const RbacPage = ({currentUser}) => {
     setPwdForm({current:"",next:"",confirm:""});
   };
 
-  const roleColor = (r) => ({"admin":"bg-red-100 text-red-700","ops":"bg-blue-100 text-blue-700","finance":"bg-emerald-100 text-emerald-700","supervisor":"bg-violet-100 text-violet-700","dispatcher":"bg-amber-100 text-amber-700"}[r]||"bg-slate-100 text-slate-600 dark:text-slate-400");
+  const roleColor = (r) => ({"admin":"bg-red-100 text-red-700","ops":"bg-emerald-100 text-emerald-700","finance":"bg-emerald-100 text-emerald-700","supervisor":"bg-violet-100 text-violet-700","dispatcher":"bg-amber-100 text-amber-700"}[r]||"bg-slate-100 text-slate-600 dark:text-slate-400");
   const roleLabel = (r) => ({"admin":"Administrateur","ops":"Ops Manager","finance":"Finance","supervisor":"Superviseur Logistique","dispatcher":"Dispatcher"}[r]||r);
 
   return (
@@ -3170,7 +3170,7 @@ const RbacPage = ({currentUser}) => {
             <p className="text-xs text-slate-400 mt-0.5">Seul l administrateur peut creer et modifier les comptes</p>
           </div>
           {currentUser?.role==="admin"&&(
-            <button onClick={()=>{setShowAddUser(true);setUserError("");setUserSuccess("");}} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
+            <button onClick={()=>{setShowAddUser(true);setUserError("");setUserSuccess("");}} className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700">
               + Creer un compte
             </button>
           )}
@@ -3198,7 +3198,7 @@ const RbacPage = ({currentUser}) => {
                   </button>
                 )}
                 {currentUser?.role==="admin"&&u.id!==currentUser?.id?(
-                  <select value={u.role} onChange={e=>handleRoleChange(u.id,e.target.value)} className="text-xs border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select value={u.role} onChange={e=>handleRoleChange(u.id,e.target.value)} className="text-xs border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     <option value="admin">Administrateur</option>
                     <option value="ops">Ops Manager</option>
                     <option value="finance">Finance</option>
@@ -3222,7 +3222,7 @@ const RbacPage = ({currentUser}) => {
       {/* MODAL CREER COMPTE */}
       {showAddUser&&(
         <Modal title="Creer un nouveau compte" onClose={()=>setShowAddUser(false)}
-          footer={<><button onClick={()=>setShowAddUser(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleAddUser} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium">Envoyer invitation</button></>}>
+          footer={<><button onClick={()=>setShowAddUser(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleAddUser} className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium">Envoyer invitation</button></>}>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700 mb-2">
             Un lien sera genere pour que l utilisateur definisse son propre mot de passe.
           </div>
@@ -3711,16 +3711,16 @@ const App = () => {
   return (
     <><div className="min-h-screen bg-slate-100 flex">
       {sideOpen&&<div className="fixed inset-0 bg-black/50 z-20 lg:hidden" onClick={()=>setSideOpen(false)}/>}
-      <aside className={(sideOpen?"w-64 translate-x-0":"-translate-x-full lg:translate-x-0 lg:w-20")+" fixed lg:relative z-30 h-full lg:h-auto bg-slate-900 text-white flex flex-col transition-all duration-300 flex-shrink-0"}>
+      <aside className={(sideOpen?"w-64 translate-x-0":"-translate-x-full lg:translate-x-0 lg:w-20")+" fixed lg:relative z-30 h-full lg:h-auto bg-slate-950 text-white flex flex-col transition-all duration-300 flex-shrink-0"}>
         <div className="p-4 flex items-center gap-3 border-b border-slate-700/50">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center flex-shrink-0">
             <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
           </div>
           {sideOpen&&<div><div className="font-bold text-sm">Easy by Saver</div><div className="text-xs text-slate-400">Gestion de flotte VTC</div></div>}
         </div>
         <nav className="flex-1 py-4 overflow-y-auto">
           {getNav(user?.role).map(n=>(
-            <button key={n.id} onClick={()=>{setPage(n.id);if(window.innerWidth<1024)setSideOpen(false);}} className={"w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors "+(page===n.id?"bg-blue-600/20 text-blue-400 border-r-2 border-blue-400":"text-slate-400 hover:text-white hover:bg-slate-800")}>
+            <button key={n.id} onClick={()=>{setPage(n.id);if(window.innerWidth<1024)setSideOpen(false);}} className={"w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors "+(page===n.id?"bg-emerald-600/20 text-emerald-400 border-r-2 border-emerald-400":"text-slate-400 hover:text-white hover:bg-slate-800")}>
               <NavIcon d={n.icon} className="w-5 h-5 flex-shrink-0"/>
               {sideOpen&&<span>{n.label}</span>}
             </button>
@@ -3755,7 +3755,7 @@ const App = () => {
             <div className="hidden sm:flex items-center gap-2">
               <div className="h-8 w-px bg-slate-200"/>
               <div className="text-sm text-slate-500 dark:text-slate-400">{user.name}</div>
-              <Badge color={{"admin":"bg-red-100 text-red-700","ops":"bg-blue-100 text-blue-700","finance":"bg-emerald-100 text-emerald-700","supervisor":"bg-violet-100 text-violet-700","dispatcher":"bg-amber-100 text-amber-700"}[user.role]||"bg-slate-100 text-slate-600 dark:text-slate-400"}>{ROLE_LABELS[user.role]||user.role}</Badge>
+              <Badge color={{"admin":"bg-red-100 text-red-700","ops":"bg-emerald-100 text-emerald-700","finance":"bg-emerald-100 text-emerald-700","supervisor":"bg-violet-100 text-violet-700","dispatcher":"bg-amber-100 text-amber-700"}[user.role]||"bg-slate-100 text-slate-600 dark:text-slate-400"}>{ROLE_LABELS[user.role]||user.role}</Badge>
             </div>
           </div>
         </header>
@@ -3774,19 +3774,19 @@ const App = () => {
           <div className="space-y-3">
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Mot de passe actuel</label>
-              <input type="password" value={pwdForm.current} onChange={e=>setPwdForm({...pwdForm,current:e.target.value})} className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="••••••••"/>
+              <input type="password" value={pwdForm.current} onChange={e=>setPwdForm({...pwdForm,current:e.target.value})} className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="••••••••"/>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nouveau mot de passe</label>
-              <input type="password" value={pwdForm.next} onChange={e=>setPwdForm({...pwdForm,next:e.target.value})} className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Minimum 6 caracteres"/>
+              <input type="password" value={pwdForm.next} onChange={e=>setPwdForm({...pwdForm,next:e.target.value})} className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Minimum 6 caracteres"/>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Confirmer le nouveau mot de passe</label>
-              <input type="password" value={pwdForm.confirm} onChange={e=>setPwdForm({...pwdForm,confirm:e.target.value})} onKeyDown={e=>e.key==="Enter"&&handleChangePwd()} className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="••••••••"/>
+              <input type="password" value={pwdForm.confirm} onChange={e=>setPwdForm({...pwdForm,confirm:e.target.value})} onKeyDown={e=>e.key==="Enter"&&handleChangePwd()} className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="••••••••"/>
             </div>
             <div className="flex gap-3 pt-2">
               <button onClick={()=>setShowPwdModal(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button>
-              <button onClick={handleChangePwd} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700">Modifier</button>
+              <button onClick={handleChangePwd} className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700">Modifier</button>
             </div>
           </div>
         </div>
