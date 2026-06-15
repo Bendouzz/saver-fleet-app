@@ -172,6 +172,12 @@ const mapVehicle = (r) => ({
   carteGriseProprietaire: r.cartegriseproprietaire || r.carteGriseProprietaire || "",
   numeroChassis: r.numerochassis || r.numeroChassis || r.vin_number || "",
   binome: r.binome || [],
+  // Photos
+  photosExt: Array.isArray(r.photos_ext) ? r.photos_ext : (r.photos_ext ? JSON.parse(r.photos_ext) : []),
+  photosInt: Array.isArray(r.photos_int) ? r.photos_int : (r.photos_int ? JSON.parse(r.photos_int) : []),
+  photoCarteGrise: r.photo_carte_grise || null,
+  photoVisite: r.photo_visite || null,
+  photoAssurance: r.photo_assurance || null,
 });
 
 const mapDriver = (r) => ({
@@ -232,6 +238,11 @@ const mapDriver = (r) => ({
   pieceExpiration: r.id_card_expiry_date || r.pieceExpiration || "",
   pieceType: r.piecetype || r.pieceType || "CNI",
   pieceDelivrance: r.piecedelivrance || r.id_card_issue_date || r.pieceDelivrance || "",
+  photoFace: r.photo_face || null,
+  photosProfil: Array.isArray(r.photos_profil) ? r.photos_profil : (r.photos_profil ? JSON.parse(r.photos_profil) : []),
+  photoPleinPied: r.photo_plein_pied || null,
+  photoPermis: r.photo_permis || null,
+  photoPiece: r.photo_piece || null,
 });
 
 const mapShift = (r) => ({
