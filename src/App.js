@@ -953,7 +953,33 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
     .filter(v=>filterStatus==="all"||v.status===filterStatus);
 
   const openAdd = () => { setForm(emptyForm); setEditItem(null); setShowModal(true); };
-  const openEdit = (v) => { setForm({...emptyForm,...v}); setEditItem(v); setShowModal(true); };
+  const openEdit = (v) => { 
+    setForm({
+      ...emptyForm, ...v,
+      photoCarteGrise: v.photo_carte_grise || v.photoCarteGrise || null,
+      photoVisite: v.photo_visite || v.photoVisite || null,
+      photoAssurance: v.photo_assurance || v.photoAssurance || null,
+      photosExt: v.photos_ext || v.photosExt || [],
+      photosInt: v.photos_int || v.photosInt || [],
+      typeContrat: v.typecontrat || v.typeContrat || "Interne SAVER",
+      typeService: v.service_type || v.typeService || "VTC",
+      classesService: v.service_class || v.classesService || [],
+      capaciteBatterie: v.battery_capacity_kwh || v.capaciteBatterie || 0,
+      vin: v.vin_number || v.vin || "",
+      numeroChassis: v.numerochassis || v.numeroChassis || "",
+      carteGriseNum: v.cartegrisenum || v.carteGriseNum || "",
+      carteGriseDate: v.cartegrisedate || v.carteGriseDate || "",
+      carteGriseProprietaire: v.cartegriseproprietaire || v.carteGriseProprietaire || "",
+      assuranceNum: v.assurancenum || v.assuranceNum || "",
+      assuranceDebut: v.assurancedebut || v.assuranceDebut || "",
+      assuranceFin: v.assurancefin || v.assuranceFin || "",
+      visiteDate: v.technical_visit_expiry || v.visiteDate || "",
+      couleur: v.vehicle_color || v.couleur || "",
+      annee: v.vehicle_year || v.annee || new Date().getFullYear(),
+    }); 
+    setEditItem(v); 
+    setShowModal(true); 
+  };
 
   const getAlerts = (v) => {
     const alerts = [];
