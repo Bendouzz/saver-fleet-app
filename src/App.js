@@ -443,7 +443,10 @@ const uploadToSupabase = async (file, bucket, folder) => {
 const PhotoUpload = ({ label, bucket, folder, value, onChange, multiple = false, hint = "" }) => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
-  const urls = value ? (Array.isArray(value) ? value : [value]).filter(Boolean) : [];
+  const [localUrls, setLocalUrls] = useState(
+    value ? (Array.isArray(value) ? value : [value]).filter(Boolean) : []
+  );
+  const urls = localUrls;
 
   const handleFiles = async (e) => {
     const files = Array.from(e.target.files);
@@ -451,14 +454,23 @@ const PhotoUpload = ({ label, bucket, folder, value, onChange, multiple = false,
     setUploading(true);
     setError("");
     try {
-      const uploaded = await Promise.all(files.map(f => uploadToSupabase(f, bucket, folder)));
-      if (multiple) {
-        onChange([...urls, ...uploaded]);
-      } else {
-        onChange(uploaded[0]);
+      const uploaded = [];
+      for(const file of files) {
+        const url = await uploadToSupabase(file, bucket, folder);
+        uploaded.push(url);
+        console.log("Photo uploadee:", url);
       }
+      let newUrls;
+      if (multiple) {
+        newUrls = [...localUrls, ...uploaded];
+      } else {
+        newUrls = [uploaded[0]];
+      }
+      setLocalUrls(newUrls);
+      onChange(multiple ? newUrls : newUrls[0]);
     } catch (err) {
-      setError("Erreur upload : " + (err.message || "Verifiez le bucket Supabase Storage"));
+      console.error("Erreur upload:", err);
+      setError("Erreur: " + err.message);
     }
     setUploading(false);
     e.target.value = "";
@@ -977,6 +989,12 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
 
   const emptyForm = {immat:"",marque:"",modele:"",couleur:"",annee:new Date().getFullYear(),site:1,autonomie:400,km:0,soc:100,status:"En exploitation",typeContrat:"Interne SAVER",typeService:"VTC",classesService:[],vin:"",numeroChassis:"",capaciteBatterie:0,carteGriseNum:"",carteGriseDate:"",carteGriseProprietaire:"",visiteDate:"",assuranceNum:"",assuranceDebut:"",assuranceFin:"",binome:[]};
   const [form, setForm] = useState(emptyForm);
+  const photoRefs = React.useRef({});
+
+  const updatePhoto = (key, value) => {
+    photoRefs.current[key] = value;
+    setForm(f => ({...f, [key]: value}));
+  };
 
   const sitesList = sites.length > 0 ? sites : [{id:1,name:"Abidjan"},{id:2,name:"Yamoussoukro"}];
   const filtered = vehicles
@@ -984,7 +1002,7 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
     .filter(v=>filterType==="all"||v.typeService===filterType)
     .filter(v=>filterStatus==="all"||v.status===filterStatus);
 
-  const openAdd = () => { setForm(emptyForm); setEditItem(null); setShowModal(true); };
+  const openAdd = () => { setForm(emptyForm); setEditItem(null); setShowModal(true); photoRefs.current = {}; };
   const openEdit = (v) => { 
     setForm({
       ...emptyForm, ...v,
@@ -1022,6 +1040,8 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
 
   const handleSave = async () => {
     if (!form.immat) return;
+    // Fusionner form + photoRefs pour ne pas perdre les URLs
+    const photos = photoRefs.current;
     const payload = {
       immat:form.immat||null, marque:form.marque||null, modele:form.modele||null,
       couleur:form.couleur||null, annee:form.annee||null,
@@ -1044,12 +1064,13 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
       assurancefin:form.assuranceFin||null,
       numerochassis:form.numeroChassis||null,
       binome:form.binome||[],
-      photo_carte_grise:form.photoCarteGrise||null,
-      photo_visite:form.photoVisite||null,
-      photo_assurance:form.photoAssurance||null,
-      photos_ext:form.photosExt||[],
-      photos_int:form.photosInt||[],
+      photo_carte_grise: photos.photoCarteGrise || form.photoCarteGrise || null,
+      photo_visite: photos.photoVisite || form.photoVisite || null,
+      photo_assurance: photos.photoAssurance || form.photoAssurance || null,
+      photos_ext: photos.photosExt || form.photosExt || [],
+      photos_int: photos.photosInt || form.photosInt || [],
     };
+    console.log("Payload photos:", payload.photo_carte_grise, payload.photos_ext);
     if (editItem) { await onUpdate(editItem.id, payload); }
     else { await onAdd({...payload, id:"VH-"+Date.now()}); }
     setShowModal(false);
@@ -1398,7 +1419,7 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
                 <Input label="Date immatriculation" value={form.carteGriseDate} onChange={v=>setForm({...form,carteGriseDate:v})} type="date"/>
                 <div className="col-span-2"><Input label="Proprietaire" value={form.carteGriseProprietaire} onChange={v=>setForm({...form,carteGriseProprietaire:v})}/></div>
                 <div className="col-span-2">
-                  <PhotoUpload label="Photo carte grise" bucket="vehicle-photos" folder={"cg/"+(form.immat||"new")} value={form.photoCarteGrise||""} onChange={url=>setForm(f=>({...f,photoCarteGrise:url}))} hint="Recto de la carte grise"/>
+                  <PhotoUpload label="Photo carte grise" bucket="vehicle-photos" folder={"cg/"+(form.immat||"new")} value={form.photoCarteGrise||""} onChange={url=>updatePhoto("photoCarteGrise", url)} hint="Recto de la carte grise"/>
                 </div>
               </div>
             </div>
@@ -1406,18 +1427,18 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
               <p className="text-xs font-semibold text-slate-500 uppercase mb-3">Visite technique et Assurance</p>
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2"><Input label="Expiration visite technique" value={form.visiteDate} onChange={v=>setForm({...form,visiteDate:v})} type="date" hint="(alerte 15j avant)"/></div>
-                <div className="col-span-2"><PhotoUpload label="Photo visite technique" bucket="vehicle-photos" folder={"visite/"+(form.immat||"new")} value={form.photoVisite||""} onChange={url=>setForm(f=>({...f,photoVisite:url}))}/></div>
+                <div className="col-span-2"><PhotoUpload label="Photo visite technique" bucket="vehicle-photos" folder={"visite/"+(form.immat||"new")} value={form.photoVisite||""} onChange={url=>updatePhoto("photoVisite", url)}/></div>
                 <Input label="N° Assurance" value={form.assuranceNum} onChange={v=>setForm({...form,assuranceNum:v})}/>
                 <Input label="Debut assurance" value={form.assuranceDebut} onChange={v=>setForm({...form,assuranceDebut:v})} type="date"/>
                 <div className="col-span-2"><Input label="Fin assurance" value={form.assuranceFin} onChange={v=>setForm({...form,assuranceFin:v})} type="date" hint="(alerte 7j avant)"/></div>
-                <div className="col-span-2"><PhotoUpload label="Photo assurance" bucket="vehicle-photos" folder={"assurance/"+(form.immat||"new")} value={form.photoAssurance||""} onChange={url=>setForm(f=>({...f,photoAssurance:url}))}/></div>
+                <div className="col-span-2"><PhotoUpload label="Photo assurance" bucket="vehicle-photos" folder={"assurance/"+(form.immat||"new")} value={form.photoAssurance||""} onChange={url=>updatePhoto("photoAssurance", url)}/></div>
               </div>
             </div>
             <div className="border-t border-slate-100 pt-4">
               <p className="text-xs font-semibold text-slate-500 uppercase mb-3">Photos du vehicule</p>
               <div className="space-y-3">
-                <PhotoUpload label="Photos exterieures (4 angles)" bucket="vehicle-photos" folder={"ext/"+(form.immat||"new")} value={form.photosExt||[]} onChange={url=>setForm(f=>({...f,photosExt:url}))} multiple hint="Avant, arriere, cote gauche, cote droit"/>
-                <PhotoUpload label="Photos interieur" bucket="vehicle-photos" folder={"int/"+(form.immat||"new")} value={form.photosInt||[]} onChange={url=>setForm(f=>({...f,photosInt:url}))} multiple hint="Habitacle, tableau de bord, sieges"/>
+                <PhotoUpload label="Photos exterieures (4 angles)" bucket="vehicle-photos" folder={"ext/"+(form.immat||"new")} value={form.photosExt||[]} onChange={url=>updatePhoto("photosExt", url)} multiple hint="Avant, arriere, cote gauche, cote droit"/>
+                <PhotoUpload label="Photos interieur" bucket="vehicle-photos" folder={"int/"+(form.immat||"new")} value={form.photosInt||[]} onChange={url=>updatePhoto("photosInt", url)} multiple hint="Habitacle, tableau de bord, sieges"/>
               </div>
             </div>
           </div>
