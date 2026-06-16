@@ -1143,7 +1143,19 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
           <div className="bg-white rounded-xl border border-slate-200 p-5">
             <h3 className="font-semibold text-slate-900 mb-3">Classes de service</h3>
             <div className="flex flex-wrap gap-2">
-              {(v.classesService||[]).map(c=><span key={c} className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium border border-blue-200">{c}</span>)}
+              {(v.classesService||[]).map(c=><span key={c} className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium border border-emerald-200">{c}</span>)}
+            </div>
+          </div>
+        )}
+
+        {/* Photos */}
+        {([...(v.photosExt||[]), ...(v.photosInt||[]), v.photoCarteGrise, v.photoVisite, v.photoAssurance].filter(Boolean).length > 0) && (
+          <div className="bg-white rounded-xl border border-slate-200 p-5">
+            <h3 className="font-semibold text-slate-900 mb-3">Photos</h3>
+            <div className="grid grid-cols-3 gap-3">
+              {[...(v.photosExt||[]), ...(v.photosInt||[]), v.photoCarteGrise, v.photoVisite, v.photoAssurance].filter(Boolean).map((url,i)=>(
+                <img key={i} src={url} alt="" className="w-full h-24 object-cover rounded-xl border border-slate-200 cursor-pointer hover:opacity-90 transition-opacity" onClick={()=>window.open(url,"_blank")}/>
+              ))}
             </div>
           </div>
         )}
