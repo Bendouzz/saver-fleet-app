@@ -1398,7 +1398,7 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
                 <Input label="Date immatriculation" value={form.carteGriseDate} onChange={v=>setForm({...form,carteGriseDate:v})} type="date"/>
                 <div className="col-span-2"><Input label="Proprietaire" value={form.carteGriseProprietaire} onChange={v=>setForm({...form,carteGriseProprietaire:v})}/></div>
                 <div className="col-span-2">
-                  <PhotoUpload label="Photo carte grise" bucket="vehicle-photos" folder={"cg/"+(form.immat||"new")} value={form.photoCarteGrise||""} onChange={v=>setForm({...form,photoCarteGrise:v})} hint="Recto de la carte grise"/>
+                  <PhotoUpload label="Photo carte grise" bucket="vehicle-photos" folder={"cg/"+(form.immat||"new")} value={form.photoCarteGrise||""} onChange={url=>setForm(f=>({...f,photoCarteGrise:url}))} hint="Recto de la carte grise"/>
                 </div>
               </div>
             </div>
@@ -1406,18 +1406,18 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
               <p className="text-xs font-semibold text-slate-500 uppercase mb-3">Visite technique et Assurance</p>
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2"><Input label="Expiration visite technique" value={form.visiteDate} onChange={v=>setForm({...form,visiteDate:v})} type="date" hint="(alerte 15j avant)"/></div>
-                <div className="col-span-2"><PhotoUpload label="Photo visite technique" bucket="vehicle-photos" folder={"visite/"+(form.immat||"new")} value={form.photoVisite||""} onChange={v=>setForm({...form,photoVisite:v})}/></div>
+                <div className="col-span-2"><PhotoUpload label="Photo visite technique" bucket="vehicle-photos" folder={"visite/"+(form.immat||"new")} value={form.photoVisite||""} onChange={url=>setForm(f=>({...f,photoVisite:url}))}/></div>
                 <Input label="N° Assurance" value={form.assuranceNum} onChange={v=>setForm({...form,assuranceNum:v})}/>
                 <Input label="Debut assurance" value={form.assuranceDebut} onChange={v=>setForm({...form,assuranceDebut:v})} type="date"/>
                 <div className="col-span-2"><Input label="Fin assurance" value={form.assuranceFin} onChange={v=>setForm({...form,assuranceFin:v})} type="date" hint="(alerte 7j avant)"/></div>
-                <div className="col-span-2"><PhotoUpload label="Photo assurance" bucket="vehicle-photos" folder={"assurance/"+(form.immat||"new")} value={form.photoAssurance||""} onChange={v=>setForm({...form,photoAssurance:v})}/></div>
+                <div className="col-span-2"><PhotoUpload label="Photo assurance" bucket="vehicle-photos" folder={"assurance/"+(form.immat||"new")} value={form.photoAssurance||""} onChange={url=>setForm(f=>({...f,photoAssurance:url}))}/></div>
               </div>
             </div>
             <div className="border-t border-slate-100 pt-4">
               <p className="text-xs font-semibold text-slate-500 uppercase mb-3">Photos du vehicule</p>
               <div className="space-y-3">
-                <PhotoUpload label="Photos exterieures (4 angles)" bucket="vehicle-photos" folder={"ext/"+(form.immat||"new")} value={form.photosExt||[]} onChange={v=>setForm({...form,photosExt:v})} multiple hint="Avant, arriere, cote gauche, cote droit"/>
-                <PhotoUpload label="Photos interieur" bucket="vehicle-photos" folder={"int/"+(form.immat||"new")} value={form.photosInt||[]} onChange={v=>setForm({...form,photosInt:v})} multiple hint="Habitacle, tableau de bord, sieges"/>
+                <PhotoUpload label="Photos exterieures (4 angles)" bucket="vehicle-photos" folder={"ext/"+(form.immat||"new")} value={form.photosExt||[]} onChange={url=>setForm(f=>({...f,photosExt:url}))} multiple hint="Avant, arriere, cote gauche, cote droit"/>
+                <PhotoUpload label="Photos interieur" bucket="vehicle-photos" folder={"int/"+(form.immat||"new")} value={form.photosInt||[]} onChange={url=>setForm(f=>({...f,photosInt:url}))} multiple hint="Habitacle, tableau de bord, sieges"/>
               </div>
             </div>
           </div>
@@ -1800,7 +1800,7 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
                   <Input label="Type" value={form.permisType} onChange={v=>setForm({...form,permisType:v})} placeholder="B, D..."/>
                   <Input label="Date delivrance" value={form.permisDelivrance} onChange={v=>setForm({...form,permisDelivrance:v})} type="date"/>
                   <Input label="Expiration" value={form.permisExpiration} onChange={v=>setForm({...form,permisExpiration:v})} type="date" hint="(alerte 30j)"/>
-                  <div className="col-span-2"><PhotoUpload label="Photo permis" bucket="driver-photos" folder={"permis/"+(form.nom||"new")} value={form.photoPermis||""} onChange={v=>setForm({...form,photoPermis:v})}/></div>
+                  <div className="col-span-2"><PhotoUpload label="Photo permis" bucket="driver-photos" folder={"permis/"+(form.nom||"new")} value={form.photoPermis||""} onChange={url=>setForm(f=>({...f,photoPermis:url}))}/></div>
                 </div>
               </div>
               <div><p className="text-xs font-semibold text-slate-500 uppercase mb-3">Piece d identite</p>
@@ -1809,16 +1809,16 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
                   <Input label="N° Piece" value={form.pieceNum} onChange={v=>setForm({...form,pieceNum:v})}/>
                   <Input label="Date delivrance" value={form.pieceDelivrance} onChange={v=>setForm({...form,pieceDelivrance:v})} type="date"/>
                   <Input label="Expiration" value={form.pieceExpiration} onChange={v=>setForm({...form,pieceExpiration:v})} type="date" hint="(alerte 30j)"/>
-                  <div className="col-span-2"><PhotoUpload label="Photo piece ID" bucket="driver-photos" folder={"piece/"+(form.nom||"new")} value={form.photoPiece||""} onChange={v=>setForm({...form,photoPiece:v})}/></div>
+                  <div className="col-span-2"><PhotoUpload label="Photo piece ID" bucket="driver-photos" folder={"piece/"+(form.nom||"new")} value={form.photoPiece||""} onChange={url=>setForm(f=>({...f,photoPiece:url}))}/></div>
                 </div>
               </div>
             </div>
           )}
           {activeTab==="photos"&&(
             <div className="space-y-4">
-              <PhotoUpload label="Photo face (portrait)" bucket="driver-photos" folder={"portrait/"+(form.nom||"new")} value={form.photoFace||""} onChange={v=>setForm({...form,photoFace:v})} hint="Photo de face, fond neutre"/>
-              <PhotoUpload label="Photos profil" bucket="driver-photos" folder={"profil/"+(form.nom||"new")} value={form.photosProfil||[]} onChange={v=>setForm({...form,photosProfil:v})} multiple/>
-              <PhotoUpload label="Photo plein pied" bucket="driver-photos" folder={"fullbody/"+(form.nom||"new")} value={form.photoPleinPied||""} onChange={v=>setForm({...form,photoPleinPied:v})}/>
+              <PhotoUpload label="Photo face (portrait)" bucket="driver-photos" folder={"portrait/"+(form.nom||"new")} value={form.photoFace||""} onChange={url=>setForm(f=>({...f,photoFace:url}))} hint="Photo de face, fond neutre"/>
+              <PhotoUpload label="Photos profil" bucket="driver-photos" folder={"profil/"+(form.nom||"new")} value={form.photosProfil||[]} onChange={url=>setForm(f=>({...f,photosProfil:url}))} multiple/>
+              <PhotoUpload label="Photo plein pied" bucket="driver-photos" folder={"fullbody/"+(form.nom||"new")} value={form.photoPleinPied||""} onChange={url=>setForm(f=>({...f,photoPleinPied:url}))}/>
             </div>
           )}
           {activeTab==="performance"&&(
