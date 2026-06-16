@@ -410,9 +410,6 @@ const NavIcon = ({d, className}) => <svg className={className} fill="none" viewB
 // ============================================================
 // PHOTO UPLOAD COMPONENT
 // ============================================================
-const SUPABASE_URL = "https://tgmzrhldehltqsloylqs.supabase.co";
-const SUPABASE_KEY = "sb_publishable_LURLrl4BHKhrC-sWyf2SPw_p45JMMgS";
-
 const uploadToSupabase = async (file, bucket, folder) => {
   const ext = file.name.split(".").pop().toLowerCase();
   const fileName = `${Date.now()}-${Math.random().toString(36).substring(2,8)}.${ext}`;
