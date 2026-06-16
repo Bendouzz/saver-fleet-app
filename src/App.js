@@ -410,17 +410,13 @@ const NavIcon = ({d, className}) => <svg className={className} fill="none" viewB
 // ============================================================
 // PHOTO UPLOAD COMPONENT
 // ============================================================
+const SUPABASE_URL = "https://tgmzrhldehltqsloylqs.supabase.co";
+const SUPABASE_KEY = "sb_publishable_LURLrl4BHKhrC-sWyf2SPw_p45JMMgS";
+
 const uploadToSupabase = async (file, bucket, folder) => {
   const ext = file.name.split(".").pop().toLowerCase();
   const fileName = `${Date.now()}-${Math.random().toString(36).substring(2,8)}.${ext}`;
   const path = folder ? `${folder}/${fileName}` : fileName;
-  
-  // Upload avec fetch direct pour eviter les problemes CORS du SDK
-  const SUPABASE_URL = "https://tgmzrhldehltqsloylqs.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_LURLrl4BHKhrC-sWyf2SPw_p45JMMgS";
-  
-  const formData = new FormData();
-  formData.append("", file);
   
   const response = await fetch(
     `${SUPABASE_URL}/storage/v1/object/${bucket}/${path}`,
@@ -429,6 +425,8 @@ const uploadToSupabase = async (file, bucket, folder) => {
       headers: {
         "apikey": SUPABASE_KEY,
         "Authorization": `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": file.type || "application/octet-stream",
+        "x-upsert": "true",
       },
       body: file,
     }
@@ -439,7 +437,10 @@ const uploadToSupabase = async (file, bucket, folder) => {
     throw new Error(`Upload failed: ${response.status} - ${errText}`);
   }
   
-  return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
+  // Construire l URL publique directement
+  const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
+  console.log("Photo uploadee:", publicUrl);
+  return publicUrl;
 };
 
 const PhotoUpload = ({ label, bucket, folder, value, onChange, multiple = false, hint = "" }) => {
