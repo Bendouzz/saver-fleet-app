@@ -3338,7 +3338,21 @@ const ROLE_LABELS = {
 // APP PRINCIPAL
 // ============================================================
 const App = () => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem("saver_user");
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
+
+  // Sauvegarder la session a chaque changement d utilisateur
+  useEffect(() => {
+    if(user) {
+      localStorage.setItem("saver_user", JSON.stringify(user));
+    } else {
+      localStorage.removeItem("saver_user");
+    }
+  }, [user]);
   const [page, setPage] = useState("dashboard");
   const [sideOpen, setSideOpen] = useState(true);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("darkMode") === "true");
