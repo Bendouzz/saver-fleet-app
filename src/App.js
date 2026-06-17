@@ -3353,7 +3353,12 @@ const App = () => {
       localStorage.removeItem("saver_user");
     }
   }, [user]);
-  const [page, setPage] = useState("dashboard");
+  const [page, setPage] = useState(() => localStorage.getItem("saver_page") || "dashboard");
+
+  // Sauvegarder la page actuelle a chaque changement
+  useEffect(() => {
+    localStorage.setItem("saver_page", page);
+  }, [page]);
   const [sideOpen, setSideOpen] = useState(true);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("darkMode") === "true");
   const [showPwdModal, setShowPwdModal] = useState(false);
@@ -3802,7 +3807,7 @@ const App = () => {
             <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
             {sideOpen&&"Changer mot de passe"}
           </button>
-          <button onClick={()=>setUser(null)} className="w-full flex items-center gap-2 text-sm text-slate-400 hover:text-red-400 transition-colors">
+          <button onClick={()=>{setUser(null);setPage("dashboard");}} className="w-full flex items-center gap-2 text-sm text-slate-400 hover:text-red-400 transition-colors">
             <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
             {sideOpen&&"Deconnexion"}
           </button>
