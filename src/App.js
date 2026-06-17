@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import * as XLSX from "xlsx";
 import { createClient } from "@supabase/supabase-js";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
@@ -989,10 +989,11 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
 
   const emptyForm = {immat:"",marque:"",modele:"",couleur:"",annee:new Date().getFullYear(),site:1,autonomie:400,km:0,soc:100,status:"En exploitation",typeContrat:"Interne SAVER",typeService:"VTC",classesService:[],vin:"",numeroChassis:"",capaciteBatterie:0,carteGriseNum:"",carteGriseDate:"",carteGriseProprietaire:"",visiteDate:"",assuranceNum:"",assuranceDebut:"",assuranceFin:"",binome:[]};
   const [form, setForm] = useState(emptyForm);
-  const photoRefs = React.useRef({});
+  const photoRefs = useRef({});
 
   const updatePhoto = (key, value) => {
     photoRefs.current[key] = value;
+    console.log("updatePhoto:", key, value);
     setForm(f => ({...f, [key]: value}));
   };
 
@@ -1190,17 +1191,6 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
           </div>
         )}
 
-        {/* Photos */}
-        {([...(v.photosExt||[]), ...(v.photosInt||[]), v.photoCarteGrise, v.photoVisite, v.photoAssurance].filter(Boolean).length > 0) && (
-          <div className="bg-white rounded-xl border border-slate-200 p-5">
-            <h3 className="font-semibold text-slate-900 mb-3">Photos</h3>
-            <div className="grid grid-cols-3 gap-3">
-              {[...(v.photosExt||[]), ...(v.photosInt||[]), v.photoCarteGrise, v.photoVisite, v.photoAssurance].filter(Boolean).map((url,i)=>(
-                <img key={i} src={url} alt="" className="w-full h-24 object-cover rounded-xl border border-slate-200 cursor-pointer hover:opacity-90 transition-opacity" onClick={()=>window.open(url,"_blank")}/>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     );
   }
@@ -1419,7 +1409,6 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
                 <Input label="Date immatriculation" value={form.carteGriseDate} onChange={v=>setForm({...form,carteGriseDate:v})} type="date"/>
                 <div className="col-span-2"><Input label="Proprietaire" value={form.carteGriseProprietaire} onChange={v=>setForm({...form,carteGriseProprietaire:v})}/></div>
                 <div className="col-span-2">
-                  <PhotoUpload label="Photo carte grise" bucket="vehicle-photos" folder={"cg/"+(form.immat||"new")} value={form.photoCarteGrise||""} onChange={url=>updatePhoto("photoCarteGrise", url)} hint="Recto de la carte grise"/>
                 </div>
               </div>
             </div>
@@ -1427,18 +1416,9 @@ const VehiculesPage = ({vehicles, onAdd, onUpdate, onDelete, sites}) => {
               <p className="text-xs font-semibold text-slate-500 uppercase mb-3">Visite technique et Assurance</p>
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2"><Input label="Expiration visite technique" value={form.visiteDate} onChange={v=>setForm({...form,visiteDate:v})} type="date" hint="(alerte 15j avant)"/></div>
-                <div className="col-span-2"><PhotoUpload label="Photo visite technique" bucket="vehicle-photos" folder={"visite/"+(form.immat||"new")} value={form.photoVisite||""} onChange={url=>updatePhoto("photoVisite", url)}/></div>
                 <Input label="N° Assurance" value={form.assuranceNum} onChange={v=>setForm({...form,assuranceNum:v})}/>
                 <Input label="Debut assurance" value={form.assuranceDebut} onChange={v=>setForm({...form,assuranceDebut:v})} type="date"/>
                 <div className="col-span-2"><Input label="Fin assurance" value={form.assuranceFin} onChange={v=>setForm({...form,assuranceFin:v})} type="date" hint="(alerte 7j avant)"/></div>
-                <div className="col-span-2"><PhotoUpload label="Photo assurance" bucket="vehicle-photos" folder={"assurance/"+(form.immat||"new")} value={form.photoAssurance||""} onChange={url=>updatePhoto("photoAssurance", url)}/></div>
-              </div>
-            </div>
-            <div className="border-t border-slate-100 pt-4">
-              <p className="text-xs font-semibold text-slate-500 uppercase mb-3">Photos du vehicule</p>
-              <div className="space-y-3">
-                <PhotoUpload label="Photos exterieures (4 angles)" bucket="vehicle-photos" folder={"ext/"+(form.immat||"new")} value={form.photosExt||[]} onChange={url=>updatePhoto("photosExt", url)} multiple hint="Avant, arriere, cote gauche, cote droit"/>
-                <PhotoUpload label="Photos interieur" bucket="vehicle-photos" folder={"int/"+(form.immat||"new")} value={form.photosInt||[]} onChange={url=>updatePhoto("photosInt", url)} multiple hint="Habitacle, tableau de bord, sieges"/>
               </div>
             </div>
           </div>
@@ -1540,7 +1520,7 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
     setShowModal(false);
   };
 
-  const tabs = [{id:"profil",label:"Profil"},{id:"kyc",label:"KYC"},{id:"photos",label:"Photos"},{id:"performance",label:"Perf."},{id:"creance",label:"Creance"}];
+  const tabs = [{id:"profil",label:"Profil"},{id:"kyc",label:"KYC"},{id:"performance",label:"Perf."},{id:"creance",label:"Creance"}];
 
   const shiftColors = {"A":"bg-emerald-100 text-emerald-700","B":"bg-violet-100 text-violet-700","C":"bg-slate-100 text-slate-600"};
 
@@ -1640,17 +1620,7 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
                 </div>
               </div>
             )}
-            {activeTab==="photos"&&(
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {[d.photo_face, d.photo_plein_pied, ...(d.photos_profil||[])].filter(Boolean).map((url,i)=>(
-                  <img key={i} src={url} alt="" className="w-full h-32 object-cover rounded-xl border border-slate-200 cursor-pointer hover:opacity-90" onClick={()=>window.open(url,"_blank")}/>
-                ))}
-                {![d.photo_face, d.photo_plein_pied, ...(d.photos_profil||[])].filter(Boolean).length&&(
-                  <div className="col-span-3 text-center text-slate-400 py-8">Aucune photo</div>
-                )}
-              </div>
-            )}
-            {activeTab==="performance"&&(
+                        {activeTab==="performance"&&(
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {[["Note Yango",d.noteYango||d.yango_score||"—","text-amber-500","/5"],["KPI Interne",(d.kpi||0)+"%","text-blue-600",""],["Courses",(d.courses||0).toLocaleString(),"text-slate-700",""],["CA",fmt(d.ca||0),"text-emerald-600",""],["Penalites",fmt(d.pen||0),"text-red-500",""],["Avance",fmt(d.avance||0),"text-amber-600",""]].map(([l,val,color,suffix])=>(
                   <div key={l} className="bg-slate-50 rounded-xl p-4 text-center">
@@ -1821,7 +1791,6 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
                   <Input label="Type" value={form.permisType} onChange={v=>setForm({...form,permisType:v})} placeholder="B, D..."/>
                   <Input label="Date delivrance" value={form.permisDelivrance} onChange={v=>setForm({...form,permisDelivrance:v})} type="date"/>
                   <Input label="Expiration" value={form.permisExpiration} onChange={v=>setForm({...form,permisExpiration:v})} type="date" hint="(alerte 30j)"/>
-                  <div className="col-span-2"><PhotoUpload label="Photo permis" bucket="driver-photos" folder={"permis/"+(form.nom||"new")} value={form.photoPermis||""} onChange={url=>setForm(f=>({...f,photoPermis:url}))}/></div>
                 </div>
               </div>
               <div><p className="text-xs font-semibold text-slate-500 uppercase mb-3">Piece d identite</p>
@@ -1830,16 +1799,8 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
                   <Input label="N° Piece" value={form.pieceNum} onChange={v=>setForm({...form,pieceNum:v})}/>
                   <Input label="Date delivrance" value={form.pieceDelivrance} onChange={v=>setForm({...form,pieceDelivrance:v})} type="date"/>
                   <Input label="Expiration" value={form.pieceExpiration} onChange={v=>setForm({...form,pieceExpiration:v})} type="date" hint="(alerte 30j)"/>
-                  <div className="col-span-2"><PhotoUpload label="Photo piece ID" bucket="driver-photos" folder={"piece/"+(form.nom||"new")} value={form.photoPiece||""} onChange={url=>setForm(f=>({...f,photoPiece:url}))}/></div>
                 </div>
               </div>
-            </div>
-          )}
-          {activeTab==="photos"&&(
-            <div className="space-y-4">
-              <PhotoUpload label="Photo face (portrait)" bucket="driver-photos" folder={"portrait/"+(form.nom||"new")} value={form.photoFace||""} onChange={url=>setForm(f=>({...f,photoFace:url}))} hint="Photo de face, fond neutre"/>
-              <PhotoUpload label="Photos profil" bucket="driver-photos" folder={"profil/"+(form.nom||"new")} value={form.photosProfil||[]} onChange={url=>setForm(f=>({...f,photosProfil:url}))} multiple/>
-              <PhotoUpload label="Photo plein pied" bucket="driver-photos" folder={"fullbody/"+(form.nom||"new")} value={form.photoPleinPied||""} onChange={url=>setForm(f=>({...f,photoPleinPied:url}))}/>
             </div>
           )}
           {activeTab==="performance"&&(
@@ -2532,7 +2493,6 @@ const ReversementsPage = ({reversements, drivers, shifts, onAdd, onUpdate, onDel
             <Input label="Date" value={form.date} onChange={v=>{setForm({...form,date:v});findShift(form.ch,v);}} type="date"/>
             <Input label="Depenses autorisees (F CFA)" value={form.depensesAutorisees||0} onChange={v=>setForm({...form,depensesAutorisees:parseInt(v)||0})} type="number"/>
             <div className="col-span-2">
-              <PhotoUpload bucket="reversement-proofs" folder={"reversements/"+(form.date||"new")} label="Preuve de paiement (screenshot Wave / Orange Money)" value={form.preuve} onChange={v=>setForm({...form,preuve:v})}/>
             </div>
             <div className="col-span-2">
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Commentaire</label>
@@ -3531,6 +3491,11 @@ const App = () => {
       assurancefin: item.assurancefin || item.assuranceFin || base.assurancefin || null,
       numerochassis: item.numerochassis || item.numeroChassis || item.vin || base.numerochassis || null,
       typecontrat: item.typecontrat || item.typeContrat || base.typecontrat || "Interne SAVER",
+      photo_carte_grise: item.photo_carte_grise || item.photoCarteGrise || null,
+      photo_visite: item.photo_visite || item.photoVisite || null,
+      photo_assurance: item.photo_assurance || item.photoAssurance || null,
+      photos_ext: item.photos_ext || item.photosExt || [],
+      photos_int: item.photos_int || item.photosInt || [],
     };
     return await vh.update(id, merged);
   };
