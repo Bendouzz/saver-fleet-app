@@ -759,7 +759,7 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
   const totalDrivers = drivers.filter(d=>d.status==="Actif").length;
   const totalReverse = filteredReversements.filter(r=>r.status==="Validé"||r.status==="Valide").reduce((a,r)=>a+(r.montant||0),0);
   const reversementsEnAttente = filteredReversements.filter(r=>r.status==="En attente").length;
-  const totalRecette = filteredShifts.reduce((a,s)=>a+(s.recette||s.revenue_cash||0),0);
+  const totalRecette = filteredReversements.reduce((a,r)=>a+(r.montant||0),0);
   const ecarts = filteredReversements.filter(r=>(r.ecart||0)>0).length;
   // Top chauffeurs calcule depuis les VRAIES recettes des shifts (pas la colonne statique ca)
   const driverRevenues = drivers.map(d => {
@@ -843,9 +843,9 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-emerald-600 rounded-xl p-5 text-white">
-          <div className="text-xs font-medium opacity-80 uppercase tracking-wide mb-2">Recettes shifts (DD)</div>
+          <div className="text-xs font-medium opacity-80 uppercase tracking-wide mb-2">Recettes reversées</div>
           <div className="text-2xl font-bold">{fmtK(totalRecette)} F</div>
-          <div className="text-xs opacity-70 mt-1">{shiftEnCours} shifts en cours</div>
+          <div className="text-xs opacity-70 mt-1">{reversementsEnAttente} en attente · {ecarts} ecart(s)</div>
         </div>
         <div className="bg-slate-700 rounded-xl p-5 text-white">
           <div className="text-xs font-medium opacity-80 uppercase tracking-wide mb-2">Reversements valides</div>
