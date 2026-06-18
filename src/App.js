@@ -758,9 +758,16 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
   const shiftTermine = filteredShifts.filter(s=>s.status==="Terminé"||s.status==="Termine").length;
   const totalDrivers = drivers.filter(d=>d.status==="Actif").length;
   const totalReverse = filteredReversements.filter(r=>r.status==="Validé"||r.status==="Valide").reduce((a,r)=>a+(r.montant||0),0);
+  const reversementsEnAttente = filteredReversements.filter(r=>r.status==="En attente").length;
   const totalRecette = filteredShifts.reduce((a,s)=>a+(s.recette||s.revenue_cash||0),0);
   const ecarts = filteredReversements.filter(r=>(r.ecart||0)>0).length;
-  const topDrivers = [...drivers].sort((a,b)=>(b.ca||0)-(a.ca||0)).slice(0,5);
+  // Top chauffeurs calcule depuis les VRAIES recettes des shifts (pas la colonne statique ca)
+  const driverRevenues = drivers.map(d => {
+    const driverShifts = shifts.filter(s => s.ch === d.id);
+    const realCA = driverShifts.reduce((a,s) => a + (s.revenue_cash || s.recette || 0), 0);
+    return { ...d, realCA };
+  });
+  const topDrivers = driverRevenues.sort((a,b) => b.realCA - a.realCA).slice(0,5);
   const ddManquants = filteredShifts.filter(s=>(s.status==="Terminé"||s.status==="Termine")&&!(s.courses_count>0||s.nbCourses>0)).length;
 
   // Alertes
@@ -783,7 +790,10 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
   const last7Days = Array.from({length:7}, (_,i) => {
     const d = new Date(); d.setDate(d.getDate()-6+i);
     const dateStr = d.toISOString().split("T")[0];
-    const dayShifts = shifts.filter(s=>(s.date||s.planned_start_date||"").startsWith(dateStr));
+    const dayShifts = shifts.filter(s=>{
+      const shiftDate = (s.date||s.planned_start_date||"").toString().split("T")[0];
+      return shiftDate === dateStr;
+    });
     const recettes = dayShifts.reduce((a,s)=>a+(s.revenue_cash||s.recette||0),0);
     return { jour: d.toLocaleDateString("fr-FR",{weekday:"short", day:"numeric"}), recettes, shifts: dayShifts.length };
   });
@@ -833,14 +843,14 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-emerald-600 rounded-xl p-5 text-white">
-          <div className="text-xs font-medium opacity-80 uppercase tracking-wide mb-2">Recettes cumulees</div>
+          <div className="text-xs font-medium opacity-80 uppercase tracking-wide mb-2">Recettes shifts (DD)</div>
           <div className="text-2xl font-bold">{fmtK(totalRecette)} F</div>
           <div className="text-xs opacity-70 mt-1">{shiftEnCours} shifts en cours</div>
         </div>
         <div className="bg-slate-700 rounded-xl p-5 text-white">
-          <div className="text-xs font-medium opacity-80 uppercase tracking-wide mb-2">Reverses valides</div>
+          <div className="text-xs font-medium opacity-80 uppercase tracking-wide mb-2">Reversements valides</div>
           <div className="text-2xl font-bold">{fmtK(totalReverse)} F</div>
-          <div className="text-xs opacity-70 mt-1">{ecarts > 0 ? ecarts+" ecart(s)" : "Aucun ecart"}</div>
+          <div className="text-xs opacity-70 mt-1">{reversementsEnAttente} en attente · {ecarts} ecart(s)</div>
         </div>
         <div className="bg-slate-600 rounded-xl p-5 text-white">
           <div className="text-xs font-medium opacity-80 uppercase tracking-wide mb-2">Chauffeurs actifs</div>
@@ -905,11 +915,11 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
                   <div className={"w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 "+(i===0?"bg-yellow-500":i===1?"bg-slate-400":i===2?"bg-amber-600":"bg-slate-300")}>{i+1}</div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{d.prenom} {d.nom}</span>
-                      <span className="text-sm font-semibold text-emerald-600">{fmt(d.ca||0)}</span>
+                      <span className="text-sm font-medium text-slate-700">{d.prenom} {d.nom}</span>
+                      <span className="text-sm font-semibold text-emerald-600">{fmt(d.realCA||0)}</span>
                     </div>
-                    <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5">
-                      <div className="bg-emerald-500 h-1.5 rounded-full transition-all" style={{width:topDrivers[0]?.ca>0?((d.ca||0)/(topDrivers[0].ca||1))*100+"%":"0%"}}/>
+                    <div className="w-full bg-slate-100 rounded-full h-1.5">
+                      <div className="bg-emerald-500 h-1.5 rounded-full transition-all" style={{width:topDrivers[0]?.realCA>0?((d.realCA||0)/(topDrivers[0].realCA||1))*100+"%":"0%"}}/>
                     </div>
                   </div>
                 </div>
@@ -1831,6 +1841,7 @@ const ChauffeursPage = ({drivers, vehicles, onAdd, onUpdate, onDelete, sites}) =
 // ============================================================
 const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sites}) => {
   const [showModal, setShowModal] = useState(false);
+  const [editItem, setEditItem] = useState(null);
   const [showDDModal, setShowDDModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedShift, setSelectedShift] = useState(null);
@@ -1863,20 +1874,49 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
   const handleSave = async () => {
     if(!form.vh||!form.ch) return setSaving(false)||alert("Vehicule et chauffeur requis");
     setSaving(true);
-    const err = await onAdd({
-      id:"SH-"+Date.now(),
-      vh:form.vh, ch:form.ch,
-      type:form.type, shift_type:"Shift "+form.type,
-      planned_start_date:form.date,
-      debut:form.debut||"06:00", fin:form.fin||"14:00",
-      status:form.status||"Planifie",
-      recette:0, check_in:false, check_out:false,
-      courses_count:0, revenue_cash:0, yango_commission:0,
-      authorized_expenses:0, yango_rating:0,
-      km_driven:0, battery_start:0, battery_end:0,
-    });
+    if(editItem){
+      await onUpdate(editItem.id, {
+        vh:form.vh, ch:form.ch,
+        type:form.type, shift_type:"Shift "+form.type,
+        planned_start_date:form.date,
+        debut:form.debut||"06:00", fin:form.fin||"14:00",
+        status:form.status||"Planifie",
+        lieuDebut:form.lieuDebut||null, lieuFin:form.lieuFin||null,
+        responsableZone:form.responsableZone||null,
+      });
+    } else {
+      await onAdd({
+        id:"SH-"+Date.now(),
+        vh:form.vh, ch:form.ch,
+        type:form.type, shift_type:"Shift "+form.type,
+        planned_start_date:form.date,
+        debut:form.debut||"06:00", fin:form.fin||"14:00",
+        status:form.status||"Planifie",
+        lieuDebut:form.lieuDebut||null, lieuFin:form.lieuFin||null,
+        responsableZone:form.responsableZone||null,
+        recette:0, check_in:false, check_out:false,
+        courses_count:0, revenue_cash:0, yango_commission:0,
+        authorized_expenses:0, yango_rating:0,
+        km_driven:0, battery_start:0, battery_end:0,
+      });
+    }
     setSaving(false);
     setShowModal(false);
+    setEditItem(null);
+  };
+
+  const openEdit = (s) => {
+    setForm({
+      vh:s.vh||"", ch:s.ch||"", type:s.type||"A",
+      date:(s.date||s.planned_start_date||"").split("T")[0]||new Date().toISOString().split("T")[0],
+      debut:s.debut||"06:00", fin:s.fin||"14:00",
+      status:s.status||"Planifie",
+      lieuDebut:s.lieuDebut||"", lieuFin:s.lieuFin||"",
+      responsableZone:s.responsableZone||"",
+      recette:s.recette||0, commentaireShift:s.commentaireShift||"",
+    });
+    setEditItem(s);
+    setShowModal(true);
   };
 
   const handleCheckin = async (s) => {
@@ -1933,7 +1973,7 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
         </div>
         <div className="flex gap-2 flex-wrap">
           <input type="date" value={filterDate} onChange={e=>setFilterDate(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"/>
-          <button onClick={()=>{setForm(emptyShift);setShowModal(true);}} className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 flex items-center gap-2 shadow-md">
+          <button onClick={()=>{setForm(emptyShift);setEditItem(null);setShowModal(true);}} className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 flex items-center gap-2 shadow-md">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
             Planifier shift
           </button>
@@ -2031,6 +2071,9 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
 
                       {/* Actions */}
                       <div className="flex gap-1.5 mt-2">
+                        <button onClick={()=>openEdit(s)} className="text-xs text-slate-500 border border-slate-200 px-2 py-1.5 rounded-lg hover:bg-slate-50">
+                          Modifier
+                        </button>
                         {(s.status==="Planifie"||s.status==="Planifié")&&(
                           <button onClick={()=>handleCheckin(s)} className="flex-1 text-xs bg-emerald-500 text-white px-2 py-1.5 rounded-lg hover:bg-emerald-600 font-medium">
                             Check-in
@@ -2079,8 +2122,8 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
 
       {/* MODAL AJOUT SHIFT */}
       {showModal&&(
-        <Modal title="Planifier un shift" onClose={()=>setShowModal(false)}
-          footer={<><button onClick={()=>setShowModal(false)} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} disabled={saving} className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50">{saving?"Enregistrement...":"Planifier"}</button></>}>
+        <Modal title={editItem?"Modifier le shift":"Planifier un shift"} onClose={()=>{setShowModal(false);setEditItem(null);}}
+          footer={<><button onClick={()=>{setShowModal(false);setEditItem(null);}} className="flex-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm">Annuler</button><button onClick={handleSave} disabled={saving} className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50">{saving?"Enregistrement...":(editItem?"Enregistrer":"Planifier")}</button></>}>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2"><Input label="Date" value={form.date} onChange={v=>setForm({...form,date:v})} type="date"/></div>
             <Select label="Vehicule" value={form.vh} onChange={v=>setForm({...form,vh:v})} options={[{value:"",label:"-- Choisir --"},...vehicles.map(v=>({value:v.id,label:v.immat}))]}/>
@@ -2229,7 +2272,7 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
 // ============================================================
 // REVERSEMENTS PAGE
 // ============================================================
-const ReversementsPage = ({reversements, drivers, shifts, onAdd, onUpdate, onDelete}) => {
+const ReversementsPage = ({reversements, drivers, shifts, onAdd, onUpdate, onDelete, user}) => {
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -2442,7 +2485,7 @@ const ReversementsPage = ({reversements, drivers, shifts, onAdd, onUpdate, onDel
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
                       <button onClick={()=>openEdit(r)} className="text-blue-600 text-xs border border-blue-200 px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20">Modifier</button>
-                      {r.status==="En attente"&&<button onClick={async()=>await onUpdate(r.id,{
+                      {r.status==="En attente"&&(user?.role==="finance"||user?.role==="admin")&&<button onClick={async()=>await onUpdate(r.id,{
   status:"Validé",
   ch:r.ch, driver_id:r.ch,
   montant:r.montant, amount_sent:r.montant, amount_requested:r.montant,
@@ -2451,6 +2494,7 @@ const ReversementsPage = ({reversements, drivers, shifts, onAdd, onUpdate, onDel
   transaction_proof_url:r.transaction_proof_url||r.preuve||null,
   commentaire:r.commentaire||null,
 })} className="text-emerald-600 text-xs border border-emerald-200 px-2 py-1 rounded hover:bg-emerald-50">Valider</button>}
+                      {r.status==="En attente"&&!(user?.role==="finance"||user?.role==="admin")&&<span className="text-xs text-slate-400 italic px-2 py-1">En attente Finance</span>}
                       <button onClick={()=>setConfirmDelete(r)} className="text-red-600 text-xs border border-red-200 px-2 py-1 rounded hover:bg-red-50">Suppr.</button>
                     </div>
                   </td>
@@ -2493,6 +2537,7 @@ const ReversementsPage = ({reversements, drivers, shifts, onAdd, onUpdate, onDel
             <Input label="Date" value={form.date} onChange={v=>{setForm({...form,date:v});findShift(form.ch,v);}} type="date"/>
             <Input label="Depenses autorisees (F CFA)" value={form.depensesAutorisees||0} onChange={v=>setForm({...form,depensesAutorisees:parseInt(v)||0})} type="number"/>
             <div className="col-span-2">
+              <PhotoUpload label="Preuve de paiement (capture Wave/OM/Mobile Money)" bucket="reversement-proofs" folder={"reversements/"+(form.date||"new")} value={form.preuve||""} onChange={url=>setForm(f=>({...f,preuve:url}))} hint="Capture d'ecran de la transaction"/>
             </div>
             <div className="col-span-2">
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Commentaire</label>
@@ -3655,6 +3700,15 @@ const App = () => {
   const updateShift = async (id, item) => {
     // Construire le payload directement sans filtre complexe
     const payload = {
+      ...(item.vh !== undefined && { vh: item.vh }),
+      ...(item.ch !== undefined && { ch: item.ch }),
+      ...(item.type !== undefined && { type: item.type, shift_type: "Shift "+item.type }),
+      ...(item.planned_start_date !== undefined && { planned_start_date: item.planned_start_date }),
+      ...(item.debut !== undefined && { debut: item.debut }),
+      ...(item.fin !== undefined && { fin: item.fin }),
+      ...(item.lieuDebut !== undefined && { lieuDebut: item.lieuDebut }),
+      ...(item.lieuFin !== undefined && { lieuFin: item.lieuFin }),
+      ...(item.responsableZone !== undefined && { responsableZone: item.responsableZone }),
       ...(item.status !== undefined && { status: item.status }),
       ...(item.check_in !== undefined && { check_in: item.check_in }),
       ...(item.check_out !== undefined && { check_out: item.check_out }),
@@ -3771,7 +3825,7 @@ const App = () => {
     vehicules: <VehiculesPage vehicles={vh.data} onAdd={addVehicle} onUpdate={updateVehicle} onDelete={vh.remove} sites={si.data}/>,
     chauffeurs: <ChauffeursPage drivers={dr.data} vehicles={vh.data} onAdd={addDriver} onUpdate={updateDriver} onDelete={dr.remove} sites={si.data}/>,
     planning: <PlanningPage shifts={sh.data} vehicles={vh.data} drivers={dr.data} onAdd={addShift} onUpdate={updateShift} onDelete={sh.remove} sites={si.data}/>,
-    reversements: <ReversementsPage reversements={rv.data} drivers={dr.data} shifts={sh.data} onAdd={addReversement} onUpdate={updateReversement} onDelete={rv.remove}/>,
+    reversements: <ReversementsPage reversements={rv.data} drivers={dr.data} shifts={sh.data} onAdd={addReversement} onUpdate={updateReversement} onDelete={rv.remove} user={user}/>,
     kpi: <KpiPaiePage drivers={dr.data} shifts={sh.data}/>,
     recharge: <RechargePage recharges={rc.data} vehicles={vh.data} drivers={dr.data} onAdd={addRecharge} onUpdate={updateRecharge} onDelete={rc.remove}/>,
     maintenance: <MaintenancePage maintenances={mt.data} vehicles={vh.data} onAdd={addMaintenance} onUpdate={updateMaintenance} onDelete={mt.remove}/>,
