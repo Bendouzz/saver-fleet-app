@@ -868,15 +868,18 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recettes 7 jours */}
         <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
-          <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Recettes — 7 derniers jours</h2>
+          <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Activité — 7 derniers jours</h2>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={last7Days} margin={{top:5,right:5,bottom:5,left:5}}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0"/>
                 <XAxis dataKey="jour" tick={{fontSize:11, fill:"#94a3b8"}} axisLine={false} tickLine={false}/>
-                <YAxis tick={{fontSize:11, fill:"#94a3b8"}} axisLine={false} tickLine={false} tickFormatter={v=>fmtK(v)}/>
-                <Tooltip formatter={(v)=>[fmtK(v)+" F","Recettes"]} contentStyle={{borderRadius:"8px",border:"1px solid #e2e8f0",fontSize:"12px"}}/>
-                <Bar dataKey="recettes" fill="#3B82F6" radius={[4,4,0,0]}/>
+                <YAxis yAxisId="left" tick={{fontSize:11, fill:"#94a3b8"}} axisLine={false} tickLine={false} tickFormatter={v=>fmtK(v)}/>
+                <YAxis yAxisId="right" orientation="right" tick={{fontSize:11, fill:"#94a3b8"}} axisLine={false} tickLine={false}/>
+                <Tooltip formatter={(v,name)=>name==="recettes"?[fmtK(v)+" F","Recettes"]:[v+" shift(s)","Shifts"]} contentStyle={{borderRadius:"8px",border:"1px solid #e2e8f0",fontSize:"12px"}}/>
+                <Legend iconType="circle" iconSize={8} formatter={v=><span style={{fontSize:"11px",color:"#64748b"}}>{v==="recettes"?"Recettes (F)":"Shifts"}</span>}/>
+                <Bar yAxisId="left" dataKey="recettes" fill="#10B981" radius={[4,4,0,0]} minPointSize={2}/>
+                <Bar yAxisId="right" dataKey="shifts" fill="#3B82F6" radius={[4,4,0,0]} minPointSize={2}/>
               </BarChart>
             </ResponsiveContainer>
           </div>
