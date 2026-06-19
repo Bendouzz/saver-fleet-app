@@ -763,8 +763,9 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
   const ecarts = filteredReversements.filter(r=>(r.ecart||0)>0).length;
   // Top chauffeurs calcule depuis les VRAIES recettes des shifts (pas la colonne statique ca)
   const driverRevenues = drivers.map(d => {
-    const driverShifts = shifts.filter(s => s.ch === d.id);
-    const realCA = driverShifts.reduce((a,s) => a + (s.revenue_cash || s.recette || 0), 0);
+    const driverShifts = shifts.filter(s => String(s.ch) === String(d.id));
+    const ddCA = driverShifts.reduce((a,s) => a + (s.revenue_cash || s.recette || 0), 0);
+    const realCA = ddCA > 0 ? ddCA : (d.ca || 0);
     return { ...d, realCA };
   });
   const topDrivers = driverRevenues.sort((a,b) => b.realCA - a.realCA).slice(0,5);
@@ -789,10 +790,9 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
   // Données graphiques - recettes 7 derniers jours
   const last7Days = Array.from({length:7}, (_,i) => {
     const d = new Date(); d.setDate(d.getDate()-6+i);
-    const dateStr = d.toISOString().split("T")[0];
     const dayShifts = shifts.filter(s=>{
-      const shiftDate = (s.date||s.planned_start_date||"").toString().split("T")[0];
-      return shiftDate === dateStr;
+      const shiftDate = new Date(s.date||s.planned_start_date||"");
+      return shiftDate.toDateString() === d.toDateString();
     });
     const recettes = dayShifts.reduce((a,s)=>a+(s.revenue_cash||s.recette||0),0);
     return { jour: d.toLocaleDateString("fr-FR",{weekday:"short", day:"numeric"}), recettes, shifts: dayShifts.length };
