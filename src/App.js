@@ -764,8 +764,8 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
   // Top chauffeurs calcule depuis les VRAIES recettes des shifts (pas la colonne statique ca)
   const driverRevenues = drivers.map(d => {
     const driverShifts = shifts.filter(s => String(s.ch) === String(d.id));
-    const ddCA = driverShifts.reduce((a,s) => a + (s.revenue_cash || s.recette || 0), 0);
-    const realCA = ddCA > 0 ? ddCA : (d.ca || 0);
+    const ddCA = driverShifts.reduce((a,s) => a + (parseFloat(s.revenue_cash)||parseFloat(s.recette)||0), 0);
+    const realCA = ddCA > 0 ? ddCA : (parseFloat(d.ca)||0);
     return { ...d, realCA };
   });
   const topDrivers = driverRevenues.sort((a,b) => b.realCA - a.realCA).slice(0,5);
