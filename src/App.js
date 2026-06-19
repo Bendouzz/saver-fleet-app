@@ -728,25 +728,51 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
   const role = user?.role || "ops";
   const [periode, setPeriode] = useState("tout");
 
+  // Selectors pour chaque mode
+  const todayStr = new Date().toISOString().split("T")[0];
+  const [selectedDay, setSelectedDay] = useState(todayStr);
+  const [weekOffset, setWeekOffset] = useState(0);   // 0 = semaine actuelle, -1 = semaine precedente...
+  const [monthOffset, setMonthOffset] = useState(0); // 0 = mois actuel
+
+  // Calcul bornes semaine selectionnee
+  const getWeekBounds = (offset) => {
+    const now = new Date();
+    const day = now.getDay(); // 0=dim,1=lun...
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - (day===0?6:day-1) + offset*7);
+    monday.setHours(0,0,0,0);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate()+6);
+    sunday.setHours(23,59,59,999);
+    return { start: monday, end: sunday };
+  };
+
+  // Calcul bornes mois selectionne
+  const getMonthBounds = (offset) => {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth()+offset, 1);
+    const end = new Date(now.getFullYear(), now.getMonth()+offset+1, 0, 23, 59, 59, 999);
+    return { start, end };
+  };
+
+  // Labels lisibles
+  const weekBounds = getWeekBounds(weekOffset);
+  const monthBounds = getMonthBounds(monthOffset);
+  const weekLabel = weekBounds.start.toLocaleDateString("fr-FR",{day:"numeric",month:"short"})+" – "+weekBounds.end.toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"});
+  const monthLabel = monthBounds.start.toLocaleDateString("fr-FR",{month:"long",year:"numeric"});
+
   // Recharts est importe en haut du fichier
 
-  // Filtre par periode
-  const now = new Date();
-  const filterShifts = (s) => {
-    const d = new Date(s.date||s.planned_start_date||"");
-    if(periode==="jour") return d.toDateString()===now.toDateString();
-    if(periode==="semaine") { const start=new Date(now); start.setDate(now.getDate()-7); return d>=start; }
-    if(periode==="mois") { const start=new Date(now); start.setDate(now.getDate()-30); return d>=start; }
+  // Filtre generique
+  const applyFilter = (dateObj) => {
+    if(!dateObj || isNaN(dateObj)) return periode==="tout";
+    if(periode==="jour") return dateObj.toDateString()===new Date(selectedDay).toDateString();
+    if(periode==="semaine") return dateObj>=weekBounds.start && dateObj<=weekBounds.end;
+    if(periode==="mois") return dateObj>=monthBounds.start && dateObj<=monthBounds.end;
     return true;
   };
-  const filteredShifts = shifts.filter(filterShifts);
-  const filteredReversements = reversements.filter(r => {
-    const d = new Date(r.date||"");
-    if(periode==="jour") return d.toDateString()===now.toDateString();
-    if(periode==="semaine") { const start=new Date(now); start.setDate(now.getDate()-7); return d>=start; }
-    if(periode==="mois") { const start=new Date(now); start.setDate(now.getDate()-30); return d>=start; }
-    return true;
-  });
+  const filteredShifts = shifts.filter(s => applyFilter(new Date(s.date||s.planned_start_date||"")));
+  const filteredReversements = reversements.filter(r => applyFilter(new Date(r.date||"")));
 
   // Stats
   const activeVh = vehicles.filter(v=>v.status==="En exploitation").length;
@@ -820,10 +846,32 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Tableau de bord</h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm">{new Date().toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Boutons periode */}
           {["tout","jour","semaine","mois"].map(p=>(
-            <button key={p} onClick={()=>setPeriode(p)} className={"px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all "+(periode===p?"bg-blue-600 text-white":"bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50")}>{p==="tout"?"Tout":p}</button>
+            <button key={p} onClick={()=>setPeriode(p)} className={"px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all "+(periode===p?"bg-blue-600 text-white":"bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50")}>{p==="tout"?"Tout":p==="jour"?"Jour":p==="semaine"?"Semaine":"Mois"}</button>
           ))}
+          {/* Selecteur Jour */}
+          {periode==="jour"&&(
+            <input type="date" value={selectedDay} onChange={e=>setSelectedDay(e.target.value)}
+              className="text-sm border border-blue-300 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+          )}
+          {/* Selecteur Semaine */}
+          {periode==="semaine"&&(
+            <div className="flex items-center gap-1 bg-white dark:bg-slate-800 border border-blue-300 rounded-lg px-2 py-1">
+              <button onClick={()=>setWeekOffset(w=>w-1)} className="text-slate-500 hover:text-blue-600 px-1 text-lg font-bold">‹</button>
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-200 min-w-[150px] text-center">{weekLabel}</span>
+              <button onClick={()=>setWeekOffset(w=>w+1)} disabled={weekOffset>=0} className="text-slate-500 hover:text-blue-600 px-1 text-lg font-bold disabled:opacity-30">›</button>
+            </div>
+          )}
+          {/* Selecteur Mois */}
+          {periode==="mois"&&(
+            <div className="flex items-center gap-1 bg-white dark:bg-slate-800 border border-blue-300 rounded-lg px-2 py-1">
+              <button onClick={()=>setMonthOffset(m=>m-1)} className="text-slate-500 hover:text-blue-600 px-1 text-lg font-bold">‹</button>
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-200 min-w-[110px] text-center capitalize">{monthLabel}</span>
+              <button onClick={()=>setMonthOffset(m=>m+1)} disabled={monthOffset>=0} className="text-slate-500 hover:text-blue-600 px-1 text-lg font-bold disabled:opacity-30">›</button>
+            </div>
+          )}
         </div>
       </div>
 
