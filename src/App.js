@@ -789,8 +789,13 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
   const ecarts = filteredReversements.filter(r=>(r.ecart||0)>0).length;
   // Top chauffeurs calcule depuis les VRAIES recettes des shifts (pas la colonne statique ca)
   const driverRevenues = drivers.map(d => {
-    const driverShifts = shifts.filter(s => String(s.ch) === String(d.id));
-    const ddCA = driverShifts.reduce((a,s) => a + (parseFloat(s.revenue_cash)||parseFloat(s.recette)||0), 0);
+    const dId = String(d.id||"").trim();
+    const dCode = String(d.matricule||d.driver_code||"").trim();
+    const driverShifts = shifts.filter(s => {
+      const sCh = String(s.ch||s.driver_id||"").trim();
+      return sCh && dId && (sCh === dId || (dCode && sCh === dCode));
+    });
+    const ddCA = driverShifts.reduce((a,s) => a + (parseFloat(s.revenue_cash)||parseFloat(s.revenusGeneres)||parseFloat(s.recette)||0), 0);
     const realCA = ddCA > 0 ? ddCA : (parseFloat(d.ca)||0);
     return { ...d, realCA };
   });
@@ -892,12 +897,12 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-emerald-600 rounded-xl p-5 text-white">
           <div className="text-xs font-medium opacity-80 uppercase tracking-wide mb-2">Recettes reversées</div>
-          <div className="text-2xl font-bold">{fmtK(totalRecette)} F</div>
+          <div className="text-2xl font-bold">{fmt(totalRecette)}</div>
           <div className="text-xs opacity-70 mt-1">{reversementsEnAttente} en attente · {ecarts} ecart(s)</div>
         </div>
         <div className="bg-slate-700 rounded-xl p-5 text-white">
           <div className="text-xs font-medium opacity-80 uppercase tracking-wide mb-2">Reversements valides</div>
-          <div className="text-2xl font-bold">{fmtK(totalReverse)} F</div>
+          <div className="text-2xl font-bold">{fmt(totalReverse)}</div>
           <div className="text-xs opacity-70 mt-1">{reversementsEnAttente} en attente · {ecarts} ecart(s)</div>
         </div>
         <div className="bg-slate-600 rounded-xl p-5 text-white">
