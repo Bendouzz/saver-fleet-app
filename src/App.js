@@ -2000,6 +2000,8 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
         status:form.status||"Planifie",
         lieuDebut:form.lieuDebut||null, lieuFin:form.lieuFin||null,
         responsableZone:form.responsableZone||null,
+        recette:parseFloat(form.recette)||0,
+        revenue_cash:parseFloat(form.recette)||0,
       });
     } else {
       await onAdd({
@@ -2011,8 +2013,10 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
         status:form.status||"Planifie",
         lieuDebut:form.lieuDebut||null, lieuFin:form.lieuFin||null,
         responsableZone:form.responsableZone||null,
-        recette:0, check_in:false, check_out:false,
-        courses_count:0, revenue_cash:0, yango_commission:0,
+        recette:parseFloat(form.recette)||0,
+        revenue_cash:parseFloat(form.recette)||0,
+        check_in:false, check_out:false,
+        courses_count:0, yango_commission:0,
         authorized_expenses:0, yango_rating:0,
         km_driven:0, battery_start:0, battery_end:0,
       });
@@ -2250,6 +2254,10 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
             <Input label="Lieu de debut" value={form.lieuDebut} onChange={v=>setForm({...form,lieuDebut:v})} placeholder="Ex: Cocody"/>
             <Input label="Lieu de fin" value={form.lieuFin} onChange={v=>setForm({...form,lieuFin:v})} placeholder="Ex: Plateau"/>
             <div className="col-span-2"><Input label="Responsable de zone" value={form.responsableZone} onChange={v=>setForm({...form,responsableZone:v})}/></div>
+            <div className="col-span-2">
+              <Input label="Recette du shift (F CFA)" value={form.recette||""} onChange={v=>setForm({...form,recette:v})} type="number" placeholder="Ex: 15000"/>
+              <div className="text-xs text-slate-400 mt-1">Montant collecté par le chauffeur — utilisé pour le classement CA et les graphiques</div>
+            </div>
           </div>
           <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mt-2">
             <div className="text-xs text-emerald-700 font-medium">Message WhatsApp automatique envoye au chauffeur apres planification</div>
