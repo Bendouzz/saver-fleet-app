@@ -956,10 +956,10 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
                 <XAxis dataKey="jour" tick={{fontSize:11, fill:"#94a3b8"}} axisLine={false} tickLine={false}/>
                 <YAxis yAxisId="left" tick={{fontSize:11, fill:"#94a3b8"}} axisLine={false} tickLine={false} tickFormatter={v=>fmtK(v)}/>
                 <YAxis yAxisId="right" orientation="right" tick={{fontSize:11, fill:"#94a3b8"}} axisLine={false} tickLine={false}/>
-                <Tooltip formatter={(v,name)=>name==="recettes"?[fmtK(v)+" F","Recettes"]:[v+" shift(s)","Shifts"]} contentStyle={{borderRadius:"8px",border:"1px solid #e2e8f0",fontSize:"12px"}}/>
+                <Tooltip formatter={(v,name)=>name==="recettes"?[new Intl.NumberFormat("fr-FR").format(v)+" F","Recettes"]:[v+" shift(s)","Shifts"]} contentStyle={{borderRadius:"8px",border:"1px solid #e2e8f0",fontSize:"12px"}}/>
                 <Legend iconType="circle" iconSize={8} formatter={v=><span style={{fontSize:"11px",color:"#64748b"}}>{v==="recettes"?"Recettes (F)":"Shifts"}</span>}/>
-                <Bar yAxisId="left" dataKey="recettes" fill="#10B981" radius={[4,4,0,0]} minPointSize={2}/>
-                <Bar yAxisId="right" dataKey="shifts" fill="#3B82F6" radius={[4,4,0,0]} minPointSize={2}/>
+                <Bar yAxisId="left" dataKey="recettes" fill="#10B981" radius={[4,4,0,0]}/>
+                <Bar yAxisId="right" dataKey="shifts" fill="#3B82F6" radius={[4,4,0,0]}/>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -1065,50 +1065,21 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
         </div>
       </div>
 
-      {/* Graphique reversements 7 jours */}
+      {/* Stats reversements 7 jours */}
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-slate-900 dark:text-white">Reversements — 7 derniers jours</h2>
-          <div className="flex gap-3 text-xs text-slate-500 dark:text-slate-400">
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-violet-500 inline-block"/>Montant</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"/>Validés</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-400 inline-block"/>Total</span>
+        <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Reversements — 7 derniers jours</h2>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="text-center p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl">
+            <div className="text-2xl font-bold text-slate-700 dark:text-white">{last7DaysRev.reduce((a,d)=>a+d.total,0)}</div>
+            <div className="text-xs text-slate-400 mt-1">Total reversements</div>
           </div>
-        </div>
-        <div className="h-52">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={last7DaysRev} margin={{top:5,right:10,bottom:5,left:5}}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0"/>
-              <XAxis dataKey="jour" tick={{fontSize:11, fill:"#94a3b8"}} axisLine={false} tickLine={false}/>
-              <YAxis yAxisId="left" tick={{fontSize:11, fill:"#94a3b8"}} axisLine={false} tickLine={false} tickFormatter={v=>fmtK(v)} width={50}/>
-              <YAxis yAxisId="right" orientation="right" tick={{fontSize:11, fill:"#94a3b8"}} axisLine={false} tickLine={false} width={25}/>
-              <Tooltip
-                formatter={(v,name)=>{
-                  if(name==="montant") return [new Intl.NumberFormat("fr-FR").format(v)+" F","Montant"];
-                  if(name==="total") return [v+" reversement(s)","Total"];
-                  if(name==="valides") return [v+" validé(s)","Validés"];
-                  return [v,name];
-                }}
-                contentStyle={{borderRadius:"8px",border:"1px solid #e2e8f0",fontSize:"12px"}}
-              />
-              <Bar yAxisId="left" dataKey="montant" fill="#8B5CF6" radius={[4,4,0,0]} minPointSize={2} name="montant"/>
-              <Bar yAxisId="right" dataKey="total" fill="#94A3B8" radius={[4,4,0,0]} minPointSize={2} name="total"/>
-              <Bar yAxisId="right" dataKey="valides" fill="#10B981" radius={[4,4,0,0]} minPointSize={2} name="valides"/>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
-          <div className="text-center">
-            <div className="text-lg font-bold text-slate-700 dark:text-white">{last7DaysRev.reduce((a,d)=>a+d.total,0)}</div>
-            <div className="text-xs text-slate-400">Reversements</div>
+          <div className="text-center p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
+            <div className="text-2xl font-bold text-emerald-600">{last7DaysRev.reduce((a,d)=>a+d.valides,0)}</div>
+            <div className="text-xs text-slate-400 mt-1">Validés</div>
           </div>
-          <div className="text-center">
-            <div className="text-lg font-bold text-emerald-600">{last7DaysRev.reduce((a,d)=>a+d.valides,0)}</div>
-            <div className="text-xs text-slate-400">Validés</div>
-          </div>
-          <div className="text-center">
-            <div className="text-lg font-bold text-violet-600">{new Intl.NumberFormat("fr-FR").format(last7DaysRev.reduce((a,d)=>a+d.montant,0))} F</div>
-            <div className="text-xs text-slate-400">Montant 7j</div>
+          <div className="text-center p-4 bg-violet-50 dark:bg-violet-900/20 rounded-xl">
+            <div className="text-2xl font-bold text-violet-600">{new Intl.NumberFormat("fr-FR").format(last7DaysRev.reduce((a,d)=>a+d.montant,0))} F</div>
+            <div className="text-xs text-slate-400 mt-1">Montant total</div>
           </div>
         </div>
       </div>
