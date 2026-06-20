@@ -787,16 +787,24 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
   const reversementsEnAttente = filteredReversements.filter(r=>r.status==="En attente").length;
   const totalRecette = filteredReversements.reduce((a,r)=>a+(r.montant||0),0);
   const ecarts = filteredReversements.filter(r=>(r.ecart||0)>0).length;
-  // Top chauffeurs calcule depuis les VRAIES recettes des shifts (pas la colonne statique ca)
+  // Top chauffeurs - CA depuis reversements (données réelles) ou shifts en fallback
   const driverRevenues = drivers.map(d => {
     const dId = String(d.id||"").trim();
     const dCode = String(d.matricule||d.driver_code||"").trim();
+    // 1. Reversements = source la plus fiable (montants réellement collectés)
+    const driverRevs = reversements.filter(r => {
+      const rCh = String(r.ch||r.driver_id||"").trim();
+      return rCh && dId && (rCh === dId || (dCode && rCh === dCode));
+    });
+    const caFromRevs = driverRevs.reduce((a,r) => a + (parseFloat(r.montant)||0), 0);
+    // 2. Fallback: shifts avec recette saisie
     const driverShifts = shifts.filter(s => {
       const sCh = String(s.ch||s.driver_id||"").trim();
       return sCh && dId && (sCh === dId || (dCode && sCh === dCode));
     });
-    const ddCA = driverShifts.reduce((a,s) => a + (parseFloat(s.revenue_cash)||parseFloat(s.revenusGeneres)||parseFloat(s.recette)||0), 0);
-    const realCA = ddCA > 0 ? ddCA : (parseFloat(d.ca)||0);
+    const caFromShifts = driverShifts.reduce((a,s) => a + (parseFloat(s.revenue_cash)||parseFloat(s.revenusGeneres)||parseFloat(s.recette)||0), 0);
+    // 3. Fallback final: colonne ca statique du driver
+    const realCA = caFromRevs > 0 ? caFromRevs : (caFromShifts > 0 ? caFromShifts : (parseFloat(d.ca)||0));
     return { ...d, realCA };
   });
   const topDrivers = driverRevenues.sort((a,b) => b.realCA - a.realCA).slice(0,5);
@@ -818,14 +826,21 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
   const today = new Date().toISOString().split("T")[0];
   const shiftsAujourdhui = filteredShifts.filter(s=>(s.date||s.planned_start_date||"").startsWith(today));
 
-  // Données graphiques - recettes 7 derniers jours
+  // Données graphiques - activité 7 derniers jours
+  // Recettes = reversements de la journée (données réelles) ou recettes shifts en fallback
   const last7Days = Array.from({length:7}, (_,i) => {
     const d = new Date(); d.setDate(d.getDate()-6+i);
     const dayShifts = shifts.filter(s=>{
       const shiftDate = new Date(s.date||s.planned_start_date||"");
       return shiftDate.toDateString() === d.toDateString();
     });
-    const recettes = dayShifts.reduce((a,s)=>a+(s.revenue_cash||s.recette||0),0);
+    const dayRevs = reversements.filter(r=>{
+      const rd = new Date(r.date||"");
+      return rd.toDateString() === d.toDateString();
+    });
+    const recettesRevs = dayRevs.reduce((a,r)=>a+(parseFloat(r.montant)||0),0);
+    const recettesShifts = dayShifts.reduce((a,s)=>a+(parseFloat(s.revenue_cash)||parseFloat(s.recette)||0),0);
+    const recettes = recettesRevs > 0 ? recettesRevs : recettesShifts;
     return { jour: d.toLocaleDateString("fr-FR",{weekday:"short", day:"numeric"}), recettes, shifts: dayShifts.length };
   });
 
