@@ -86,19 +86,31 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 const fmt = (n) => new Intl.NumberFormat("fr-FR").format(n||0) + " F";
 const fmtK = (n) => n >= 1000000 ? (n/1000000).toFixed(1)+"M" : n >= 1000 ? Math.round(n/1000)+"k" : (n||0).toString();
 
-// Hook Supabase generique
+// Hook Supabase generique avec temps réel
 const useSupabase = (table, mapper = x=>x) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState(null);
 
   const load = async () => {
-    setLoading(true);
     const { data: rows } = await supabase.from(table).select("*").order("created_at", {ascending:false});
     setData((rows||[]).map(mapper));
     setLoading(false);
+    setLastUpdate(new Date());
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    // Écoute temps réel — se déclenche dès qu'une ligne est insérée, modifiée ou supprimée
+    const channel = supabase
+      .channel("realtime-" + table)
+      .on("postgres_changes", { event: "*", schema: "public", table }, () => {
+        load();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   const add = async (item) => {
     const { error } = await supabase.from(table).insert(item);
@@ -118,7 +130,7 @@ const useSupabase = (table, mapper = x=>x) => {
     return error;
   };
 
-  return { data, loading, add, update, remove, reload: load };
+  return { data, loading, lastUpdate, add, update, remove, reload: load };
 };
 
 // AUTH via table users
@@ -875,7 +887,13 @@ const DashboardPage = ({vehicles, drivers, shifts, reversements, user}) => {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Tableau de bord</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Tableau de bord</h1>
+            <span className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs font-semibold px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-700">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block"/>
+              Live
+            </span>
+          </div>
           <p className="text-slate-500 dark:text-slate-400 text-sm">{new Date().toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -2670,7 +2688,7 @@ const ReversementsPage = ({reversements, drivers, shifts, onAdd, onUpdate, onDel
 // ============================================================
 // KPI & PAIE PAGE - Nouveau systeme SAVER
 // ============================================================
-const KpiPaiePage = ({drivers, shifts}) => {
+const KpiPaiePage = ({drivers, shifts, reversements}) => {
   const FIXE_JOURNALIER = 5357; // F CFA par jour (modifiable)
   const KPI_RECETTES = 25000; // par shift de 8h
   const KPI_COURSES = 12; // par shift
@@ -2680,15 +2698,23 @@ const KpiPaiePage = ({drivers, shifts}) => {
   const [periodeFin, setPeriodeFin] = useState("");
 
   const calcPaie = (d) => {
-    const shiftsDriver = shifts.filter(s=>(s.status==="Terminé"||s.status==="Termine")&&s.ch===d.id);
+    const dId = String(d.id||"").trim();
+    const dCode = String(d.matricule||d.driver_code||"").trim();
+    const shiftsDriver = shifts.filter(s=>{
+      const sCh = String(s.ch||s.driver_id||"").trim();
+      return (s.status==="Terminé"||s.status==="Termine") && sCh && dId && (sCh===dId||(dCode&&sCh===dCode));
+    });
     const joursTravailes = shiftsDriver.length;
     const salaireBase = joursTravailes * FIXE_JOURNALIER;
-
-    const totalRecettesNettes = shiftsDriver.reduce((a,s)=>{
-      const rev = s.revenue_cash||s.revenusGeneres||s.recette||0;
-      const commission = s.yango_commission||s.commissionYango||0;
-      return a + (rev - commission);
-    },(0));
+    // Recettes depuis reversements (source fiable) ou shifts en fallback
+    const revFromRevs = (reversements||[]).filter(r=>{
+      const rCh = String(r.ch||r.driver_id||"").trim();
+      return rCh && dId && (rCh===dId||(dCode&&rCh===dCode));
+    }).reduce((a,r)=>a+(parseFloat(r.montant)||0),0);
+    const revFromShifts = shiftsDriver.reduce((a,s)=>a+(parseFloat(s.revenue_cash)||parseFloat(s.revenusGeneres)||parseFloat(s.recette)||0),0);
+    const totalRevBrut = revFromRevs > 0 ? revFromRevs : revFromShifts;
+    const totalCommission = shiftsDriver.reduce((a,s)=>a+(s.yango_commission||s.commissionYango||0),0);
+    const totalRecettesNettes = Math.max(0, totalRevBrut - totalCommission);
 
     const objectifRecettes = joursTravailes * KPI_RECETTES;
     const surplus = Math.max(0, totalRecettesNettes - objectifRecettes);
@@ -2725,14 +2751,26 @@ const KpiPaiePage = ({drivers, shifts}) => {
     : shifts;
 
   const calcPaieFiltre = (d) => {
-    const shiftsDriver = shiftsFiltres.filter(s=>(s.status==="Terminé"||s.status==="Termine")&&s.ch===d.id);
+    const dId = String(d.id||"").trim();
+    const dCode = String(d.matricule||d.driver_code||"").trim();
+    const shiftsDriver = shiftsFiltres.filter(s=>{
+      const sCh = String(s.ch||s.driver_id||"").trim();
+      return (s.status==="Terminé"||s.status==="Termine") && sCh && dId && (sCh===dId||(dCode&&sCh===dCode));
+    });
     const joursTravailes = shiftsDriver.length;
     const salaireBase = joursTravailes * FIXE_JOURNALIER;
-    const totalRecettesNettes = shiftsDriver.reduce((a,s)=>{
-      const rev = s.revenue_cash||s.revenusGeneres||s.recette||0;
-      const commission = s.yango_commission||s.commissionYango||0;
-      return a + (rev - commission);
-    },0);
+    // Filtrer reversements sur la même période
+    const revsFiltres = (reversements||[]).filter(r=>{
+      const rCh = String(r.ch||r.driver_id||"").trim();
+      const rDate = r.date||"";
+      const inPeriod = (!periodeDebut && !periodeFin) || (rDate >= periodeDebut && rDate <= periodeFin);
+      return inPeriod && rCh && dId && (rCh===dId||(dCode&&rCh===dCode));
+    });
+    const revFromRevs = revsFiltres.reduce((a,r)=>a+(parseFloat(r.montant)||0),0);
+    const revFromShifts = shiftsDriver.reduce((a,s)=>a+(parseFloat(s.revenue_cash)||parseFloat(s.revenusGeneres)||parseFloat(s.recette)||0),0);
+    const totalRevBrut = revFromRevs > 0 ? revFromRevs : revFromShifts;
+    const totalCommission = shiftsDriver.reduce((a,s)=>a+(s.yango_commission||s.commissionYango||0),0);
+    const totalRecettesNettes = Math.max(0, totalRevBrut - totalCommission);
     const objectifRecettes = joursTravailes * KPI_RECETTES;
     const surplus = Math.max(0, totalRecettesNettes - objectifRecettes);
     const totalCourses = shiftsDriver.reduce((a,s)=>a+(s.courses_count||s.nbCourses||0),0);
@@ -2790,17 +2828,17 @@ const KpiPaiePage = ({drivers, shifts}) => {
     const dailyHeader = ["Date", "Driver_ID", "Shifts", "Heures", "Recettes especes versees (FCFA)", "Commandes", "Avance versee (FCFA)", "Manquant constate (FCFA)", "Commentaire"];
     const dailyRows = shiftsFiltres
       .filter(s => s.status==="Terminé"||s.status==="Termine")
-      .map(s => [
-        s.planned_start_date||s.date||"",
-        s.ch||"",
-        1,
-        8,
-        s.revenue_cash||s.recette||0,
-        s.courses_count||s.nbCourses||0,
-        s.authorized_expenses||0,
-        0,
-        ""
-      ]);
+      .map(s => {
+        // Chercher le reversement correspondant à ce shift (même chauffeur, même date)
+        const shiftDate = s.planned_start_date||s.date||"";
+        const rev = (reversements||[]).find(r => {
+          const rCh = String(r.ch||r.driver_id||"").trim();
+          const sCh = String(s.ch||"").trim();
+          return rCh === sCh && r.date === shiftDate;
+        });
+        const recette = rev ? (parseFloat(rev.montant)||0) : (parseFloat(s.revenue_cash)||parseFloat(s.recette)||0);
+        return [shiftDate, s.ch||"", 1, 8, recette, s.courses_count||s.nbCourses||0, s.authorized_expenses||0, 0, ""];
+      });
     const wsDailyData = XLSX.utils.aoa_to_sheet([dailyHeader, ...dailyRows]);
     XLSX.utils.book_append_sheet(wb, wsDailyData, "Daily_Data");
 
@@ -3937,7 +3975,7 @@ const App = () => {
     chauffeurs: <ChauffeursPage drivers={dr.data} vehicles={vh.data} onAdd={addDriver} onUpdate={updateDriver} onDelete={dr.remove} sites={si.data}/>,
     planning: <PlanningPage shifts={sh.data} vehicles={vh.data} drivers={dr.data} onAdd={addShift} onUpdate={updateShift} onDelete={sh.remove} sites={si.data}/>,
     reversements: <ReversementsPage reversements={rv.data} drivers={dr.data} shifts={sh.data} onAdd={addReversement} onUpdate={updateReversement} onDelete={rv.remove} user={user}/>,
-    kpi: <KpiPaiePage drivers={dr.data} shifts={sh.data}/>,
+    kpi: <KpiPaiePage drivers={dr.data} shifts={sh.data} reversements={rv.data}/>,
     recharge: <RechargePage recharges={rc.data} vehicles={vh.data} drivers={dr.data} onAdd={addRecharge} onUpdate={updateRecharge} onDelete={rc.remove}/>,
     maintenance: <MaintenancePage maintenances={mt.data} vehicles={vh.data} onAdd={addMaintenance} onUpdate={updateMaintenance} onDelete={mt.remove}/>,
     gps: <GpsPage vehicles={vh.data}/>,
