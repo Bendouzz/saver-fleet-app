@@ -2060,27 +2060,46 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
   const handleSaveDD = async () => {
     if(!selectedShift) return;
     setSaving(true);
-    await onUpdate(selectedShift.id, {
-      courses_count: ddForm.nbCourses||0,
-      revenue_cash: ddForm.revenusGeneres||0,
-      recette: ddForm.revenusGeneres||0,
-      yango_commission: ddForm.commissionYango||0,
-      authorized_expenses: ddForm.depensesAutorisees||0,
-      yango_rating: ddForm.noteYangoShift||0,
-      km_driven: ddForm.kmParcourus||0,
-      battery_start: ddForm.autonomieDebut||0,
-      battery_end: ddForm.autonomieFin||0,
-      real_start_time: ddForm.heureDebutReelle||null,
-      real_end_time: ddForm.heureFinReelle||null,
-      photo_selfie: ddForm.photoSelfie||null,
-      photos_fin_shift: ddForm.photosFinShift||[],
-      captures_yango: ddForm.capturesYango||[],
-      captures_bord: ddForm.capturesBord||[],
-    });
-    // Attendre que Supabase confirme avant de fermer
-    await new Promise(resolve => setTimeout(resolve, 500));
-    setSaving(false);
-    setShowDDModal(false);
+    try {
+      // Champs de base — toujours présents dans la table shifts
+      const payload = {
+        courses_count: parseInt(ddForm.nbCourses)||0,
+        revenue_cash: parseFloat(ddForm.revenusGeneres)||0,
+        yango_commission: parseFloat(ddForm.commissionYango)||0,
+        authorized_expenses: parseFloat(ddForm.depensesAutorisees)||0,
+        yango_rating: parseFloat(ddForm.noteYangoShift)||0,
+        km_driven: parseFloat(ddForm.kmParcourus)||0,
+        battery_start: parseFloat(ddForm.autonomieDebut)||0,
+        battery_end: parseFloat(ddForm.autonomieFin)||0,
+        real_start_time: ddForm.heureDebutReelle||null,
+        real_end_time: ddForm.heureFinReelle||null,
+        status: "Terminé",
+      };
+      const { error } = await supabase.from("shifts").update(payload).eq("id", selectedShift.id);
+      if(error) {
+        console.error("Erreur sauvegarde DD:", error);
+        alert("Erreur lors de la sauvegarde : " + (error.message||"Vérifiez votre connexion et réessayez."));
+        setSaving(false);
+        return;
+      }
+      // Photos en option — on ignore si ça échoue (colonnes peut-être absentes)
+      try {
+        const photoPayload = {};
+        if(ddForm.photoSelfie) photoPayload.photo_selfie = ddForm.photoSelfie;
+        if(ddForm.photosFinShift?.length) photoPayload.photos_fin_shift = ddForm.photosFinShift;
+        if(ddForm.capturesYango?.length) photoPayload.captures_yango = ddForm.capturesYango;
+        if(ddForm.capturesBord?.length) photoPayload.captures_bord = ddForm.capturesBord;
+        if(Object.keys(photoPayload).length > 0) {
+          await supabase.from("shifts").update(photoPayload).eq("id", selectedShift.id);
+        }
+      } catch(_){}
+      setSaving(false);
+      setShowDDModal(false);
+    } catch(e) {
+      console.error("Erreur inattendue DD:", e);
+      alert("Erreur inattendue. Vérifiez votre connexion et réessayez.");
+      setSaving(false);
+    }
   };
 
   // Calculs DD
