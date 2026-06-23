@@ -2124,7 +2124,8 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
           <p className="text-sm text-slate-500 dark:text-slate-400">{new Date().toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <input type="date" value={filterDate} onChange={e=>setFilterDate(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"/>
+          <input type="date" value={filterDate} onChange={e=>setFilterDate(e.target.value)} className="text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"/>
+          {filterDate && <button onClick={()=>setFilterDate("")} className="text-xs px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200">Tous les jours</button>}
           <button onClick={()=>{setForm(emptyShift);setEditItem(null);setShowModal(true);}} className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 flex items-center gap-2 shadow-md">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
             Planifier shift
@@ -2152,7 +2153,7 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {["A","B","C"].map(type=>{
           const col=shiftColors[type];
-          const shiftList=shifts.filter(s=>s.type===type);
+          const shiftList=shifts.filter(s=>s.type===type && (filterDate===""||((s.date||s.planned_start_date||"").startsWith(filterDate))));
           return (
             <div key={type} className={col.bg+" rounded-xl border "+col.border+" p-4"}>
               <div className="flex items-center justify-between mb-4">
@@ -2243,9 +2244,10 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
                         )}
                         {isTermine&&(
                           <button onClick={()=>{
+                            const toHHMM = (ts) => { if(!ts) return ""; if(ts.includes("T")) return ts.substring(11,16); return ts.substring(0,5); };
                             setDDForm({
-                              heureDebutReelle:s.real_start_time||"",
-                              heureFinReelle:s.real_end_time||"",
+                              heureDebutReelle:toHHMM(s.real_start_time),
+                              heureFinReelle:toHHMM(s.real_end_time),
                               kmParcourus:s.km_driven||0,
                               nbCourses:s.courses_count||s.nbCourses||0,
                               revenusGeneres:s.revenue_cash||s.revenusGeneres||0,
