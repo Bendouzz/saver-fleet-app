@@ -2448,7 +2448,7 @@ const ReversementsPage = ({reversements, drivers, shifts, onAdd, onUpdate, onDel
     return { debut: debut.toISOString().split("T")[0], fin: now.toISOString().split("T")[0] };
   };
 
-  const emptyForm = {ch:"",montant:0,canal:"Wave Business",date:new Date().toISOString().split("T")[0],status:"En attente",ecart:0,depensesAutorisees:0,preuve:"",commentaire:""};
+  const emptyForm = {ch:"",montant:0,montantDeclare:0,canal:"Wave Business",date:new Date().toISOString().split("T")[0],status:"En attente",ecart:0,depensesAutorisees:0,preuve:"",commentaire:""};
   const [form, setForm] = useState(emptyForm);
   const [shiftInfo, setShiftInfo] = useState(null);
 
@@ -2471,7 +2471,7 @@ const ReversementsPage = ({reversements, drivers, shifts, onAdd, onUpdate, onDel
   const openAdd = () => { setForm(emptyForm); setEditItem(null); setShowModal(true); };
   const openEdit = (r) => {
     setForm({...emptyForm,
-      ch:r.ch||"", montant:r.montant||0, canal:r.canal||"Wave Business",
+      ch:r.ch||"", montant:r.montant||0, montantDeclare:r.montant_declare||r.montantDeclare||r.montant||0, canal:r.canal||"Wave Business",
       date:r.date||"", status:r.status||"En attente", ecart:r.ecart||0,
       depensesAutorisees:r.authorized_expenses||r.depensesAutorisees||0,
       preuve:r.transaction_proof_url||r.preuve||"",
@@ -2481,11 +2481,11 @@ const ReversementsPage = ({reversements, drivers, shifts, onAdd, onUpdate, onDel
     setShowModal(true);
   };
 
-  // Calcul ecart automatique base sur les recettes DD du shift
+  // Calcul ecart : recette déclarée - dépenses - montant versé
   const calcEcart = (montantVerse, montantDeclare, depenses, canal) => {
-    const revenuBase = shiftInfo ? (shiftInfo.revenue_cash || shiftInfo.recette || montantDeclare) : montantDeclare;
-    const tolerance = (canal==="Wave Business" || canal==="Wave") ? revenuBase * 0.01 : 0;
-    const montantAttendu = revenuBase - (depenses || 0);
+    if(!montantDeclare || montantDeclare <= 0) return 0;
+    const tolerance = (canal==="Wave Business" || canal==="Wave") ? montantDeclare * 0.01 : 0;
+    const montantAttendu = montantDeclare - (depenses || 0);
     const ecart = montantAttendu - montantVerse - tolerance;
     return Math.max(0, Math.round(ecart));
   };
@@ -2690,7 +2690,8 @@ const ReversementsPage = ({reversements, drivers, shifts, onAdd, onUpdate, onDel
                 <div className="text-xs text-amber-700">⚠ Aucun shift terminé trouvé pour ce chauffeur à cette date</div>
               </div>
             )}
-            <Input label="Montant verse (F CFA)" value={form.montant} onChange={v=>setForm({...form,montant:parseInt(v)||0})} type="number" required/>
+            <Input label="Recette declaree par le chauffeur (F CFA)" value={form.montantDeclare||""} onChange={v=>{const val=parseInt(v)||0;setForm({...form,montantDeclare:val});}} type="number" placeholder="Ex: 18000"/>
+            <Input label="Montant verse par le chauffeur (F CFA)" value={form.montant} onChange={v=>setForm({...form,montant:parseInt(v)||0})} type="number" required/>
             <Select label="Canal" value={form.canal} onChange={v=>setForm({...form,canal:v})} options={["Wave Business","Orange Money Business","MTN Mobile Money","Moov Money","Cash"]}/>
             <Input label="Date" value={form.date} onChange={v=>{setForm({...form,date:v});findShift(form.ch,v);}} type="date"/>
             <Input label="Depenses autorisees (F CFA)" value={form.depensesAutorisees||0} onChange={v=>setForm({...form,depensesAutorisees:parseInt(v)||0})} type="number"/>
@@ -2702,10 +2703,12 @@ const ReversementsPage = ({reversements, drivers, shifts, onAdd, onUpdate, onDel
               <textarea value={form.commentaire||""} onChange={e=>setForm({...form,commentaire:e.target.value})} rows={2} className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Remarques eventuelles..."/>
             </div>
           </div>
-          {form.montant>0&&(
-            <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3 mt-2 text-xs text-slate-600 dark:text-slate-400">
-              Ecart calcule automatiquement : {fmt(calcEcart(form.montant,form.montant,form.depensesAutorisees||0,form.canal))} 
-              {form.canal==="Wave Business"&&<span className="text-slate-400"> (tolerance 1% frais Wave deduite)</span>}
+          {form.montantDeclare>0&&form.montant>0&&(
+            <div className={`rounded-lg p-3 mt-2 text-xs ${calcEcart(form.montant,form.montantDeclare,form.depensesAutorisees||0,form.canal)>0?"bg-red-50 dark:bg-red-900/20 text-red-600":"bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600"}`}>
+              {calcEcart(form.montant,form.montantDeclare,form.depensesAutorisees||0,form.canal)>0
+                ? <>⚠ Ecart detecte : <strong>{fmt(calcEcart(form.montant,form.montantDeclare,form.depensesAutorisees||0,form.canal))}</strong> manquant{form.canal==="Wave Business"&&<span className="text-xs opacity-70"> (tolerance 1% frais Wave deduite)</span>}</>
+                : <>✓ Reversement conforme — aucun ecart</>
+              }
             </div>
           )}
         </Modal>
