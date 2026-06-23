@@ -2062,6 +2062,14 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
     setSaving(true);
     try {
       // Champs de base — toujours présents dans la table shifts
+      const shiftDate = selectedShift.date || selectedShift.planned_start_date || new Date().toISOString().split("T")[0];
+      // Convertir "HH:MM" en timestamp complet pour Supabase
+      const toTimestamp = (timeStr) => {
+        if(!timeStr) return null;
+        // Si déjà un timestamp complet, on retourne tel quel
+        if(timeStr.includes("T") || timeStr.includes("-")) return timeStr;
+        return `${shiftDate}T${timeStr}:00`;
+      };
       const payload = {
         courses_count: parseInt(ddForm.nbCourses)||0,
         revenue_cash: parseFloat(ddForm.revenusGeneres)||0,
@@ -2071,8 +2079,8 @@ const PlanningPage = ({shifts, vehicles, drivers, onAdd, onUpdate, onDelete, sit
         km_driven: parseFloat(ddForm.kmParcourus)||0,
         battery_start: parseFloat(ddForm.autonomieDebut)||0,
         battery_end: parseFloat(ddForm.autonomieFin)||0,
-        real_start_time: ddForm.heureDebutReelle||null,
-        real_end_time: ddForm.heureFinReelle||null,
+        real_start_time: toTimestamp(ddForm.heureDebutReelle),
+        real_end_time: toTimestamp(ddForm.heureFinReelle),
         status: "Terminé",
       };
       const { error } = await supabase.from("shifts").update(payload).eq("id", selectedShift.id);
