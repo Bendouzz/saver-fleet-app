@@ -283,7 +283,7 @@ const mapShift = (r) => ({
   lieuFin: r.lieuFin || "",
   responsableZone: r.responsableZone || "",
   commentaireShift: r.commentaireShift || "",
-  date: r.planned_start_date || r.date || new Date().toISOString().split("T")[0],
+  date: r.planned_start_date || (r.created_at ? r.created_at.split("T")[0] : new Date().toISOString().split("T")[0]),
 });
 
 const mapReversement = (r) => ({
