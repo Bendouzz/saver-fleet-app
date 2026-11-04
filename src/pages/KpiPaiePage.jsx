@@ -1,6 +1,3 @@
-// KpiPaiePage.jsx — Easy by Saver
-// Copier dans : src/pages/KpiPaiePage.jsx
-// Dark theme · Tailwind CSS · Props : {drivers, shifts, reversements}
 
 import { useState } from "react";
 import * as XLSX from "xlsx";
@@ -166,17 +163,17 @@ export const KpiPaiePage = ({ drivers = [], shifts = [], reversements = [] }) =>
     <div className="flex h-full bg-slate-900 text-slate-100 gap-0" style={{ minHeight: "calc(100vh - 56px)" }}>
 
       {/* ── PANNEAU GAUCHE : LISTE ───────────────────────────────────────── */}
-      <div className="w-88 shrink-0 border-r border-slate-700 flex flex-col bg-slate-900" style={{ width: "22rem" }}>
+      <div className="w-80 shrink-0 border-r border-slate-700 flex flex-col bg-slate-900">
 
         {/* Header */}
-        <div className="p-5 border-b border-slate-700">
-          <div className="flex items-center justify-between mb-4">
+        <div className="p-4 border-b border-slate-700">
+          <div className="flex items-center justify-between mb-3">
             <div>
-              <div className="font-bold text-white text-base">KPI & Paie</div>
-              <div className="text-xs text-slate-500 mt-1">{paies.length} chauffeurs · {shiftsTermines.length} shifts</div>
+              <div className="font-bold text-white text-sm">KPI & Paie</div>
+              <div className="text-[10px] text-slate-500 mt-0.5">{paies.length} chauffeurs · {shiftsTermines.length} shifts</div>
             </div>
             <button onClick={exportExcel}
-              className="flex items-center gap-1.5 bg-green-700 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-xs font-semibold">
+              className="flex items-center gap-1.5 bg-green-700 hover:bg-green-600 text-white px-2.5 py-1.5 rounded-lg text-[11px] font-semibold">
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
               </svg>
@@ -185,37 +182,37 @@ export const KpiPaiePage = ({ drivers = [], shifts = [], reversements = [] }) =>
           </div>
 
           {/* Période */}
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             <div className="flex gap-2 items-center">
-              <label className="text-xs text-slate-500 w-6">Du</label>
+              <label className="text-[10px] text-slate-500 w-5">Du</label>
               <input type="date" value={periodeDebut} onChange={e => setPeriodeDebut(e.target.value)}
-                className="flex-1 bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" />
+                className="flex-1 bg-slate-800 border border-slate-700 text-slate-200 text-[11px] rounded-lg px-2 py-1.5 focus:outline-none focus:border-blue-500" />
             </div>
             <div className="flex gap-2 items-center">
-              <label className="text-xs text-slate-500 w-6">Au</label>
+              <label className="text-[10px] text-slate-500 w-5">Au</label>
               <input type="date" value={periodeFin} onChange={e => setPeriodeFin(e.target.value)}
-                className="flex-1 bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" />
+                className="flex-1 bg-slate-800 border border-slate-700 text-slate-200 text-[11px] rounded-lg px-2 py-1.5 focus:outline-none focus:border-blue-500" />
             </div>
             {(periodeDebut || periodeFin) && (
               <button onClick={() => { setPeriodeDebut(""); setPeriodeFin(""); }}
-                className="text-xs text-red-400 hover:text-red-300">
-                Effacer la periode
+                className="text-[10px] text-red-400 hover:text-red-300">
+                Effacer la période
               </button>
             )}
           </div>
         </div>
 
         {/* Totaux */}
-        <div className="p-5 border-b border-slate-700 grid grid-cols-2 gap-3">
+        <div className="p-4 border-b border-slate-700 grid grid-cols-2 gap-2">
           {[
             ["Total base",   fmt(totaux.base),    "text-white"],
             ["Total bonus",  fmt(totaux.bonus),   "text-green-400"],
-            ["Deductions",   fmt(totaux.ded),     "text-red-400"],
+            ["Déductions",   fmt(totaux.ded),     "text-red-400"],
             ["Total net",    fmt(totaux.net),      "text-blue-400"],
           ].map(([l, v, c]) => (
-            <div key={l} className="bg-slate-800 rounded-xl p-3.5 text-center">
-              <div className={`text-base font-bold ${c}`}>{v}</div>
-              <div className="text-[10px] text-slate-500 mt-1">{l}</div>
+            <div key={l} className="bg-slate-800 rounded-lg p-2.5 text-center">
+              <div className={`text-sm font-bold ${c}`}>{v}</div>
+              <div className="text-[9px] text-slate-500 mt-0.5">{l}</div>
             </div>
           ))}
         </div>
@@ -230,17 +227,17 @@ export const KpiPaiePage = ({ drivers = [], shifts = [], reversements = [] }) =>
             const kpiOk = p.totalRecettesNettes >= p.objectifRecettes;
             return (
               <div key={p.d.id} onClick={() => setSelectedId(isSelected ? null : p.d.id)}
-                className={`flex items-center gap-3.5 px-5 py-4 cursor-pointer border-b border-slate-800 transition-all ${isSelected ? "bg-blue-900/30 border-l-2 border-l-blue-500 pl-[18px]" : "hover:bg-slate-800/50"}`}>
-                <div className="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300 shrink-0">
+                className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-slate-800 transition-all ${isSelected ? "bg-blue-900/30 border-l-2 border-l-blue-500 pl-3.5" : "hover:bg-slate-800/50"}`}>
+                <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-[11px] font-bold text-slate-300 shrink-0">
                   {(p.d.prenom || "?")[0]}{(p.d.nom || "?")[0]}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold text-white truncate">{p.d.prenom} {p.d.nom}</div>
-                  <div className="text-xs text-slate-500 mt-0.5">{p.joursTravailes}j · {p.totalCourses} courses</div>
+                  <div className="text-[10px] text-slate-500">{p.joursTravailes}j · {p.totalCourses} courses</div>
                 </div>
                 <div className="text-right shrink-0">
                   <div className="text-sm font-bold text-white">{fmtK(p.net)}</div>
-                  <div className={`text-[10px] font-semibold mt-0.5 ${kpiOk ? "text-green-400" : "text-amber-400"}`}>
+                  <div className={`text-[9px] font-semibold ${kpiOk ? "text-green-400" : "text-amber-400"}`}>
                     {kpiOk ? "KPI OK" : "Sous KPI"}
                   </div>
                 </div>
@@ -251,31 +248,31 @@ export const KpiPaiePage = ({ drivers = [], shifts = [], reversements = [] }) =>
       </div>
 
       {/* ── PANNEAU DROIT ─────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto bg-slate-900 p-8 space-y-6">
+      <div className="flex-1 overflow-y-auto bg-slate-900 p-6 space-y-5">
 
         {/* Règles de rémunération */}
-        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6">
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-5">Regles de remuneration SAVER</div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+        <div className="bg-slate-800 border border-slate-700 rounded-xl p-5">
+          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Règles de rémunération SAVER</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
             {[
               ["Fixe journalier",  fmt(FIXE_JOURNALIER) + " FCFA", "text-white",       "bg-slate-700"],
               ["KPI Recettes",     fmt(KPI_RECETTES) + " / shift",  "text-blue-400",    "bg-blue-900/40"],
               ["KPI Courses",      KPI_COURSES + " courses/shift",  "text-violet-400",  "bg-violet-900/40"],
               ["Bonus max/jour",   fmt(BONUS_MAX) + " FCFA",        "text-amber-400",   "bg-amber-900/40"],
             ].map(([l, v, col, bg]) => (
-              <div key={l} className={`${bg} rounded-xl p-4 text-center`}>
-                <div className={`text-base font-bold ${col}`}>{v}</div>
-                <div className="text-xs text-slate-500 mt-1.5">{l}</div>
+              <div key={l} className={`${bg} rounded-lg p-3 text-center`}>
+                <div className={`text-sm font-bold ${col}`}>{v}</div>
+                <div className="text-[10px] text-slate-500 mt-1">{l}</div>
               </div>
             ))}
           </div>
           {/* Paliers */}
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Paliers de bonus (courses supplementaires)</div>
-          <div className="flex flex-wrap gap-2.5">
+          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Paliers de bonus (courses supplémentaires)</div>
+          <div className="flex flex-wrap gap-2">
             {[[1, 10, "10%"], [11, 19, "25%"], [20, 25, "35%"], [26, 35, "50%"], [36, "+", "75%"]].map(([min, max, pct]) => (
-              <div key={min} className="bg-slate-900/60 border border-slate-700 px-3.5 py-2 rounded-xl text-xs">
+              <div key={min} className="bg-slate-900/60 border border-slate-700 px-3 py-1.5 rounded-lg text-[11px]">
                 <span className="text-slate-400">{min}–{max} courses +</span>
-                <span className="font-bold text-green-400 ml-1.5">{pct} du surplus</span>
+                <span className="font-bold text-green-400 ml-1">{pct} du surplus</span>
               </div>
             ))}
           </div>
@@ -286,8 +283,8 @@ export const KpiPaiePage = ({ drivers = [], shifts = [], reversements = [] }) =>
           <DetailPaie p={selectedPaie} />
         ) : (
           /* Table récapitulatif tous chauffeurs */
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden">
-            <div className="px-6 py-5 border-b border-slate-700 flex items-center justify-between">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-700 flex items-center justify-between">
               <div className="font-semibold text-white text-sm">Tableau de paie</div>
               <span className="text-[10px] text-slate-500">{paies.length} chauffeurs · Clique sur un nom pour le détail</span>
             </div>
@@ -357,10 +354,10 @@ const DetailPaie = ({ p }) => {
   const coursesPct = p.objectifCourses > 0 ? Math.min(100, Math.round(p.totalCourses / p.objectifCourses * 100)) : 0;
 
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-2xl p-7 space-y-6">
+    <div className="bg-slate-800 border border-slate-700 rounded-xl p-5 space-y-5">
       {/* Header */}
-      <div className="flex items-center gap-5">
-        <div className="w-14 h-14 rounded-xl bg-slate-700 flex items-center justify-center text-xl font-bold text-slate-300">
+      <div className="flex items-center gap-4">
+        <div className="w-12 h-12 rounded-xl bg-slate-700 flex items-center justify-center text-lg font-bold text-slate-300">
           {(p.d.prenom || "?")[0]}{(p.d.nom || "?")[0]}
         </div>
         <div>
@@ -373,34 +370,34 @@ const DetailPaie = ({ p }) => {
       </div>
 
       {/* Barres de progression */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div>
-          <div className="flex justify-between text-sm mb-2">
+          <div className="flex justify-between text-[11px] mb-1.5">
             <span className="text-slate-400">Recettes nettes</span>
             <span className="text-slate-300 font-semibold">{fmt(Math.round(p.totalRecettesNettes))} / {fmt(p.objectifRecettes)} FCFA</span>
           </div>
-          <div className="w-full h-2.5 bg-slate-700 rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
             <div className={`h-full rounded-full transition-all ${kpiOk ? "bg-green-500" : "bg-amber-500"}`} style={{ width: `${kpiPct}%` }} />
           </div>
-          <div className="text-xs text-slate-500 mt-1.5">{kpiPct}% de l'objectif</div>
+          <div className="text-[10px] text-slate-500 mt-1">{kpiPct}% de l'objectif</div>
         </div>
         <div>
-          <div className="flex justify-between text-sm mb-2">
+          <div className="flex justify-between text-[11px] mb-1.5">
             <span className="text-slate-400">Courses</span>
             <span className="text-slate-300 font-semibold">{p.totalCourses} / {p.objectifCourses} courses</span>
           </div>
-          <div className="w-full h-2.5 bg-slate-700 rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
             <div className={`h-full rounded-full transition-all ${coursesPct >= 100 ? "bg-blue-500" : "bg-slate-500"}`} style={{ width: `${coursesPct}%` }} />
           </div>
-          <div className="text-xs text-slate-500 mt-1.5">{p.coursesSupp > 0 ? `+${p.coursesSupp} courses supplementaires → palier ${Math.round(p.palierPct * 100)}%` : "Objectif non atteint"}</div>
+          <div className="text-[10px] text-slate-500 mt-1">{p.coursesSupp > 0 ? `+${p.coursesSupp} courses supplémentaires → palier ${Math.round(p.palierPct * 100)}%` : "Objectif non atteint"}</div>
         </div>
       </div>
 
       {/* Calcul détaillé */}
-      <div className="bg-slate-900/60 rounded-xl p-5 space-y-2.5 text-sm">
-        <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Decomposition salaire</div>
+      <div className="bg-slate-900/60 rounded-xl p-4 space-y-2 text-sm">
+        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Décomposition salaire</div>
         {[
-          ["Jours travailles",          `${p.joursTravailes} jours`,              "text-slate-300"],
+          ["Jours travaillés",          `${p.joursTravailes} jours`,              "text-slate-300"],
           ["Salaire de base",           `${fmt(p.salaireBase)} FCFA`,             "text-white"],
           ["Recettes brutes",           `${fmt(Math.round(p.totalRevBrut))} FCFA`, "text-slate-400"],
           ["Commission Yango",          `-${fmt(p.totalCommission)} FCFA`,         "text-red-400"],
@@ -410,14 +407,14 @@ const DetailPaie = ({ p }) => {
           ["Avances",                   p.avances > 0 ? `-${fmt(Math.round(p.avances))} FCFA` : "—",   "text-red-400"],
           ["Dettes / manquants",        p.manquants > 0 ? `-${fmt(p.manquants)} FCFA` : "—",            "text-red-400"],
         ].map(([l, v, c]) => (
-          <div key={l} className="flex justify-between py-2 border-b border-slate-800 last:border-0">
-            <span className="text-slate-500 text-sm">{l}</span>
-            <span className={`font-semibold text-sm ${c}`}>{v}</span>
+          <div key={l} className="flex justify-between py-1 border-b border-slate-800 last:border-0">
+            <span className="text-slate-500 text-[12px]">{l}</span>
+            <span className={`font-semibold text-[12px] ${c}`}>{v}</span>
           </div>
         ))}
-        <div className="flex justify-between pt-3">
-          <span className="text-slate-300 font-bold text-base">NET A PAYER</span>
-          <span className={`text-2xl font-bold ${p.net >= 0 ? "text-white" : "text-red-400"}`}>{fmt(Math.round(p.net))} FCFA</span>
+        <div className="flex justify-between pt-2">
+          <span className="text-slate-400 font-bold">NET À PAYER</span>
+          <span className={`text-lg font-bold ${p.net >= 0 ? "text-white" : "text-red-400"}`}>{fmt(Math.round(p.net))} FCFA</span>
         </div>
       </div>
     </div>
