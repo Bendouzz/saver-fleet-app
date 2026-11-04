@@ -33,20 +33,22 @@ pool.query("SELECT 1").then(() => console.log("Supabase PostgreSQL connecte")).c
 const app = express();
 
 // ── SÉCURITÉ ──────────────────────────────────────────────────────────────────
-// Helmet : headers de sécurité + masque "X-Powered-By: Express"
-app.use(helmet());
-
-// CORS : seulement le frontend Vercel autorisé
+// CORS en premier (avant helmet) pour que les preflight OPTIONS passent
 const allowedOrigins = [
   "https://saver-fleet-app.vercel.app",
-  "http://localhost:3000", // dev local
+  "http://localhost:3000",
 ];
-app.use(cors({
+const corsOptions = {
   origin: (origin, cb) => {
     if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
     cb(new Error("CORS non autorisé : " + origin));
   }
-}));
+};
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // preflight pour toutes les routes
+
+// Helmet : headers de sécurité, crossOriginResourcePolicy désactivé pour l'API publique
+app.use(helmet({ crossOriginResourcePolicy: false }));
 
 // Rate limiting : max 10 tentatives de login par IP par 15 min
 const loginLimiter = rateLimit({
