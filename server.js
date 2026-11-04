@@ -1,12 +1,14 @@
 // server.js — Easy by Saver · API Express → Supabase PostgreSQL
-// Installation : npm install express cors pg bcrypt jsonwebtoken
+// Installation : npm install express cors pg bcrypt jsonwebtoken helmet express-rate-limit
 // Lancement    : node server.js  (ou nodemon server.js)
 
-const express = require("express");
-const cors    = require("cors");
-const { Pool } = require("pg");
-const bcrypt  = require("bcrypt");
-const jwt     = require("jsonwebtoken");
+const express   = require("express");
+const cors      = require("cors");
+const helmet    = require("helmet");
+const rateLimit = require("express-rate-limit");
+const { Pool }  = require("pg");
+const bcrypt    = require("bcrypt");
+const jwt       = require("jsonwebtoken");
 
 const JWT_SECRET = "saver_secret_key_2025";
 const PORT = process.env.PORT || 3001;
@@ -29,7 +31,32 @@ const pool = new Pool({
 pool.query("SELECT 1").then(() => console.log("Supabase PostgreSQL connecte")).catch(e => console.error("Connexion Supabase echouee:", e.message));
 
 const app = express();
-app.use(cors({ origin: "*" }));
+
+// ── SÉCURITÉ ──────────────────────────────────────────────────────────────────
+// Helmet : headers de sécurité + masque "X-Powered-By: Express"
+app.use(helmet());
+
+// CORS : seulement le frontend Vercel autorisé
+const allowedOrigins = [
+  "https://saver-fleet-app.vercel.app",
+  "http://localhost:3000", // dev local
+];
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    cb(new Error("CORS non autorisé : " + origin));
+  }
+}));
+
+// Rate limiting : max 10 tentatives de login par IP par 15 min
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: "Trop de tentatives. Réessayez dans 15 minutes." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use(express.json({ limit: "50mb" }));
 
 // ── MIDDLEWARE AUTH ───────────────────────────────────────────────────────────
@@ -45,7 +72,7 @@ function auth(req, res, next) {
 }
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
-app.post("/auth/login", async (req, res) => {
+app.post("/auth/login", loginLimiter, async (req, res) => {
   try {
     const { email, password, mot_de_passe } = req.body;
     const pwd = mot_de_passe || password;
