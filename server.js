@@ -4,7 +4,6 @@
 
 const express   = require("express");
 const cors      = require("cors");
-const helmet    = require("helmet");
 const rateLimit = require("express-rate-limit");
 const { Pool }  = require("pg");
 const bcrypt    = require("bcrypt");
@@ -47,8 +46,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions)); // preflight pour toutes les routes
 
-// Helmet : headers de sécurité, crossOriginResourcePolicy désactivé pour l'API publique
-app.use(helmet({ crossOriginResourcePolicy: false }));
+// Masquer X-Powered-By manuellement (sans helmet)
+app.disable("x-powered-by");
 
 // Rate limiting : max 10 tentatives de login par IP par 15 min
 const loginLimiter = rateLimit({
