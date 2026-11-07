@@ -20,12 +20,7 @@ import { SitesPage } from "./pages/SitesPage.jsx";
 import { RbacPage } from "./pages/RbacPage.jsx";
 
 const App = () => {
-  const [user, setUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem("saver_user");
-      return saved ? JSON.parse(saved) : null;
-    } catch { return null; }
-  });
+  const [user, setUser] = useState(null);
 
   // Sauvegarder la session a chaque changement d utilisateur
   useEffect(() => {
