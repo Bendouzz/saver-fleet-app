@@ -44,7 +44,7 @@ const corsOptions = {
   }
 };
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // preflight pour toutes les routes
+app.options("/(.*)", cors(corsOptions)); // preflight pour toutes les routes
 
 // Masquer X-Powered-By manuellement (sans helmet)
 app.disable("x-powered-by");
