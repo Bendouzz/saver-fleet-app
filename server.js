@@ -33,13 +33,18 @@ const app = express();
 
 // ── SÉCURITÉ ──────────────────────────────────────────────────────────────────
 // CORS en premier (avant helmet) pour que les preflight OPTIONS passent
-const allowedOrigins = [
-  "https://saver-fleet-app.vercel.app",
-  "http://localhost:3000",
-];
 const corsOptions = {
   origin: (origin, cb) => {
-    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    // Autoriser : pas d'origine, localhost, et tous les domaines Vercel du projet
+    if (
+      !origin ||
+      origin === "http://localhost:3000" ||
+      origin === "http://localhost:3001" ||
+      /^https:\/\/saver-fleet-.*\.vercel\.app$/.test(origin) ||
+      origin === "https://saver-fleet-app.vercel.app"
+    ) {
+      return cb(null, true);
+    }
     cb(new Error("CORS non autorisé : " + origin));
   }
 };
